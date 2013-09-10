@@ -59,8 +59,15 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 
 	@Override
 	public void release() {
-		if (serviceConnection != null && getContext() != null)
-			getContext().unbindService(serviceConnection);
+		if (serviceConnection != null && getContext() != null) {
+			try {
+				getContext().unbindService(serviceConnection);
+			}
+			catch (Exception e) {
+				Log.e(LOG_TAG, e.toString());
+			}
+			billingService = null;
+		}
 		cachedProducts.release();
 		super.release();
 	}
@@ -130,7 +137,7 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 
 			if (resultCode == Activity.RESULT_OK && responseCode == Constants.BILLING_RESPONSE_RESULT_OK) {
 				String purchaseData = data.getStringExtra(Constants.INAPP_PURCHASE_DATA);
-				
+
 				try {
 					JSONObject jo = new JSONObject(purchaseData);
 					String productId = jo.getString("productId");
@@ -148,11 +155,11 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 				catch (Exception e) {
 					Log.e(LOG_TAG, e.toString());
 				}
-				
+
 			}
 			else
 				onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, null);
-			
+
 			return true;
 		}
 		return false;
