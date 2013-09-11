@@ -54,7 +54,16 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 		super(context);
 		contextPackageName = context.getApplicationContext().getPackageName();
 		cachedProducts = new BillingCache(context);
-		context.bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"),  serviceConnection, Context.BIND_AUTO_CREATE);
+		bindPlayServices();
+	}
+	
+	private void bindPlayServices() {
+		try {
+			getContext().bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"),  serviceConnection, Context.BIND_AUTO_CREATE);
+		}
+		catch (Exception e) {
+			Log.e(LOG_TAG, e.toString());
+		}
 	}
 
 	@Override
@@ -70,6 +79,10 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 		}
 		cachedProducts.release();
 		super.release();
+	}
+	
+	public boolean isInitialized() {
+		return billingService != null;
 	}
 
 	public void setBillingHandler(IBillingHandler handler) {
