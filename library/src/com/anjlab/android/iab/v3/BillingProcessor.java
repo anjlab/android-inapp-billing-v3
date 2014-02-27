@@ -24,6 +24,7 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	private static final String LOG_TAG = "iabv3";
 	private static final String RESTORE_KEY = ".products.restored";
 
+
 	IInAppBillingService billingService;
 	String contextPackageName;
 	String purchasePayload;
@@ -92,11 +93,24 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	public boolean loadOwnedProductsFromGoogle() {
 		if (billingService != null) {
 			try {
+
 				Bundle bundle = billingService.getPurchases(3, contextPackageName, "inapp", null);
 				int response = bundle.getInt(Constants.RESPONSE_CODE);
+				boolean cachedProductsCleared = false;
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					ArrayList<String> responseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_ITEM_LIST);
 					cachedProducts.clear();
+					cachedProducts.putAll(responseList);
+					cachedProductsCleared = true;
+				}
+				
+				// attempt to load subscriptions
+				bundle = billingService.getPurchases(3, contextPackageName, "subs", null);
+				response = bundle.getInt(Constants.RESPONSE_CODE);
+				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
+					ArrayList<String> responseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_ITEM_LIST);
+					if(!cachedProductsCleared)
+						cachedProducts.clear();
 					cachedProducts.putAll(responseList);
 				}
 				return true;
@@ -112,12 +126,17 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	public boolean isPurchased(String productId) {
 		return cachedProducts.includes(productId);
 	}
-
 	public boolean purchase(String productId) {
+		
+		return purchase(productId, BillingPurchaseType.OneTime);
+	}
+	public boolean purchase(String productId, BillingPurchaseType purchaseType) {
 		if (billingService != null) {
 			try {
 				purchasePayload = UUID.randomUUID().toString();
-				Bundle bundle = billingService.getBuyIntent(3, contextPackageName, productId, "inapp", purchasePayload);
+				String type = toPurchaseTypeString(purchaseType);
+				
+				Bundle bundle = billingService.getBuyIntent(3, contextPackageName, productId, type, purchasePayload);
 				if (bundle != null) {
 					int response = bundle.getInt(Constants.RESPONSE_CODE);
 					if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
@@ -142,6 +161,13 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 			}
 		}
 		return false;
+	}
+
+	private String toPurchaseTypeString(BillingPurchaseType purchaseType) {
+		String type = "inapp";
+		if(purchaseType == BillingPurchaseType.Subscription)
+			type = "subs";
+		return type;
 	}
 
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
