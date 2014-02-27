@@ -1,0 +1,54 @@
+apply plugin: 'android'
+
+dependencies {
+    compile project(':library')
+}
+
+android {
+    compileSdkVersion 10
+    buildToolsVersion "19.0.0"
+
+    defaultConfig {
+        versionCode 1
+        versionName "1.0"
+        minSdkVersion 8
+        targetSdkVersion 19
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            res.srcDirs = ['res']
+        }
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+    }
+
+    signingConfigs {
+        release
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    if (project.hasProperty('keyStoreFile')) {
+        android.signingConfigs.release.storeFile = file(keyStoreFile)
+    }
+
+    if (project.hasProperty('keyStorePassword')) {
+        android.signingConfigs.release.storePassword = keyStorePassword
+    }
+
+    if (project.hasProperty('keyStoreKeyAlias')) {
+        android.signingConfigs.release.keyAlias = keyStoreKeyAlias
+    }
+
+    if (project.hasProperty('keyStoreKeyPassword')) {
+        android.signingConfigs.release.keyPassword = keyStoreKeyPassword
+    }
+}

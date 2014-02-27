@@ -1,2 +1,6 @@
 bin/
 gen/
+.idea
+build
+local.properties
+.gradle

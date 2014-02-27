@@ -1,0 +1,91 @@
+apply plugin: 'android-library'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version '1.0.3'
+group 'com.anjlab.android.iab.v3'
+
+android {
+    compileSdkVersion 8
+    buildToolsVersion "19.0.0"
+
+    defaultConfig {
+        versionCode 1
+        versionName "1.0"
+        minSdkVersion 8
+        targetSdkVersion 19
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            res.srcDirs = ['res']
+        }
+
+        // Move the tests to tests/java, tests/res, etc...
+        instrumentTest.setRoot('tests')
+
+        // Move the build types to build-types/<type>
+        // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
+        // This moves them out of them default location under src/<type>/... which would
+        // conflict with src/ being used by the main source set.
+        // Adding new build types or product flavors should be accompanied
+        // by a similar customization.
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+    }
+}
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: sonatypeUsername, password: sonatypePassword)
+        }
+
+        pom.project {
+            name 'Android In-App Billing v3 Library'
+            packaging 'aar'
+            description 'A lightweight implementation of Android In-app Billing Version 3'
+            url 'https://github.com/anjlab/android-inapp-billing-v3'
+
+            scm {
+                url 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+                connection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+                developerConnection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+            }
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'serggl'
+                    name 'Sergey Glukhov'
+                    email 'sergey.glukhov@gmail.com'
+                }
+            }
+        }
+    }
+}
