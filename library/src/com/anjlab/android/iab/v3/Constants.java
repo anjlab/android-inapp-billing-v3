@@ -1,6 +1,11 @@
 package com.anjlab.android.iab.v3;
 
 public class Constants {
+    public static final int GOOGLE_API_VERSION = 3;
+
+    public static final String PRODUCT_TYPE_MANAGED = "inapp";
+    public static final String PRODUCT_TYPE_SUBSCRIPTION = "subs";
+
 	public static final int BILLING_RESPONSE_RESULT_OK = 0; 				//Success
 	public static final int BILLING_RESPONSE_RESULT_USER_CANCELED =	1; 		//User pressed back or canceled a dialog
 	public static final int BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE = 3;//Billing API version is not supported for the type requested
@@ -15,8 +20,9 @@ public class Constants {
 	public static final String INAPP_PURCHASE_ITEM_LIST = "INAPP_PURCHASE_ITEM_LIST";
 	public static final String BUY_INTENT = "BUY_INTENT";
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
+    public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
 
-	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASED_PRODUCTS = 100;
+	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;
 	public static final int BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE = 101;
 	public static final int BILLING_ERROR_INVALID_SIGNATURE = 102;
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;

@@ -2,25 +2,27 @@ package com.anjlab.android.iab.v3;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.text.TextUtils;
 
 public class BillingCache extends BillingBase {
-	private static final String CACHE_KEY = ".products.cache";
 	private static final String CACHE_DELIMITER = "|";
 	
 	ArrayList<String> products;
+    String cacheKey;
 	
-	public BillingCache(Activity context) {
+	public BillingCache(Activity context, String key) {
 		super(context);
 		products = new ArrayList<String>();
+        cacheKey = key;
 		load();
 	}
 	
 	private String getPreferencesCacheKey() {
-		return getPreferencesBaseKey() + CACHE_KEY;
+		return getPreferencesBaseKey() + cacheKey;
 	}
 	
 	private void load() {
@@ -54,6 +56,10 @@ public class BillingCache extends BillingBase {
 		products.clear();
 		flush();
 	}
+
+    public List<String> getContents() {
+        return new ArrayList<String>(products);
+    }
 	
 	@Override
 	public String toString() {

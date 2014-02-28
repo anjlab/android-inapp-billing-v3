@@ -2,16 +2,16 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-version '1.0.3'
+version '1.0.4'
 group 'com.anjlab.android.iab.v3'
 
 android {
     compileSdkVersion 8
-    buildToolsVersion "19.0.0"
+    buildToolsVersion '19.0.0'
 
     defaultConfig {
         versionCode 1
-        versionName "1.0"
+        versionName project.version
         minSdkVersion 8
         targetSdkVersion 19
     }
