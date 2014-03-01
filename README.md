@@ -10,7 +10,15 @@ Getting Started
 
 * You project should build against Android 2.2 SDK at least.
 
-* Add this *Android In-App Billing v3 Library* to your project.
+* Add this *Android In-App Billing v3 Library* to your Eclipse project. If you guys are using Android Studio and Gradle, add this to you build.gradle file:
+```groovy
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+       compile 'com.anjlab.android.iab.v3:library:1.0.+@aar'
+    }
+```
 
 * Open the *AndroidManifest.xml* of your application and add this permission:
 ```xml
@@ -29,6 +37,11 @@ Getting Started
 	}
 ```
 
+* If you want to validate purchases via you application licinse key, add this:
+```java
+	bp.verifyPurchasesWithLicenseKey("YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE");
+```
+
 * Implement IBillingHandler Interface to handle purchase results and errors:
 ```java
 	bp.setBillingHandler(this);
@@ -43,9 +56,10 @@ Getting Started
 	}
 ```
 
-* Call purchase(productId) method for a BillingProcessor instance:
+* Call `purchase` method for a BillingProcessor instance to initiate purchase or `subscribe` to initiate a subscription:
 ```java
-bp.purchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.purchase("YOUR MANAGED PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.subscribe("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 * **That's it! A super small and fast in-app library ever!**
 
