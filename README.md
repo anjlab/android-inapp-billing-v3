@@ -3,7 +3,7 @@ Android In-App Billing v3 Library
 
 This is a simple, straight-forward implementation of the Android v3 In-app billing API.
 
-For now it supports: 'Managed Product' purchases and Subscriptions.
+It supports: Managed Product purchases and Subscriptions.
 
 Getting Started
 ===============

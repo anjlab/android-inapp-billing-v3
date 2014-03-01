@@ -89,7 +89,7 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 		super.release();
 	}
 
-    public void verifyPurchasesWithKeySignature(String signature) {
+    public void verifyPurchasesWithLicenseKey(String signature) {
         signatureBase64 = signature;
     }
 	

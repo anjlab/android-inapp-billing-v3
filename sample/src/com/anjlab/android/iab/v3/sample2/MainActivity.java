@@ -12,7 +12,7 @@ public class MainActivity extends Activity implements IBillingHandler {
 
 	BillingProcessor bp;
 	static final String LOG_TAG = "test";
-    static final String PUBLIC_KEY = "mIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhiglXguRsKwT1o4kmZ34UoeeKOxJlcmYotn9TiPyzCpRtVx7ZB+XVb6dKRGY1uu0HsR0eW2nto7YmJWR/8/RsB1wDVi9gpqzluxRWmx5o7C5+qk4Tx+asJjAVYP8ESoDbp7sB7sudAuHE8pMir8vYEiaXyAxxeh/exLgxGyYDlXhe25Dy7ghnfkkXlh+qRCUbAWh9QGUMnX6sMTerjn/QNO/ODkoa0G9HZLfA+rWXrAxCCRTIIWFj1mXHHZNK7Mp0ApvoOOc9XJVCVfa6NJennaLFURo4MSbej1PKZT34WfImiltWTLir0L8XnZDaS2yZMMiQ/47TCv59ZygFbwnSQIDAQAB";
+    static final String PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ9AMIIBCgKCAQEAhiglXguRsKwT1o5kmZ34UoeeKOxJlcmYotn0git statusTiPyzCpRtVx7ZB+XVb6dKRGY1uu0HsR0eW2nto7YmJWR/8/RsB1wDVi9gpqzluxRWmx5o7C5+qk4Tx+asJjAVYP8ESoDbp7sB7sudAuHE8pMir8vYEiaXyAxxeh/exLgxGyYDlXhe25Dy7ghnfkkXlh+qRCUbAWh9QGUMnX6sMTerjn/QNO/ODkoa0G9HZLfA+rWXrAxCCRTIIWFj1mXHHZNK7Mp0ApvoOOc9XJVCVfa6NJennaLFURo4MSbej1PKZT34WfImiltWTLir0L8XnZDaS2yZMMiQ/47TCv59ZygFbwnSQIDAQAB";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -20,7 +20,7 @@ public class MainActivity extends Activity implements IBillingHandler {
 		setContentView(R.layout.activity_main);
 
 		bp = new BillingProcessor(this);
-        bp.verifyPurchasesWithKeySignature(PUBLIC_KEY);
+        bp.verifyPurchasesWithLicenseKey(PUBLIC_KEY);
 		bp.setBillingHandler(this);
 	}
 
