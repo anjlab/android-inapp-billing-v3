@@ -7,20 +7,27 @@ import android.os.Bundle;
 import android.util.Log;
 import android.app.Activity;
 import android.content.Intent;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends Activity implements IBillingHandler {
+public class MainActivity extends Activity implements IBillingHandler, View.OnClickListener {
 
 	BillingProcessor bp;
-	static final String LOG_TAG = "test";
-    static final String PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ9AMIIBCgKCAQEAhiglXguRsKwT1o5kmZ34UoeeKOxJlcmYotn0git statusTiPyzCpRtVx7ZB+XVb6dKRGY1uu0HsR0eW2nto7YmJWR/8/RsB1wDVi9gpqzluxRWmx5o7C5+qk4Tx+asJjAVYP8ESoDbp7sB7sudAuHE8pMir8vYEiaXyAxxeh/exLgxGyYDlXhe25Dy7ghnfkkXlh+qRCUbAWh9QGUMnX6sMTerjn/QNO/ODkoa0G9HZLfA+rWXrAxCCRTIIWFj1mXHHZNK7Mp0ApvoOOc9XJVCVfa6NJennaLFURo4MSbej1PKZT34WfImiltWTLir0L8XnZDaS2yZMMiQ/47TCv59ZygFbwnSQIDAQAB";
+	static final String LOG_TAG = "iabv3";
+    static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
+    boolean readyToPurchase = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+        findViewById(R.id.consumeButton).setOnClickListener(this);
+        findViewById(R.id.purchaseButton).setOnClickListener(this);
+
 		bp = new BillingProcessor(this);
-        bp.verifyPurchasesWithLicenseKey(PUBLIC_KEY);
+//        bp.verifyPurchasesWithLicenseKey("YOUR MERCHANT KEY HERE");
 		bp.setBillingHandler(this);
 	}
 
@@ -40,7 +47,7 @@ public class MainActivity extends Activity implements IBillingHandler {
 	
 	@Override
 	public void onPurchaseHistoryRestored() {
-		Log.d(LOG_TAG, "onPurchaseHistoryRestored");
+        showToast("onPurchaseHistoryRestored");
         for(String sku : bp.listOwnedProducts())
             Log.d(LOG_TAG, "Owned Managed Product: " + sku);
         for(String sku : bp.listOwnedSubscriptions())
@@ -49,17 +56,46 @@ public class MainActivity extends Activity implements IBillingHandler {
 	
 	@Override
 	public void onProductPurchased(String productId) {
-		Log.d(LOG_TAG, "onProductPurchased: " + productId);
+        showToast("onProductPurchased: " + productId);
+        updateTextView();
 	}
 	
 	@Override
 	public void onBillingError(int errorCode, Throwable error) {
-		Log.d(LOG_TAG, "onBillingError: " + Integer.toString(errorCode));
+        showToast("onBillingError: " + Integer.toString(errorCode));
 	}
 
 	@Override
 	public void onBillingInitialized() {
-		bp.purchase("com.anjlab.test.iab.s2.p5");
+        readyToPurchase = true;
+        updateTextView();
 	}
+
+    private void updateTextView() {
+        TextView text = (TextView)findViewById(R.id.textView);
+        text.setText(String.format("%s is%s purchased", PRODUCT_ID, bp.isPurchased(PRODUCT_ID) ? "" : " not"));
+    }
+     private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    public void onClick(View v) {
+        if (readyToPurchase)
+            switch (v.getId()) {
+                case R.id.purchaseButton:
+                    bp.purchase(PRODUCT_ID);
+                    break;
+                case R.id.consumeButton:
+                    Boolean consumed = bp.consumePurchase(PRODUCT_ID);
+                    updateTextView();
+                    if (consumed)
+                        showToast("Successfully consumed");
+                    break;
+                default:
+                    break;
+            }
+        else
+            showToast("Billing was not initialized yet.");
+    }
 
 }

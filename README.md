@@ -3,7 +3,7 @@ Android In-App Billing v3 Library
 
 This is a simple, straight-forward implementation of the Android v3 In-app billing API.
 
-It supports: Managed Product purchases and Subscriptions.
+It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
 Getting Started
 ===============
@@ -37,11 +37,6 @@ Getting Started
 	}
 ```
 
-* If you want to validate purchases via you application licinse key, add this:
-```java
-	bp.verifyPurchasesWithLicenseKey("YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE");
-```
-
 * Implement IBillingHandler Interface to handle purchase results and errors:
 ```java
 	bp.setBillingHandler(this);
@@ -58,7 +53,7 @@ Getting Started
 
 * Call `purchase` method for a BillingProcessor instance to initiate purchase or `subscribe` to initiate a subscription:
 ```java
-bp.purchase("YOUR MANAGED PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.purchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
 bp.subscribe("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 * **That's it! A super small and fast in-app library ever!**
@@ -75,7 +70,7 @@ bp.subscribe("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 	}
 ```
 
-IBillingHandler callback interface
+IBillingHandler Callback Interface
 -----------------------------------
 has 4 methods:
 
@@ -96,6 +91,21 @@ has 4 methods:
 ```
   called then BillingProcessor was initialized and its ready to purchase 
 
+
+Validate Purchases Against Your Merchant Key
+-----------------------------------
+This option is turned off by default. If you do want to validate:
+```java
+	bp.verifyPurchasesWithLicenseKey("YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE");
+```
+
+Consume Purchased Products
+--------------------------
+You can always consume made purchase and allow to buy same product multiple times. To do this you need:
+```java
+	bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+```
+
 ## Contributing
 
 1. Fork it
@@ -103,9 +113,3 @@ has 4 methods:
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
-
-[1]: http://developer.android.com/guide/market/billing/index.html
-[2]: https://github.com/robotmedia/AndroidBillingLibrary/blob/master/AndroidBillingLibrary/src/net/robotmedia/billing/helper/AbstractBillingActivity.java
-[3]: https://github.com/robotmedia/AndroidBillingLibrary/blob/master/AndroidBillingLibrary/src/net/robotmedia/billing/BillingController.java
-[4]: https://github.com/robotmedia/AndroidBillingLibrary/blob/master/AndroidBillingLibrary/src/net/robotmedia/billing/IBillingObserver.java
-[5]: https://github.com/robotmedia/AndroidBillingLibrary/tree/master/DungeonsRedux

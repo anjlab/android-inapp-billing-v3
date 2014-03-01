@@ -1,6 +1,5 @@
 package com.anjlab.android.iab.v3;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,17 +15,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 
 public class BillingProcessor extends BillingBase implements IBillingHandler {
 
 	public static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
-	private static final String LOG_TAG = "iabv3";
-	private static final String RESTORE_KEY = ".products.restored";
-    private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache";
-    private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache";
+    private static final String LOG_TAG = "iabv3";
+    private static final String SETTINGS_VERSION = ".v2_4";
+	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
+    private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
+    private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
 
 
 	IInAppBillingService billingService;
@@ -48,7 +47,7 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 			billingService = IInAppBillingService.Stub.asInterface(service);
 
 			if (!isPurchaseHistoryRestored() && loadOwnedPurchasesFromGoogle())
-			{
+            {
 				setPurchaseHistoryRestored();
 				onPurchaseHistoryRestored();
 			}
@@ -98,11 +97,11 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	}
 
     public boolean isPurchased(String productId) {
-        return cachedProducts.includes(productId);
+        return cachedProducts.includesProduct(productId);
     }
 
     public boolean isSubscribed(String productId) {
-        return cachedSubscriptions.includes(productId);
+        return cachedSubscriptions.includesProduct(productId);
     }
 
     public List<String> listOwnedProducts() {
@@ -118,25 +117,28 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	}
 
     private boolean loadPurchasesByType(String type, BillingCache cacheStorage) {
-        try {
-            Bundle bundle = billingService.getPurchases(Constants.GOOGLE_API_VERSION, contextPackageName, type, null);
-            int response = bundle.getInt(Constants.RESPONSE_CODE);
-            if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
-                ArrayList<String> responseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_ITEM_LIST);
-                cacheStorage.clear();
-                cacheStorage.putAll(responseList);
+        if (isInitialized())
+            try {
+                Bundle bundle = billingService.getPurchases(Constants.GOOGLE_API_VERSION, contextPackageName, type, null);
+
+                if (bundle.getInt(Constants.RESPONSE_CODE) == Constants.BILLING_RESPONSE_RESULT_OK) {
+                    cacheStorage.clear();
+                    for (String purchaseData : bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST)) {
+                        JSONObject purchase = new JSONObject(purchaseData);
+                        cacheStorage.put(purchase.getString("productId"), purchase.getString("purchaseToken"));
+                    }
+                }
+                return true;
             }
-            return true;
-        }
-        catch (RemoteException e) {
-            onBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
-            Log.e(LOG_TAG, e.toString());
-            return false;
-        }
+            catch (Exception e) {
+                onBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
+                Log.e(LOG_TAG, e.toString());
+            }
+        return false;
     }
 
 	public boolean loadOwnedPurchasesFromGoogle() {
-        return billingService != null &&
+        return isInitialized() &&
                 loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
                 loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
 	}
@@ -150,13 +152,13 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
     }
 
 	private boolean purchase(String productId, String purchaseType, BillingCache cacheStorage) {
-		if (billingService != null) {
+		if (isInitialized()) {
 			try {
 				purchasePayload = UUID.randomUUID().toString();
 
 				Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
 				if (bundle != null) {
-					int response = bundle.getInt(Constants.RESPONSE_CODE);
+                    int response = bundle.getInt(Constants.RESPONSE_CODE);
 					if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 						PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
 						if (getContext() != null)
@@ -165,8 +167,9 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 							onBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
 					} 
 					else if (response == Constants.BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED) {
-                        cacheStorage.put(productId);
-						onProductPurchased(productId);
+                        if (!isPurchased(productId) && !isSubscribed(productId))
+                            loadOwnedPurchasesFromGoogle();
+                        onProductPurchased(productId);
 					}
 					else
 						onBillingError(Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
@@ -180,6 +183,30 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 		return false;
 	}
 
+    public boolean consumePurchase(String productId) {
+        if (isInitialized()) {
+            try {
+                String purchaseToken = cachedProducts.getProductPurchaseToken(productId);
+                if (!TextUtils.isEmpty(purchaseToken)) {
+                    int response =  billingService.consumePurchase(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseToken);
+                    if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
+                        cachedProducts.remove(productId);
+                        Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
+                        return  true;
+                    }
+                    else {
+                        onBillingError(response, null);
+                        Log.e(LOG_TAG, String.format("Failed to consume %s: error %d", productId, response));
+                    }
+                }
+            }
+            catch (Exception e) {
+                Log.e(LOG_TAG, e.toString());
+            }
+        }
+        return false;
+    }
+
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PURCHASE_FLOW_REQUEST_CODE) {
 			int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
@@ -189,12 +216,13 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
                 String dataSignature = data.getStringExtra(Constants.RESPONSE_INAPP_SIGNATURE);
 
 				try {
-					JSONObject jo = new JSONObject(purchaseData);
-					String productId = jo.getString("productId");
-					String developerPayload = jo.getString("developerPayload");
+					JSONObject purchase = new JSONObject(purchaseData);
+                    String productId = purchase.getString("productId");
+                    String purchaseToken = purchase.getString("purchaseToken");
+					String developerPayload = purchase.getString("developerPayload");
 					if (purchasePayload.equals(developerPayload)) {
                         if (verifyPurchaseSignature(purchaseData, dataSignature)) {
-                            cachedProducts.put(productId);
+                            cachedProducts.put(productId, purchaseToken);
                             onProductPurchased(productId);
                         }
                         else {
