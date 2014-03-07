@@ -144,17 +144,17 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 	}
 
     public boolean purchase(String productId) {
-        return purchase(productId, Constants.PRODUCT_TYPE_MANAGED, cachedProducts);
+        return purchase(productId, Constants.PRODUCT_TYPE_MANAGED);
     }
 
     public boolean subscribe(String productId) {
-        return purchase(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
+        return purchase(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
     }
 
-	private boolean purchase(String productId, String purchaseType, BillingCache cacheStorage) {
+	private boolean purchase(String productId, String purchaseType) {
 		if (isInitialized()) {
 			try {
-				purchasePayload = UUID.randomUUID().toString();
+				purchasePayload = String.format("%s:%s", purchaseType, UUID.randomUUID());
 
 				Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
 				if (bundle != null) {
@@ -222,7 +222,8 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 					String developerPayload = purchase.getString("developerPayload");
 					if (purchasePayload.equals(developerPayload)) {
                         if (verifyPurchaseSignature(purchaseData, dataSignature)) {
-                            cachedProducts.put(productId, purchaseToken);
+                            BillingCache cache = developerPayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION) ? cachedSubscriptions : cachedProducts;
+                            cache.put(productId, purchaseToken);
                             onProductPurchased(productId);
                         }
                         else {
