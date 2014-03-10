@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/.." external.system.id="GRADLE" external.system.module.group="com.anjlab.android.iab.v3" external.system.module.version="1.0.5" type="JAVA_MODULE" version="4">
+<module external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/.." external.system.id="GRADLE" external.system.module.group="com.anjlab.android.iab.v3" external.system.module.version="1.0.7" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
@@ -9,7 +9,7 @@
     <facet type="android" name="Android">
       <configuration>
         <option name="SELECTED_BUILD_VARIANT" value="release" />
-        <option name="ASSEMBLE_TASK_NAME" value="bundleRelease" />
+        <option name="ASSEMBLE_TASK_NAME" value="assembleRelease" />
         <option name="COMPILE_JAVA_TASK_NAME" value="compileReleaseJava" />
         <option name="SOURCE_GEN_TASK_NAME" value="generateReleaseSources" />
         <option name="ALLOW_USER_CONFIGURATION" value="false" />
@@ -29,27 +29,26 @@
       <sourceFolder url="file://$MODULE_DIR$/build/source/buildConfig/release" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/build/source/rs/release" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/build/res/rs/release" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build-types/release/res" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build-types/release/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/build-types/release/aidl" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/build-types/release/assets" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/build-types/release/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/build-types/release/jni" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/build-types/release/rs" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/build-types/release/res" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/build-types/release/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/res" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/assets" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/jni" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/rs" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/res" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/aidl" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/assets" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/java" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/jni" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/rs" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/res" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/resources" type="java-test-resource" />
-      <excludeFolder url="file://$MODULE_DIR$/.gradle" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/res" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/aidl" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/assets" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/jni" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/rs" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/.idea" />
       <excludeFolder url="file://$MODULE_DIR$/build/apk" />
       <excludeFolder url="file://$MODULE_DIR$/build/assets" />

@@ -27,7 +27,6 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
     private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
     private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
 
-
 	IInAppBillingService billingService;
 	String contextPackageName;
 	String purchasePayload;
@@ -137,11 +136,17 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
         return false;
     }
 
-	public boolean loadOwnedPurchasesFromGoogle() {
-        return isInitialized() &&
-                loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
-                loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
-	}
+    public boolean loadOwnedPurchasesFromGoogle() {
+        return isInitialized() && restorePurchases() && restoreSubscriptions();
+    }
+
+    public boolean restorePurchases() {
+        return isInitialized() && loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts);
+    }
+
+    public boolean restoreSubscriptions() {
+        return isInitialized() && loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
+    }
 
     public boolean purchase(String productId) {
         return purchase(productId, Constants.PRODUCT_TYPE_MANAGED);
@@ -265,7 +270,7 @@ public class BillingProcessor extends BillingBase implements IBillingHandler {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
 	}
 
-	public void setPurchaseHistoryRestored() {
+	private void setPurchaseHistoryRestored() {
 		saveBoolean(getPreferencesBaseKey() + RESTORE_KEY, true);
 	}
 
