@@ -13,69 +13,80 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity implements IBillingHandler, View.OnClickListener {
 
-	BillingProcessor bp;
-	static final String LOG_TAG = "iabv3";
-    static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
+    BillingProcessor bp;
     boolean readyToPurchase = false;
+    static final String LOG_TAG = "iabv3";
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    // PUT YOUR TEST PRODUCT / SUBSCRIPTION IDS HERE
+    static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
+    static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
         findViewById(R.id.consumeButton).setOnClickListener(this);
         findViewById(R.id.purchaseButton).setOnClickListener(this);
+        findViewById(R.id.subscribeButton).setOnClickListener(this);
+        findViewById(R.id.updateSubscriptionsButton).setOnClickListener(this);
 
-		bp = new BillingProcessor(this);
+        bp = new BillingProcessor(this);
 //        bp.verifyPurchasesWithLicenseKey("YOUR MERCHANT KEY HERE");
-		bp.setBillingHandler(this);
-	}
+        bp.setBillingHandler(this);
+    }
 
-	@Override
-	public void onDestroy() {
-		if (bp != null) 
-			bp.release();
-		
-		super.onDestroy();
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (!bp.handleActivityResult(requestCode, resultCode, data))
-			super.onActivityResult(requestCode, resultCode, data);
-	}
-	
-	@Override
-	public void onPurchaseHistoryRestored() {
+    @Override
+    public void onDestroy() {
+        if (bp != null)
+            bp.release();
+
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (!bp.handleActivityResult(requestCode, resultCode, data))
+            super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onPurchaseHistoryRestored() {
         showToast("onPurchaseHistoryRestored");
         for(String sku : bp.listOwnedProducts())
             Log.d(LOG_TAG, "Owned Managed Product: " + sku);
         for(String sku : bp.listOwnedSubscriptions())
             Log.d(LOG_TAG, "Owned Subscription: " + sku);
-	}
-	
-	@Override
-	public void onProductPurchased(String productId) {
-        showToast("onProductPurchased: " + productId);
-        updateTextView();
-	}
-	
-	@Override
-	public void onBillingError(int errorCode, Throwable error) {
-        showToast("onBillingError: " + Integer.toString(errorCode));
-	}
-
-	@Override
-	public void onBillingInitialized() {
-        readyToPurchase = true;
-        updateTextView();
-	}
-
-    private void updateTextView() {
-        TextView text = (TextView)findViewById(R.id.textView);
-        text.setText(String.format("%s is%s purchased", PRODUCT_ID, bp.isPurchased(PRODUCT_ID) ? "" : " not"));
+        updateTextViews();
     }
-     private void showToast(String message) {
+
+    @Override
+    public void onProductPurchased(String productId) {
+        showToast("onProductPurchased: " + productId);
+        updateTextViews();
+    }
+
+    @Override
+    public void onBillingError(int errorCode, Throwable error) {
+        showToast("onBillingError: " + Integer.toString(errorCode));
+    }
+
+    @Override
+    public void onBillingInitialized() {
+        readyToPurchase = true;
+        updateTextViews();
+    }
+
+    private void updateTextViews() {
+        TextView text = (TextView)findViewById(R.id.productIdTextView);
+        text.setText(String.format("%s is%s purchased", PRODUCT_ID, bp.isPurchased(PRODUCT_ID) ? "" : " not"));
+
+        text = (TextView)findViewById(R.id.subscriptionIdTextView);
+        text.setText(String.format("%s is%s subscribed", SUBSCRIPTION_ID, bp.isSubscribed(SUBSCRIPTION_ID) ? "" : " not"));
+    }
+
+    private void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
@@ -87,9 +98,18 @@ public class MainActivity extends Activity implements IBillingHandler, View.OnCl
                     break;
                 case R.id.consumeButton:
                     Boolean consumed = bp.consumePurchase(PRODUCT_ID);
-                    updateTextView();
+                    updateTextViews();
                     if (consumed)
                         showToast("Successfully consumed");
+                    break;
+                case R.id.subscribeButton:
+                    bp.subscribe(SUBSCRIPTION_ID);
+                    break;
+                case R.id.updateSubscriptionsButton:
+                    if (bp.restoreSubscriptions()) {
+                        showToast("Subscriptions updated.");
+                        updateTextViews();
+                    }
                     break;
                 default:
                     break;
