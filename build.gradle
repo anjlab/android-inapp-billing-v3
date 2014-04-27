@@ -5,5 +5,25 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:0.9.+'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
+    }
+}
+
+allprojects {
+    apply plugin: 'license'
+
+    sourceSets {
+        licenseSrc {
+            java {
+                srcDir 'src'
+                exclude 'com/anjlab/android/iab/v3/Security.java'
+                exclude 'com/android/vending/billing/IInAppBillingService.aidl'
+            }
+        }
+    }
+
+    license {
+        header rootProject.file('LICENSE')
+        strictCheck true
     }
 }
