@@ -1,136 +1,89 @@
-/**
- * Copyright 2014 AnjLab
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.anjlab.android.iab.v3.sample2;
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    tools:context=".MainActivity" >
 
-import com.anjlab.android.iab.v3.BillingProcessor;
-import com.anjlab.android.iab.v3.IBillingHandler;
+    <TextView
+        android:layout_marginTop="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Products" />
 
-import android.os.Bundle;
-import android.util.Log;
-import android.app.Activity;
-import android.content.Intent;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
+    <TextView
+        android:id="@+id/productIdTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/wait"
+        android:layout_marginTop="10dp" />
 
-public class MainActivity extends Activity implements IBillingHandler, View.OnClickListener {
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
 
-    BillingProcessor bp;
-    boolean readyToPurchase = false;
-    static final String LOG_TAG = "iabv3";
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Purchase"
+            android:layout_marginRight="10dp"
+            android:onClick="onClick"
+            android:id="@+id/purchaseButton" />
 
-    // PUT YOUR TEST PRODUCT / SUBSCRIPTION IDS HERE
-    static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
-    static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Consume"
+            android:onClick="onClick"
+            android:id="@+id/consumeButton"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_marginTop="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Subscriptions" />
+
+    <TextView
+        android:id="@+id/subscriptionIdTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/wait"
+        android:layout_marginTop="10dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Subscribe"
+            android:id="@+id/subscribeButton"
+            android:onClick="onClick"
+            android:layout_marginRight="10dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Update"
+            android:onClick="onClick"
+            android:id="@+id/updateSubscriptionsButton" />
+
+    </LinearLayout>
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        findViewById(R.id.consumeButton).setOnClickListener(this);
-        findViewById(R.id.purchaseButton).setOnClickListener(this);
-        findViewById(R.id.subscribeButton).setOnClickListener(this);
-        findViewById(R.id.updateSubscriptionsButton).setOnClickListener(this);
-
-        bp = new BillingProcessor(this);
-//        bp.verifyPurchasesWithLicenseKey("YOUR MERCHANT KEY HERE");
-        bp.setBillingHandler(this);
-    }
-
-    @Override
-    public void onDestroy() {
-        if (bp != null)
-            bp.release();
-
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (!bp.handleActivityResult(requestCode, resultCode, data))
-            super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    @Override
-    public void onPurchaseHistoryRestored() {
-        showToast("onPurchaseHistoryRestored");
-        for(String sku : bp.listOwnedProducts())
-            Log.d(LOG_TAG, "Owned Managed Product: " + sku);
-        for(String sku : bp.listOwnedSubscriptions())
-            Log.d(LOG_TAG, "Owned Subscription: " + sku);
-        updateTextViews();
-    }
-
-    @Override
-    public void onProductPurchased(String productId) {
-        showToast("onProductPurchased: " + productId);
-        updateTextViews();
-    }
-
-    @Override
-    public void onBillingError(int errorCode, Throwable error) {
-        showToast("onBillingError: " + Integer.toString(errorCode));
-    }
-
-    @Override
-    public void onBillingInitialized() {
-        readyToPurchase = true;
-        updateTextViews();
-    }
-
-    private void updateTextViews() {
-        TextView text = (TextView)findViewById(R.id.productIdTextView);
-        text.setText(String.format("%s is%s purchased", PRODUCT_ID, bp.isPurchased(PRODUCT_ID) ? "" : " not"));
-
-        text = (TextView)findViewById(R.id.subscriptionIdTextView);
-        text.setText(String.format("%s is%s subscribed", SUBSCRIPTION_ID, bp.isSubscribed(SUBSCRIPTION_ID) ? "" : " not"));
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    public void onClick(View v) {
-        if (readyToPurchase)
-            switch (v.getId()) {
-                case R.id.purchaseButton:
-                    bp.purchase(PRODUCT_ID);
-                    break;
-                case R.id.consumeButton:
-                    Boolean consumed = bp.consumePurchase(PRODUCT_ID);
-                    updateTextViews();
-                    if (consumed)
-                        showToast("Successfully consumed");
-                    break;
-                case R.id.subscribeButton:
-                    bp.subscribe(SUBSCRIPTION_ID);
-                    break;
-                case R.id.updateSubscriptionsButton:
-                    if (bp.restoreSubscriptions()) {
-                        showToast("Subscriptions updated.");
-                        updateTextViews();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        else
-            showToast("Billing was not initialized yet.");
-    }
-
-}
+</LinearLayout>

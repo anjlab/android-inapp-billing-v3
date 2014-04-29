@@ -19,7 +19,6 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
-
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +37,7 @@ import java.security.spec.X509EncodedKeySpec;
  * make it harder for an attacker to replace the code with stubs that treat all
  * purchases as verified.
  */
-public class Security {
+class Security {
     private static final String TAG = "IABUtil/Security";
 
     private static final String KEY_FACTORY_ALGORITHM = "RSA";

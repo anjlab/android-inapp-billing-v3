@@ -1,10 +1,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center_horizontal"
-    tools:context=".MainActivity" >
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:gravity="center_horizontal"
+              tools:context=".MainActivity" >
 
     <TextView
         android:layout_marginTop="20dp"
@@ -32,6 +32,7 @@
             android:layout_height="wrap_content"
             android:text="Purchase"
             android:layout_marginRight="10dp"
+            android:onClick="onClick"
             android:id="@+id/purchaseButton" />
 
         <Button
@@ -39,6 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:text="Consume"
+            android:onClick="onClick"
             android:id="@+id/consumeButton"/>
 
     </LinearLayout>
@@ -69,6 +71,7 @@
             android:layout_height="wrap_content"
             android:text="Subscribe"
             android:id="@+id/subscribeButton"
+            android:onClick="onClick"
             android:layout_marginRight="10dp" />
 
         <Button
@@ -76,6 +79,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:text="Update"
+            android:onClick="onClick"
             android:id="@+id/updateSubscriptionsButton" />
 
     </LinearLayout>
