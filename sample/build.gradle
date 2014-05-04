@@ -1,12 +1,13 @@
 apply plugin: 'android'
 
 dependencies {
-    compile project(':library')
+//    compile project(':library')
+    compile fileTree(dir: 'libs', include: 'library*.jar')
 }
 
 android {
     compileSdkVersion 10
-    buildToolsVersion '19.0.0'
+    buildToolsVersion '19.0.3'
 
     defaultConfig {
         versionCode 2
