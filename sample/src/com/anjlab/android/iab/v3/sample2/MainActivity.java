@@ -1,4 +1,4 @@
-package com.anjlab.android.iab.v3.sample2.app;
+package com.anjlab.android.iab.v3.sample2;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -95,7 +95,7 @@ public class MainActivity extends Activity {
                 bp.subscribe(SUBSCRIPTION_ID);
                 break;
             case R.id.updateSubscriptionsButton:
-                if (bp.restoreSubscriptions()) {
+                if (bp.loadOwnedPurchasesFromGoogle()) {
                     showToast("Subscriptions updated.");
                     updateTextViews();
                 }

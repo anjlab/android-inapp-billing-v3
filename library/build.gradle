@@ -2,12 +2,12 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-version '1.0.7'
 group 'com.anjlab.android.iab.v3'
+version '1.0.8'
 
 android {
     compileSdkVersion 8
-    buildToolsVersion '19.0.0'
+    buildToolsVersion '19.0.3'
 
     defaultConfig {
         versionCode 1
@@ -20,22 +20,8 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-            resources.srcDirs = ['src']
             aidl.srcDirs = ['src']
-            res.srcDirs = ['res']
         }
-
-        // Move the tests to tests/java, tests/res, etc...
-        instrumentTest.setRoot('tests')
-
-        // Move the build types to build-types/<type>
-        // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
-        // This moves them out of them default location under src/<type>/... which would
-        // conflict with src/ being used by the main source set.
-        // Adding new build types or product flavors should be accompanied
-        // by a similar customization.
-        debug.setRoot('build-types/debug')
-        release.setRoot('build-types/release')
     }
 }
 
@@ -98,5 +84,6 @@ android.libraryVariants.all { variant ->
     def task = project.tasks.create "jar${name.capitalize()}", Jar
     task.dependsOn variant.javaCompile
     task.from variant.javaCompile.destinationDir
+    task.baseName 'anjlab-iabv3'
     artifacts.add('archives', task);
 }

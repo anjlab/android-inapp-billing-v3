@@ -1,8 +1,8 @@
 apply plugin: 'android'
 
 dependencies {
-//    compile project(':library')
-    compile fileTree(dir: 'libs', include: 'library*.jar')
+    compile project(':library')
+//    compile fileTree(dir: 'libs', include: 'library*.jar')
 }
 
 android {
