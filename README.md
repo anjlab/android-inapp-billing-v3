@@ -10,7 +10,9 @@ Getting Started
 
 * You project should build against Android 2.2 SDK at least.
 
-* Add this *Android In-App Billing v3 Library* to your Eclipse project. If you guys are using Android Studio and Gradle, add this to you build.gradle file:
+* Add this *Android In-App Billing v3 Library* to your project:
+  - If you guys are using Eclipse, add this [jar](https://github.com/anjlab/android-inapp-billing-v3/blob/master/sample/libs/anjlab-iabv3-1.0.8.jar) dependency
+  - If you guys are using Android Studio and Gradle, add this to you build.gradle file:
 ```groovy
     repositories {
         mavenCentral()
@@ -66,7 +68,8 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 	@Override
 	public void onPurchaseHistoryRestored() {
 		/*
-		 * Called then purchase history was restored and the list of all owned PRODUCT IDs was loaded from Google Play
+		 * Called then purchase history was restored and the list of all owned PRODUCT ID's 
+		 * was loaded from Google Play
 		 */
 	}
 }
