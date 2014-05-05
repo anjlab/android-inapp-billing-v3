@@ -24,22 +24,52 @@ Getting Started
 ```xml
   <uses-permission android:name="com.android.vending.BILLING" />
 ```
-* Create instance of BillingProcessor class in your Activity source code:
+* Create instance of BillingProcessor class and implement callback in your Activity source code. Constructor will take 3 parameters:
+  - **Context**
+  - **Your Merchant Key from Google Developer console.** This will be used to verify purchase signatures. You can pass NULL if you would like to skip this check
+  - **IBillingHandler Interface implementation to handle purchase results and errors** (see below)
 ```java
-  BillingProcessor bp;
+public class SomeActivity extends Activity implements BillingProcessor.IBillingHandler {
+	BillingProcessor bp;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		bp = new BillingProcessor(this);
+		bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
 	}
-```
-
-* Implement IBillingHandler Interface to handle purchase results and errors:
-```java
-	bp.setBillingHandler(this);
+	
+	// IBillingHandler implementation
+	
+	@Override
+	public void onBillingInitialized() {
+		/*
+		 * Called then BillingProcessor was initialized and its ready to purchase 
+		 */
+	}
+	
+	@Override
+	public void onProductPurchased(String productId) {
+		/*
+		 * Called then requested PRODUCT ID was successfully purchased
+		 */
+	}
+	
+	@Override
+	public void onBillingError(int errorCode, Throwable error) {
+		/*
+		 * Called then some error occured. See Constants class for more details
+		 */
+	}
+	
+	@Override
+	public void onPurchaseHistoryRestored() {
+		/*
+		 * Called then purchase history was restored and the list of all owned PRODUCT IDs was loaded from Google Play
+		 */
+	}
+}
 ```
 
 * override Activity's onActivityResult method:
@@ -70,35 +100,6 @@ bp.subscribe("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 	}
 ```
 
-IBillingHandler Callback Interface
------------------------------------
-has 4 methods:
-
-```java
-  void onProductPurchased(String productId);
-```
-  called then requested PRODUCT ID was successfully purchased
-```java
-	void onPurchaseHistoryRestored();
-```
-  called then purchase history was restored and the list of all owned PRODUCT IDs was loaded from Google Play
-```java
-	void onBillingError(int errorCode, Throwable error);
-```
-  called then some error occured. See Constants class for more details
-```java
-	void onBillingInitialized();
-```
-  called then BillingProcessor was initialized and its ready to purchase 
-
-
-Validate Purchases Against Your Merchant Key
------------------------------------
-This option is turned off by default. If you do want to validate:
-```java
-	bp.verifyPurchasesWithLicenseKey("YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE");
-```
-
 Consume Purchased Products
 --------------------------
 You can always consume made purchase and allow to buy same product multiple times. To do this you need:
@@ -109,14 +110,13 @@ You can always consume made purchase and allow to buy same product multiple time
 Restore Purchases & Subscriptions
 --------------------------
 ```java
-	bp.restorePurchases();
-	bp.restoreSubscriptions();
+	bp.loadOwnedPurchasesFromGoogle();
 ```
 
 Notice On Canceled/Expired Subscriptions
 --------------------------
 Since Google's v3 API doesn't provide any callbacks to handle canceled and/or expired subscriptions you have to handle it on your own.
-The easiest way to do this - call periodically `bp.restoreSubscriptions()` method.
+The easiest way to do this - call periodically `bp.loadOwnedPurchasesFromGoogle()` method.
 
 ## License
 
