@@ -66,7 +66,8 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 	@Override
 	public void onPurchaseHistoryRestored() {
 		/*
-		 * Called then purchase history was restored and the list of all owned PRODUCT IDs was loaded from Google Play
+		 * Called then purchase history was restored and the list of all owned PRODUCT ID's 
+		 * was loaded from Google Play
 		 */
 	}
 }
