@@ -85,5 +85,13 @@ android.libraryVariants.all { variant ->
     task.dependsOn variant.javaCompile
     task.from variant.javaCompile.destinationDir
     task.baseName 'anjlab-iabv3'
+    task.doLast{
+        println "Copying jar to sample project..."
+        copy {
+            from task.archivePath
+            into '../sample/libs'
+            rename { String fileName -> 'anjlab-iabv3-current.jar' }
+        }
+    }
     artifacts.add('archives', task);
 }

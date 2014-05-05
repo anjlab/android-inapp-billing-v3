@@ -64,7 +64,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 10 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="library" exported="" />
+    <orderEntry type="library" exported="" name="anjlab-iabv3-current" level="project" />
   </component>
 </module>
 
