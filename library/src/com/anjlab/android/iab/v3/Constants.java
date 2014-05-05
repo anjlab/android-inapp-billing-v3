@@ -15,7 +15,7 @@
  */
 package com.anjlab.android.iab.v3;
 
-public class Constants {
+class Constants {
     public static final int GOOGLE_API_VERSION = 3;
 
     public static final String PRODUCT_TYPE_MANAGED = "inapp";
@@ -29,7 +29,7 @@ public class Constants {
 	public static final int BILLING_RESPONSE_RESULT_ERROR =	6; 				//Fatal error during the API action
 	public static final int BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED = 7; //Failure to purchase since item is already owned
 	public static final int BILLING_RESPONSE_RESULT_ITEM_NOT_OWNED = 8; 	//Failure to consume since item is not owned
-	
+
 	public static final String RESPONSE_CODE = "RESPONSE_CODE";
 	public static final String DETAILS_LIST = "DETAILS_LIST";
 	public static final String INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST";
