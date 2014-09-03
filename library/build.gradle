@@ -1,4 +1,4 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
@@ -7,7 +7,7 @@ version '1.0.8'
 
 android {
     compileSdkVersion 8
-    buildToolsVersion '19.0.3'
+    buildToolsVersion '19.1.0'
 
     defaultConfig {
         versionCode 1
@@ -16,20 +16,14 @@ android {
         targetSdkVersion 19
     }
 
-    sourceSets {
-        main {
-            manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-        }
+    sourceSets.main {
+        manifest.srcFile 'AndroidManifest.xml'
+        java.srcDir 'src'
+        aidl.srcDir 'src'
     }
 }
 
-configurations {
-    archives {
-        extendsFrom configurations.default
-    }
-}
+configurations.archives.extendsFrom configurations.default
 
 signing {
     required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
@@ -78,7 +72,7 @@ uploadArchives {
 
 android.libraryVariants.all { variant ->
     def name = variant.buildType.name
-    if (name.equals(com.android.builder.BuilderConstants.DEBUG)) {
+    if (name.equals('com.android.builder.BuilderConstants.DEBUG')) {
         return; // Skip debug builds.
     }
     def task = project.tasks.create "jar${name.capitalize()}", Jar
