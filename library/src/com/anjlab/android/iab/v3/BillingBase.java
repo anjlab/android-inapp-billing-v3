@@ -26,8 +26,7 @@ class BillingBase {
 	private WeakReference<Activity> contextReference;
 
 	public BillingBase(Activity context) {
-        this.context = context;
-		contextReference = new WeakReference<Activity>(context);
+        contextReference = new WeakReference<Activity>(context);
 	}
 
 	public Activity getContext() {
@@ -39,10 +38,10 @@ class BillingBase {
 	}
 
 	private SharedPreferences getPreferences() {
-        	if(contextReference.get() != null)
-            		return PreferenceManager.getDefaultSharedPreferences(contextReference.get());
-		return null;
-	}
+        if(contextReference.get() != null)
+            return PreferenceManager.getDefaultSharedPreferences(contextReference.get());
+        return null;
+    }
 
 	public void release() {
 		if (contextReference != null)

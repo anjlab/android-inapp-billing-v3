@@ -70,7 +70,7 @@ public class BillingProcessor extends BillingBase {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			billingService = IInAppBillingService.Stub.asInterface(service);
-			if (loadOwnedPurchasesFromGoogle() && !isPurchaseHistoryRestored()) {
+			if (!isPurchaseHistoryRestored() && loadOwnedPurchasesFromGoogle()) {
 				setPurchaseHistoryRestored();
 				if(eventHandler != null)
 					eventHandler.onPurchaseHistoryRestored();
