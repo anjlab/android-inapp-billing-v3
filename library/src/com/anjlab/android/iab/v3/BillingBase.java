@@ -17,6 +17,7 @@ package com.anjlab.android.iab.v3;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import java.lang.ref.WeakReference;
 
@@ -25,6 +26,7 @@ class BillingBase {
 	private WeakReference<Activity> contextReference;
 
 	public BillingBase(Activity context) {
+        this.context = context;
 		contextReference = new WeakReference<Activity>(context);
 	}
 
@@ -33,12 +35,12 @@ class BillingBase {
 	}
 
 	protected String getPreferencesBaseKey() {
-		return getClass().getPackage().getName();
+		return contextReference.get().getPackageName() + "_preferences";
 	}
 
 	private SharedPreferences getPreferences() {
-		if (contextReference.get() != null)
-			return contextReference.get().getPreferences(Activity.MODE_PRIVATE);
+        	if(contextReference.get() != null)
+            		return PreferenceManager.getDefaultSharedPreferences(contextReference.get());
 		return null;
 	}
 
@@ -83,3 +85,4 @@ class BillingBase {
 		return defValue;
 	}
 }
+
