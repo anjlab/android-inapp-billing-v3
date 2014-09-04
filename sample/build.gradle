@@ -1,4 +1,4 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 dependencies {
 //    compile project(':library')
@@ -16,15 +16,11 @@ android {
         targetSdkVersion 19
     }
 
-    sourceSets {
-        main {
-            manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src']
-            resources.srcDirs = ['src']
-            res.srcDirs = ['res']
-        }
-        debug.setRoot('build-types/debug')
-        release.setRoot('build-types/release')
+    sourceSets.main {
+        manifest.srcFile 'AndroidManifest.xml'
+        java.srcDir 'src'
+        resources.srcDir 'src'
+        res.srcDir 'res'
     }
 
     signingConfigs {
