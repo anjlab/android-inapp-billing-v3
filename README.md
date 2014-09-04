@@ -121,7 +121,7 @@ Notice On Canceled/Expired Subscriptions
 Since Google's v3 API doesn't provide any callbacks to handle canceled and/or expired subscriptions you have to handle it on your own.
 The easiest way to do this - call periodically `bp.loadOwnedPurchasesFromGoogle()` method.
 
-Get Market Details of Your Products
+Get Listing Details of Your Products
 --------------------------
 To query listing price and a description of your product / subscription listed in Google Play use these methods:
 
