@@ -229,7 +229,7 @@ public class BillingProcessor extends BillingBase {
         return false;
     }
 
-    public String getPrice(String productId, String purchaseType) {
+    private SkuDetails getSkuDetails(String productId, String purchaseType) {
         if (billingService != null) {
             try {
                 ArrayList<String> skuList = new ArrayList<String>();
@@ -239,24 +239,32 @@ public class BillingProcessor extends BillingBase {
                 Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseType, products);
                 int response = skuDetails.getInt(Constants.RESPONSE_CODE);
                 if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
-                    ArrayList<String> responseList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
-                    for (String thisResponse : responseList) {
-                        JSONObject object = new JSONObject(thisResponse);
+                    for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
+                        Log.d(LOG_TAG, responseLine);
+                        JSONObject object = new JSONObject(responseLine);
                         String responseProductId = object.getString(Constants.RESPONSE_PRODUCT_ID);
                         if (productId.equals(responseProductId))
-                            return object.getString(Constants.RESPONSE_PRICE);
+                            return new SkuDetails(object);
                     }
                 }
                 else {
                     if(eventHandler != null)
                         eventHandler.onBillingError(response, null);
-                    Log.e(LOG_TAG, String.format("Failed to retrieve price for %s: error %d", productId, response));
+                    Log.e(LOG_TAG, String.format("Failed to retrieve info for %s: error %d", productId, response));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
             }
         }
         return null;
+    }
+
+    public SkuDetails getPurchaseDetails(String productId) {
+        return getSkuDetails(productId, Constants.PRODUCT_TYPE_MANAGED);
+    }
+
+    public SkuDetails getSubscriptionDetails(String productId) {
+        return getSkuDetails(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
     }
 
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {

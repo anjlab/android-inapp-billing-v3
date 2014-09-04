@@ -38,7 +38,12 @@ class Constants {
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
     public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
     public static final String RESPONSE_PRODUCT_ID = "productId";
+    public static final String RESPONSE_TYPE = "type";
+    public static final String RESPONSE_TITLE = "title";
+    public static final String RESPONSE_DESCRIPTION = "description";
     public static final String RESPONSE_PRICE = "price";
+    public static final String RESPONSE_PRICE_CURRENCY = "price_currency_code";
+    public static final String RESPONSE_PRICE_MICROS = "price_amount_micros";
     public static final String RESPONSE_PURCHASE_TOKEN = "purchaseToken";
     public static final String RESPONSE_PAYLOAD = "developerPayload";
 

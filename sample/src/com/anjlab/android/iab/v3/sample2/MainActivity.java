@@ -3,6 +3,7 @@ package com.anjlab.android.iab.v3.sample2;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.SyncStateContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -73,7 +74,7 @@ public class MainActivity extends Activity {
     }
 
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     public void onClick(View v) {
@@ -91,6 +92,9 @@ public class MainActivity extends Activity {
                 if (consumed)
                     showToast("Successfully consumed");
                 break;
+            case R.id.productDetailsButton:
+                showToast(bp.getPurchaseDetails(PRODUCT_ID).toString());
+                break;
             case R.id.subscribeButton:
                 bp.subscribe(SUBSCRIPTION_ID);
                 break;
@@ -99,6 +103,9 @@ public class MainActivity extends Activity {
                     showToast("Subscriptions updated.");
                     updateTextViews();
                 }
+                break;
+            case R.id.subsDetailsButton:
+                showToast(bp.getSubscriptionDetails(SUBSCRIPTION_ID).toString());
                 break;
             default:
                 break;
