@@ -30,6 +30,25 @@ signing {
     sign configurations.archives
 }
 
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
+
 uploadArchives {
     configuration = configurations.archives
     repositories.mavenDeployer {
