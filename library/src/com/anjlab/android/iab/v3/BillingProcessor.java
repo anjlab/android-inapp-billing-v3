@@ -164,25 +164,25 @@ public class BillingProcessor extends BillingBase {
 	}
 
     public boolean purchase(String productId) {
-        return purchase(productId, Constants.PRODUCT_TYPE_MANAGED, cachedProducts);
+        return purchase(productId, Constants.PRODUCT_TYPE_MANAGED);
     }
 
     public boolean subscribe(String productId) {
-        return purchase(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
+        return purchase(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
     }
 
-	private boolean purchase(String productId, String purchaseType, BillingCache cacheStorage) {
-		if (!isInitialized())
+	private boolean purchase(String productId, String purchaseType) {
+		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
-			purchasePayload = UUID.randomUUID().toString();
+			purchasePayload = purchaseType + ":" + UUID.randomUUID().toString();
 			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
 			if (bundle != null) {
                 int response = bundle.getInt(Constants.RESPONSE_CODE);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
 					if (getContext() != null)
-						getContext().startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0), Integer.valueOf(0));
+						getContext().startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
 					else
 						if(eventHandler != null)
 							eventHandler.onBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
@@ -229,14 +229,14 @@ public class BillingProcessor extends BillingBase {
         return false;
     }
 
-    public String getPrice(String productId, String purchaseType, String packageName) {
+    public String getPrice(String productId, String purchaseType) {
         if (billingService != null) {
             try {
                 ArrayList<String> skuList = new ArrayList<String>();
                 skuList.add(productId);
                 Bundle products = new Bundle();
                 products.putStringArrayList(Constants.PRODUCTS_LIST, skuList);
-                Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, packageName, purchaseType, products);
+                Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseType, products);
                 int response = skuDetails.getInt(Constants.RESPONSE_CODE);
                 if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
                     ArrayList<String> responseList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
@@ -268,12 +268,16 @@ public class BillingProcessor extends BillingBase {
             String dataSignature = data.getStringExtra(Constants.RESPONSE_INAPP_SIGNATURE);
 			try {
 				JSONObject purchase = new JSONObject(purchaseData);
-                String productId = purchase.getString("productId");
-                String purchaseToken = purchase.getString("purchaseToken");
-				String developerPayload = purchase.getString("developerPayload");
+                String productId = purchase.getString(Constants.RESPONSE_PRODUCT_ID);
+                String purchaseToken = purchase.getString(Constants.RESPONSE_PURCHASE_TOKEN);
+				String developerPayload = purchase.getString(Constants.RESPONSE_PAYLOAD);
+                if (developerPayload == null)
+                    developerPayload = "";
+                boolean purchasedSubscription = purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 				if (purchasePayload.equals(developerPayload)) {
                     if (verifyPurchaseSignature(purchaseData, dataSignature)) {
-                        cachedProducts.put(productId, purchaseToken);
+                        BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
+                        cache.put(productId, purchaseToken);
                         if(eventHandler != null)
         					eventHandler.onProductPurchased(productId);
                     }

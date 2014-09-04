@@ -39,6 +39,8 @@ class Constants {
     public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
     public static final String RESPONSE_PRODUCT_ID = "productId";
     public static final String RESPONSE_PRICE = "price";
+    public static final String RESPONSE_PURCHASE_TOKEN = "purchaseToken";
+    public static final String RESPONSE_PAYLOAD = "developerPayload";
 
 	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;
 	public static final int BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE = 101;
