@@ -37,6 +37,7 @@ class Constants {
 	public static final String BUY_INTENT = "BUY_INTENT";
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
     public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
+    public static final String RESPONSE_ORDER_ID = "orderId";
     public static final String RESPONSE_PRODUCT_ID = "productId";
     public static final String RESPONSE_TYPE = "type";
     public static final String RESPONSE_TITLE = "title";
@@ -45,6 +46,7 @@ class Constants {
     public static final String RESPONSE_PRICE_CURRENCY = "price_currency_code";
     public static final String RESPONSE_PRICE_MICROS = "price_amount_micros";
     public static final String RESPONSE_PURCHASE_TOKEN = "purchaseToken";
+    public static final String RESPONSE_PURCHASE_TIME = "purchaseTime";
     public static final String RESPONSE_PAYLOAD = "developerPayload";
 
 	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;

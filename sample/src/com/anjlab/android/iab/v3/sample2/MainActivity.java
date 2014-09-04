@@ -18,13 +18,13 @@ package com.anjlab.android.iab.v3.sample2;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.SyncStateContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anjlab.android.iab.v3.BillingProcessor;
+import com.anjlab.android.iab.v3.TransactionDetails;
 
 public class MainActivity extends Activity {
     private BillingProcessor bp;
@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         bp = new BillingProcessor(this, LICENSE_KEY, new BillingProcessor.IBillingHandler() {
             @Override
-            public void onProductPurchased(String productId) {
+            public void onProductPurchased(String productId, TransactionDetails details) {
                 showToast("onProductPurchased: " + productId);
                 updateTextViews();
             }
@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
                     showToast("Successfully consumed");
                 break;
             case R.id.productDetailsButton:
-                showToast(bp.getPurchaseDetails(PRODUCT_ID).toString());
+                showToast(bp.getPurchaseListingDetails(PRODUCT_ID).toString());
                 break;
             case R.id.subscribeButton:
                 bp.subscribe(SUBSCRIPTION_ID);
@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
                 }
                 break;
             case R.id.subsDetailsButton:
-                showToast(bp.getSubscriptionDetails(SUBSCRIPTION_ID).toString());
+                showToast(bp.getSubscriptionListingDetails(SUBSCRIPTION_ID).toString());
                 break;
             default:
                 break;

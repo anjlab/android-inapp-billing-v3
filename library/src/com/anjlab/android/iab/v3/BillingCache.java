@@ -62,13 +62,13 @@ class BillingCache extends BillingBase {
 		return data != null && data.containsKey(productId);
 	}
 
-    public String getProductPurchaseToken(String productId) {
+    public String getDetails(String productId) {
         return data.containsKey(productId) ? data.get(productId) : null;
     }
 
-    public void put(String productId, String purchaseToken) {
+    public void put(String productId, String details) {
         if (!data.containsKey(productId)) {
-            data.put(productId, purchaseToken);
+            data.put(productId, details);
             flush();
         }
     }

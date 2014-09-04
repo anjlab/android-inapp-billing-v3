@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -41,7 +42,7 @@ public class BillingProcessor extends BillingBase {
 	 * Apps must implement one of these to construct a BillingProcessor.
 	 */
 	public static interface IBillingHandler {
-		void onProductPurchased(String productId);
+		void onProductPurchased(String productId, TransactionDetails details);
 		void onPurchaseHistoryRestored();
 		void onBillingError(int errorCode, Throwable error);
 		void onBillingInitialized();
@@ -49,7 +50,7 @@ public class BillingProcessor extends BillingBase {
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
     private static final String LOG_TAG = "iabv3";
-    private static final String SETTINGS_VERSION = ".v2_4";
+    private static final String SETTINGS_VERSION = ".v2_5";
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
     private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
     private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
@@ -144,7 +145,7 @@ public class BillingProcessor extends BillingBase {
                 cacheStorage.clear();
                 for (String purchaseData : bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST)) {
                     JSONObject purchase = new JSONObject(purchaseData);
-                    cacheStorage.put(purchase.getString("productId"), purchase.getString("purchaseToken"));
+                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), purchaseData);
                 }
             }
             return true;
@@ -179,7 +180,7 @@ public class BillingProcessor extends BillingBase {
 			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
 			if (bundle != null) {
                 int response = bundle.getInt(Constants.RESPONSE_CODE);
-				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
+                if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
 					if (getContext() != null)
 						getContext().startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
@@ -190,8 +191,12 @@ public class BillingProcessor extends BillingBase {
 				else if (response == Constants.BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED) {
                     if (!isPurchased(productId) && !isSubscribed(productId))
                         loadOwnedPurchasesFromGoogle();
-                    if(eventHandler != null)
-    					eventHandler.onProductPurchased(productId);
+                    if(eventHandler != null) {
+                        TransactionDetails details = getPurchaseTransactionDetails(productId);
+                        if (details == null)
+                            details = getSubscriptionTransactionDetails(productId);
+                        eventHandler.onProductPurchased(productId, details);
+                    }
 				}
 				else
 					if(eventHandler != null)
@@ -204,13 +209,25 @@ public class BillingProcessor extends BillingBase {
 		return false;
 	}
 
+    private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache) {
+        String details = cache.getDetails(productId);
+        if (!TextUtils.isEmpty(details)) {
+            try {
+                return new TransactionDetails(new JSONObject(details));
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId);
+            }
+        }
+        return null;
+    }
+
     public boolean consumePurchase(String productId) {
         if (!isInitialized())
         	return false;
         try {
-            String purchaseToken = cachedProducts.getProductPurchaseToken(productId);
-            if (!TextUtils.isEmpty(purchaseToken)) {
-                int response =  billingService.consumePurchase(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseToken);
+            TransactionDetails transactionDetails = getPurchaseTransactionDetails(productId, cachedProducts);
+            if (transactionDetails != null && !TextUtils.isEmpty(transactionDetails.purchaseToken)) {
+                int response =  billingService.consumePurchase(Constants.GOOGLE_API_VERSION, contextPackageName, transactionDetails.purchaseToken);
                 if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
                     cachedProducts.remove(productId);
                     Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
@@ -240,7 +257,6 @@ public class BillingProcessor extends BillingBase {
                 int response = skuDetails.getInt(Constants.RESPONSE_CODE);
                 if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
                     for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
-                        Log.d(LOG_TAG, responseLine);
                         JSONObject object = new JSONObject(responseLine);
                         String responseProductId = object.getString(Constants.RESPONSE_PRODUCT_ID);
                         if (productId.equals(responseProductId))
@@ -259,12 +275,20 @@ public class BillingProcessor extends BillingBase {
         return null;
     }
 
-    public SkuDetails getPurchaseDetails(String productId) {
+    public SkuDetails getPurchaseListingDetails(String productId) {
         return getSkuDetails(productId, Constants.PRODUCT_TYPE_MANAGED);
     }
 
-    public SkuDetails getSubscriptionDetails(String productId) {
+    public SkuDetails getSubscriptionListingDetails(String productId) {
         return getSkuDetails(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+    }
+
+    public TransactionDetails getPurchaseTransactionDetails(String productId) {
+        return getPurchaseTransactionDetails(productId, cachedProducts);
+    }
+
+    public TransactionDetails getSubscriptionTransactionDetails(String productId) {
+        return getPurchaseTransactionDetails(productId, cachedSubscriptions);
     }
 
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
@@ -277,17 +301,16 @@ public class BillingProcessor extends BillingBase {
 			try {
 				JSONObject purchase = new JSONObject(purchaseData);
                 String productId = purchase.getString(Constants.RESPONSE_PRODUCT_ID);
-                String purchaseToken = purchase.getString(Constants.RESPONSE_PURCHASE_TOKEN);
-				String developerPayload = purchase.getString(Constants.RESPONSE_PAYLOAD);
+                String developerPayload = purchase.getString(Constants.RESPONSE_PAYLOAD);
                 if (developerPayload == null)
                     developerPayload = "";
                 boolean purchasedSubscription = purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 				if (purchasePayload.equals(developerPayload)) {
                     if (verifyPurchaseSignature(purchaseData, dataSignature)) {
                         BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
-                        cache.put(productId, purchaseToken);
+                        cache.put(productId, purchaseData);
                         if(eventHandler != null)
-        					eventHandler.onProductPurchased(productId);
+        					eventHandler.onProductPurchased(productId, new TransactionDetails(purchase));
                     }
                     else {
                         Log.e(LOG_TAG, "Public key signature doesn't match!");
