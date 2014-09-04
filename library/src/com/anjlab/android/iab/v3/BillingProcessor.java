@@ -15,6 +15,7 @@
  */
 package com.anjlab.android.iab.v3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -226,6 +227,36 @@ public class BillingProcessor extends BillingBase {
             Log.e(LOG_TAG, e.toString());
         }
         return false;
+    }
+
+    public String getPrice(String productId, String purchaseType, String packageName) {
+        if (billingService != null) {
+            try {
+                ArrayList<String> skuList = new ArrayList<String>();
+                skuList.add(productId);
+                Bundle products = new Bundle();
+                products.putStringArrayList(Constants.PRODUCTS_LIST, skuList);
+                Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, packageName, purchaseType, products);
+                int response = skuDetails.getInt(Constants.RESPONSE_CODE);
+                if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
+                    ArrayList<String> responseList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
+                    for (String thisResponse : responseList) {
+                        JSONObject object = new JSONObject(thisResponse);
+                        String responseProductId = object.getString(Constants.RESPONSE_PRODUCT_ID);
+                        if (productId.equals(responseProductId))
+                            return object.getString(Constants.RESPONSE_PRICE);
+                    }
+                }
+                else {
+                    if(eventHandler != null)
+                        eventHandler.onBillingError(response, null);
+                    Log.e(LOG_TAG, String.format("Failed to retrieve price for %s: error %d", productId, response));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {

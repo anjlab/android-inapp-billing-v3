@@ -32,10 +32,13 @@ class Constants {
 
 	public static final String RESPONSE_CODE = "RESPONSE_CODE";
 	public static final String DETAILS_LIST = "DETAILS_LIST";
+    public static final String PRODUCTS_LIST = "ITEM_ID_LIST";
 	public static final String INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST";
 	public static final String BUY_INTENT = "BUY_INTENT";
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
     public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
+    public static final String RESPONSE_PRODUCT_ID = "productId";
+    public static final String RESPONSE_PRICE = "price";
 
 	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;
 	public static final int BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE = 101;
