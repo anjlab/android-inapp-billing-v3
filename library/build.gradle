@@ -3,7 +3,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group 'com.anjlab.android.iab.v3'
-version '1.0.8'
+version '1.0.9'
 
 android {
     compileSdkVersion 8

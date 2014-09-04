@@ -48,7 +48,7 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
-    private static final String LOG_TAG = "viable";
+    private static final String LOG_TAG = "iabv3";
     private static final String SETTINGS_VERSION = ".v2_4";
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
     private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;

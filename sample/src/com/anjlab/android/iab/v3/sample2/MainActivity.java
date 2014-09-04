@@ -18,7 +18,7 @@ public class MainActivity extends Activity {
     // PRODUCT & SUBSCRIPTION IDS
     private static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
     private static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
-    private static final String LICENSE_KEY = "YOUR MERCHANT KEY HERE";
+    private static final String LICENSE_KEY = null; // PUT YOUR MERCHANT KEY HERE;
 
 
     @Override
