@@ -50,7 +50,7 @@ public class BillingProcessor extends BillingBase {
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
     private static final String LOG_TAG = "iabv3";
-    private static final String SETTINGS_VERSION = ".v2_5";
+    private static final String SETTINGS_VERSION = ".v2_6";
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
     private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
     private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
@@ -145,11 +145,10 @@ public class BillingProcessor extends BillingBase {
                 cacheStorage.clear();
                 ArrayList<String> purchaseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
                 ArrayList<String> signatureList = bundle.getStringArrayList(Constants.RESPONSE_INAPP_SIGNATURE);
-                for (int i=0;i<purchaseList.size();i++) {
+                for (int i=0; i<purchaseList.size(); i++) {
                     String jsonData = purchaseList.get(i);
                     JSONObject purchase = new JSONObject(jsonData);
-                    String signature = signatureList.get(i);
-                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
+                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signatureList.get(i));
                 }
             }
             return true;
@@ -215,7 +214,7 @@ public class BillingProcessor extends BillingBase {
 
     private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache) {
         PurchaseInfo details = cache.getDetails(productId);
-        if (!TextUtils.isEmpty(details.responseData)) {
+        if (details != null && !TextUtils.isEmpty(details.responseData)) {
             try {
                 return new TransactionDetails(details);
             } catch (JSONException e) {
