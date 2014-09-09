@@ -29,8 +29,11 @@ public class TransactionDetails {
     public final String purchaseToken;
 
     public final Date purchaseTime;
+	
+	public final JSONObject rawJSONObject;
 
     public TransactionDetails(JSONObject source) throws JSONException {
+		rawJSONObject = source;
         productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
         orderId = source.getString(Constants.RESPONSE_ORDER_ID);
         purchaseToken = source.getString(Constants.RESPONSE_PURCHASE_TOKEN);
