@@ -146,9 +146,10 @@ public class BillingProcessor extends BillingBase {
                 ArrayList<String> purchaseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
                 ArrayList<String> signatureList = bundle.getStringArrayList(Constants.RESPONSE_INAPP_SIGNATURE);
                 for (int i=0;i<purchaseList.size();i++) {
-                    JSONObject purchase = new JSONObject(purchaseList.get(i));
+                    String jsonData = purchaseList.get(i);
+                    JSONObject purchase = new JSONObject(jsonData);
                     String signature = signatureList.get(i);
-                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), purchaseList.get(i), signature);
+                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
                 }
             }
             return true;
