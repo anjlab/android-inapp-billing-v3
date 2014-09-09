@@ -30,10 +30,11 @@ public class TransactionDetails {
 
     public final Date purchaseTime;
 	
-	public final JSONObject rawJSONObject;
+	public final PurchaseInfo purchaseInfo;
 
-    public TransactionDetails(JSONObject source) throws JSONException {
-		rawJSONObject = source;
+    public TransactionDetails(PurchaseInfo info) throws JSONException {
+        JSONObject source = new JSONObject(info.jsonObject);
+        purchaseInfo = info;
         productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
         orderId = source.getString(Constants.RESPONSE_ORDER_ID);
         purchaseToken = source.getString(Constants.RESPONSE_PURCHASE_TOKEN);
@@ -42,6 +43,6 @@ public class TransactionDetails {
 
     @Override
     public String toString() {
-        return String.format("%s purchased at %s(%s). Token: %s", productId, purchaseTime, orderId, purchaseToken);
+        return String.format("%s purchased at %s(%s). Token: %s, Signature: %s", productId, purchaseTime, orderId, purchaseToken, purchaseInfo.signature);
     }
 }

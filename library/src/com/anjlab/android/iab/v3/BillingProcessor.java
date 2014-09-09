@@ -15,13 +15,6 @@
  */
 package com.anjlab.android.iab.v3;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -34,6 +27,13 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.vending.billing.IInAppBillingService;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class BillingProcessor extends BillingBase {
 
@@ -143,9 +143,12 @@ public class BillingProcessor extends BillingBase {
             Bundle bundle = billingService.getPurchases(Constants.GOOGLE_API_VERSION, contextPackageName, type, null);
             if (bundle.getInt(Constants.RESPONSE_CODE) == Constants.BILLING_RESPONSE_RESULT_OK) {
                 cacheStorage.clear();
-                for (String purchaseData : bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST)) {
-                    JSONObject purchase = new JSONObject(purchaseData);
-                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), purchaseData);
+                ArrayList<String> purchaseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
+                ArrayList<String> signatureList = bundle.getStringArrayList(Constants.RESPONSE_INAPP_SIGNATURE);
+                for (int i=0;i<purchaseList.size();i++) {
+                    JSONObject purchase = new JSONObject(purchaseList.get(i));
+                    String signature = signatureList.get(i);
+                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), purchaseList.get(i), signature);
                 }
             }
             return true;
@@ -210,10 +213,10 @@ public class BillingProcessor extends BillingBase {
 	}
 
     private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache) {
-        String details = cache.getDetails(productId);
-        if (!TextUtils.isEmpty(details)) {
+        PurchaseInfo details = cache.getDetails(productId);
+        if (!TextUtils.isEmpty(details.jsonObject)) {
             try {
-                return new TransactionDetails(new JSONObject(details));
+                return new TransactionDetails(details);
             } catch (JSONException e) {
                 Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId);
             }
@@ -308,9 +311,9 @@ public class BillingProcessor extends BillingBase {
 				if (purchasePayload.equals(developerPayload)) {
                     if (verifyPurchaseSignature(purchaseData, dataSignature)) {
                         BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
-                        cache.put(productId, purchaseData);
+                        cache.put(productId, purchaseData, dataSignature);
                         if(eventHandler != null)
-        					eventHandler.onProductPurchased(productId, new TransactionDetails(purchase));
+        					eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
                     }
                     else {
                         Log.e(LOG_TAG, "Public key signature doesn't match!");
