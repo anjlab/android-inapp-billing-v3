@@ -159,6 +159,10 @@ As a result you will get a `TransactionDetails` object with the following info i
     public final String orderId;
     public final String purchaseToken;
     public final Date purchaseTime;
+    
+    // containing the raw json string from google play and the signature to
+    // verify the purchase on your own server
+    public final PurchaseInfo purchaseInfo;
 ```
 
 ## License
