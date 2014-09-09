@@ -55,7 +55,7 @@ class BillingCache extends BillingBase {
         ArrayList<String> output = new ArrayList<String>();
         for(String productId : data.keySet()) {
             PurchaseInfo info = data.get(productId);
-            output.add(productId + LINE_DELIMITER + info.jsonObject + LINE_DELIMITER + info.signature);
+            output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
         }
 		saveString(getPreferencesCacheKey(), TextUtils.join(ENTRY_DELIMITER, output));
 	}

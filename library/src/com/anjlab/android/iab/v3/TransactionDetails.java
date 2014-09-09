@@ -33,7 +33,7 @@ public class TransactionDetails {
 	public final PurchaseInfo purchaseInfo;
 
     public TransactionDetails(PurchaseInfo info) throws JSONException {
-        JSONObject source = new JSONObject(info.jsonObject);
+        JSONObject source = new JSONObject(info.responseData);
         purchaseInfo = info;
         productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
         orderId = source.getString(Constants.RESPONSE_ORDER_ID);

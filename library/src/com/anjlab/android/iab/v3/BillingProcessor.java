@@ -214,7 +214,7 @@ public class BillingProcessor extends BillingBase {
 
     private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache) {
         PurchaseInfo details = cache.getDetails(productId);
-        if (!TextUtils.isEmpty(details.jsonObject)) {
+        if (!TextUtils.isEmpty(details.responseData)) {
             try {
                 return new TransactionDetails(details);
             } catch (JSONException e) {
