@@ -27,12 +27,12 @@ class BillingCache extends BillingBase {
     private static final String ENTRY_DELIMITER = "#####";
     private static final String LINE_DELIMITER  = ">>>>>";
 
-    private HashMap<String, String> data;
+    private HashMap<String, PurchaseInfo> data;
     private String cacheKey;
 
 	public BillingCache(Activity context, String key) {
 		super(context);
-	    data = new HashMap<String, String>();
+	    data = new HashMap<String, PurchaseInfo>();
         cacheKey = key;
 		load();
 	}
@@ -46,15 +46,17 @@ class BillingCache extends BillingBase {
             if (!TextUtils.isEmpty(entry)) {
                 String[] parts = entry.split(Pattern.quote(LINE_DELIMITER));
                 if (parts.length > 1)
-                    data.put(parts[0], parts[1]);
+                    data.put(parts[0], new PurchaseInfo(parts[1], parts[2]));
             }
 		}
 	}
 
 	private void flush() {
         ArrayList<String> output = new ArrayList<String>();
-        for(String productId : data.keySet())
-            output.add(productId + LINE_DELIMITER + data.get(productId));
+        for(String productId : data.keySet()) {
+            PurchaseInfo info = data.get(productId);
+            output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
+        }
 		saveString(getPreferencesCacheKey(), TextUtils.join(ENTRY_DELIMITER, output));
 	}
 
@@ -62,13 +64,13 @@ class BillingCache extends BillingBase {
 		return data != null && data.containsKey(productId);
 	}
 
-    public String getDetails(String productId) {
+    public PurchaseInfo getDetails(String productId) {
         return data.containsKey(productId) ? data.get(productId) : null;
     }
 
-    public void put(String productId, String details) {
+    public void put(String productId, String details, String signature) {
         if (!data.containsKey(productId)) {
-            data.put(productId, details);
+            data.put(productId, new PurchaseInfo(details, signature));
             flush();
         }
     }
