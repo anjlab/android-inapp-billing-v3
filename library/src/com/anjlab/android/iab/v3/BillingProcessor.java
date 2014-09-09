@@ -54,10 +54,10 @@ public class BillingProcessor extends BillingBase {
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
     private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
     private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
+    private static final String PURCHASE_PAYLOAD_CACHE_KEY = ".purchase.last" + SETTINGS_VERSION;
 
 	private IInAppBillingService billingService;
 	private String contextPackageName;
-	private String purchasePayload;
 	private String signatureBase64;
 	private BillingCache cachedProducts;
 	private BillingCache cachedSubscriptions;
@@ -148,7 +148,8 @@ public class BillingProcessor extends BillingBase {
                 for (int i=0; i<purchaseList.size(); i++) {
                     String jsonData = purchaseList.get(i);
                     JSONObject purchase = new JSONObject(jsonData);
-                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signatureList.get(i));
+                    String signature = signatureList != null && signatureList.size() > i ? signatureList.get(i) : null;
+                    cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
                 }
             }
             return true;
@@ -179,7 +180,8 @@ public class BillingProcessor extends BillingBase {
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
-			purchasePayload = purchaseType + ":" + UUID.randomUUID().toString();
+			String purchasePayload = purchaseType + ":" + UUID.randomUUID().toString();
+            savePurchasePayload(purchasePayload);
 			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
 			if (bundle != null) {
                 int response = bundle.getInt(Constants.RESPONSE_CODE);
@@ -297,8 +299,10 @@ public class BillingProcessor extends BillingBase {
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode != PURCHASE_FLOW_REQUEST_CODE)
         	return false;
-		int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
-		if (resultCode == Activity.RESULT_OK && responseCode == Constants.BILLING_RESPONSE_RESULT_OK) {
+        int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
+        Log.d(LOG_TAG, String.format("resultCode = %d, responseCode = %d", resultCode, responseCode));
+        String purchasePayload = getPurchasePayload();
+		if (resultCode == Activity.RESULT_OK && responseCode == Constants.BILLING_RESPONSE_RESULT_OK && !TextUtils.isEmpty(purchasePayload)) {
 			String purchaseData = data.getStringExtra(Constants.INAPP_PURCHASE_DATA);
             String dataSignature = data.getStringExtra(Constants.RESPONSE_INAPP_SIGNATURE);
 			try {
@@ -359,5 +363,13 @@ public class BillingProcessor extends BillingBase {
 	public void setPurchaseHistoryRestored() {
 		saveBoolean(getPreferencesBaseKey() + RESTORE_KEY, true);
 	}
+
+    private void savePurchasePayload(String value) {
+        saveString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, value);
+    }
+
+    private String getPurchasePayload() {
+        return loadString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, null);
+    }
 
 }
