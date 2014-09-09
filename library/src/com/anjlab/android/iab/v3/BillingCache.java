@@ -24,16 +24,16 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 class BillingCache extends BillingBase {
-    private static final String ENTRY_DELIMITER = "#####";
-    private static final String LINE_DELIMITER  = ">>>>>";
+	private static final String ENTRY_DELIMITER = "#####";
+	private static final String LINE_DELIMITER = ">>>>>";
 
-    private HashMap<String, PurchaseInfo> data;
-    private String cacheKey;
+	private HashMap<String, PurchaseInfo> data;
+	private String cacheKey;
 
 	public BillingCache(Activity context, String key) {
 		super(context);
-	    data = new HashMap<String, PurchaseInfo>();
-        cacheKey = key;
+		data = new HashMap<String, PurchaseInfo>();
+		cacheKey = key;
 		load();
 	}
 
@@ -42,21 +42,21 @@ class BillingCache extends BillingBase {
 	}
 
 	private void load() {
-		for(String entry : loadString(getPreferencesCacheKey(), "").split(Pattern.quote(ENTRY_DELIMITER))) {
-            if (!TextUtils.isEmpty(entry)) {
-                String[] parts = entry.split(Pattern.quote(LINE_DELIMITER));
-                if (parts.length > 1)
-                    data.put(parts[0], new PurchaseInfo(parts[1], parts[2]));
-            }
+		for (String entry : loadString(getPreferencesCacheKey(), "").split(Pattern.quote(ENTRY_DELIMITER))) {
+			if (!TextUtils.isEmpty(entry)) {
+				String[] parts = entry.split(Pattern.quote(LINE_DELIMITER));
+				if (parts.length > 1)
+					data.put(parts[0], new PurchaseInfo(parts[1], parts[2]));
+			}
 		}
 	}
 
 	private void flush() {
-        ArrayList<String> output = new ArrayList<String>();
-        for(String productId : data.keySet()) {
-            PurchaseInfo info = data.get(productId);
-            output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
-        }
+		ArrayList<String> output = new ArrayList<String>();
+		for (String productId : data.keySet()) {
+			PurchaseInfo info = data.get(productId);
+			output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
+		}
 		saveString(getPreferencesCacheKey(), TextUtils.join(ENTRY_DELIMITER, output));
 	}
 
@@ -64,32 +64,32 @@ class BillingCache extends BillingBase {
 		return data != null && data.containsKey(productId);
 	}
 
-    public PurchaseInfo getDetails(String productId) {
-        return data.containsKey(productId) ? data.get(productId) : null;
-    }
+	public PurchaseInfo getDetails(String productId) {
+		return data.containsKey(productId) ? data.get(productId) : null;
+	}
 
-    public void put(String productId, String details, String signature) {
-        if (!data.containsKey(productId)) {
-            data.put(productId, new PurchaseInfo(details, signature));
-            flush();
-        }
-    }
+	public void put(String productId, String details, String signature) {
+		if (!data.containsKey(productId)) {
+			data.put(productId, new PurchaseInfo(details, signature));
+			flush();
+		}
+	}
 
-    public void remove(String productId) {
-        if (data.containsKey(productId)) {
-            data.remove(productId);
-            flush();
-        }
-    }
+	public void remove(String productId) {
+		if (data.containsKey(productId)) {
+			data.remove(productId);
+			flush();
+		}
+	}
 
 	public void clear() {
-        data.clear();
+		data.clear();
 		flush();
 	}
 
-    public List<String> getContents() {
-        return new ArrayList<String>(data.keySet());
-    }
+	public List<String> getContents() {
+		return new ArrayList<String>(data.keySet());
+	}
 
 	@Override
 	public String toString() {

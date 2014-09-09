@@ -25,12 +25,12 @@ package com.anjlab.android.iab.v3;
  */
 public class PurchaseInfo {
 
-    public final String responseData;
+	public final String responseData;
 
-    public final String signature;
+	public final String signature;
 
-    PurchaseInfo(String responseData, String signature) {
-        this.responseData = responseData;
-        this.signature = signature;
-    }
+	PurchaseInfo(String responseData, String signature) {
+		this.responseData = responseData;
+		this.signature = signature;
+	}
 }
