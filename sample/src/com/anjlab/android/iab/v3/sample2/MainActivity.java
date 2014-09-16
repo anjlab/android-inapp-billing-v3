@@ -27,24 +27,31 @@ import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.TransactionDetails;
 
 public class MainActivity extends Activity {
-    private BillingProcessor bp;
-    private boolean readyToPurchase = false;
-    private static final String LOG_TAG = "iabv3";
+	// SAMPLE APP CONSTANTS
+	private static final String ACTIVITY_NUMBER = "activity_num";
+	private static final String LOG_TAG = "iabv3";
 
     // PRODUCT & SUBSCRIPTION IDS
     private static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
     private static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
     private static final String LICENSE_KEY = null; // PUT YOUR MERCHANT KEY HERE;
 
+	private BillingProcessor bp;
+	private boolean readyToPurchase = false;
 
-    @Override
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+		TextView title = (TextView)findViewById(R.id.titleTextView);
+		title.setText(String.format(getString(R.string.title), getIntent().getIntExtra(ACTIVITY_NUMBER, 1)));
+
         bp = new BillingProcessor(this, LICENSE_KEY, new BillingProcessor.IBillingHandler() {
             @Override
             public void onProductPurchased(String productId, TransactionDetails details) {
-                showToast("onProductPurchased: " + productId);
+				showToast("onProductPurchased: " + productId);
                 updateTextViews();
             }
             @Override
@@ -66,9 +73,16 @@ public class MainActivity extends Activity {
                 updateTextViews();
             }
         });
-    } // end onCreate()
+    }
 
-    @Override
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		updateTextViews();
+	}
+
+	@Override
     public void onDestroy() {
         if (bp != null)
             bp.release();
@@ -121,7 +135,10 @@ public class MainActivity extends Activity {
                 break;
             case R.id.subsDetailsButton:
                 showToast(bp.getSubscriptionListingDetails(SUBSCRIPTION_ID).toString());
-                break;
+				break;
+			case R.id.launchMoreButton:
+				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));
+				break;
             default:
                 break;
         }

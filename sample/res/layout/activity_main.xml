@@ -1,103 +1,124 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:gravity="center_horizontal"
-              tools:context=".MainActivity" >
-
-    <TextView
-        android:layout_marginTop="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Products" />
-
-    <TextView
-        android:id="@+id/productIdTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/wait"
-        android:layout_marginTop="10dp" />
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:orientation="horizontal">
+        tools:context=".MainActivity" >
+
+        <TextView
+            android:id="@+id/titleTextView"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/title" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Purchase"
-            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:text="Launch Another One"
+            android:layout_gravity="center"
             android:onClick="onClick"
-            android:id="@+id/purchaseButton" />
+            android:id="@+id/launchMoreButton" />
 
-        <Button
+        <TextView
+            android:layout_marginTop="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="20dp"
-            android:text="Consume"
-            android:onClick="onClick"
-            android:id="@+id/consumeButton"/>
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Products" />
 
-        <Button
+        <TextView
+            android:id="@+id/productIdTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Details"
-            android:onClick="onClick"
-            android:id="@+id/productDetailsButton"/>
+            android:text="@string/wait"
+            android:layout_marginTop="10dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Purchase"
+                android:layout_marginRight="20dp"
+                android:onClick="onClick"
+                android:id="@+id/purchaseButton" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:text="Consume"
+                android:onClick="onClick"
+                android:id="@+id/consumeButton"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Details"
+                android:onClick="onClick"
+                android:id="@+id/productDetailsButton"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Subscriptions" />
+
+        <TextView
+            android:id="@+id/subscriptionIdTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wait"
+            android:layout_marginTop="10dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Subscribe"
+                android:id="@+id/subscribeButton"
+                android:onClick="onClick"
+                android:layout_marginRight="20dp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:text="Update"
+                android:onClick="onClick"
+                android:id="@+id/updateSubscriptionsButton" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Details"
+                android:onClick="onClick"
+                android:id="@+id/subsDetailsButton"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <TextView
-        android:layout_marginTop="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Subscriptions" />
-
-    <TextView
-        android:id="@+id/subscriptionIdTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/wait"
-        android:layout_marginTop="10dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Subscribe"
-            android:id="@+id/subscribeButton"
-            android:onClick="onClick"
-            android:layout_marginRight="20dp" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="20dp"
-            android:text="Update"
-            android:onClick="onClick"
-            android:id="@+id/updateSubscriptionsButton" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Details"
-            android:onClick="onClick"
-            android:id="@+id/subsDetailsButton"/>
-
-    </LinearLayout>
-
-
-
-</LinearLayout>
+</ScrollView>
