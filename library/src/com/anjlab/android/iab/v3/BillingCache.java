@@ -17,8 +17,10 @@ package com.anjlab.android.iab.v3;
 
 import android.app.Activity;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -26,9 +28,11 @@ import java.util.regex.Pattern;
 class BillingCache extends BillingBase {
 	private static final String ENTRY_DELIMITER = "#####";
 	private static final String LINE_DELIMITER = ">>>>>";
+	private static final String VERSION_KEY = ".version";
 
 	private HashMap<String, PurchaseInfo> data;
 	private String cacheKey;
+	private String version;
 
 	public BillingCache(Activity context, String key) {
 		super(context);
@@ -41,6 +45,10 @@ class BillingCache extends BillingBase {
 		return getPreferencesBaseKey() + cacheKey;
 	}
 
+	private String getPreferencesVersionKey() {
+		return getPreferencesCacheKey() + VERSION_KEY;
+	}
+
 	private void load() {
 		for (String entry : loadString(getPreferencesCacheKey(), "").split(Pattern.quote(ENTRY_DELIMITER))) {
 			if (!TextUtils.isEmpty(entry)) {
@@ -49,6 +57,7 @@ class BillingCache extends BillingBase {
 					data.put(parts[0], new PurchaseInfo(parts[1], parts[2]));
 			}
 		}
+		version = getCurrentVersion();
 	}
 
 	private void flush() {
@@ -58,17 +67,22 @@ class BillingCache extends BillingBase {
 			output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
 		}
 		saveString(getPreferencesCacheKey(), TextUtils.join(ENTRY_DELIMITER, output));
+		version = Long.toString(new Date().getTime());
+		saveString(getPreferencesVersionKey(), version);
 	}
 
 	public boolean includesProduct(String productId) {
-		return data != null && data.containsKey(productId);
+		reloadDataIfNeeded();
+		return data.containsKey(productId);
 	}
 
 	public PurchaseInfo getDetails(String productId) {
+		reloadDataIfNeeded();
 		return data.containsKey(productId) ? data.get(productId) : null;
 	}
 
 	public void put(String productId, String details, String signature) {
+		reloadDataIfNeeded();
 		if (!data.containsKey(productId)) {
 			data.put(productId, new PurchaseInfo(details, signature));
 			flush();
@@ -76,6 +90,7 @@ class BillingCache extends BillingBase {
 	}
 
 	public void remove(String productId) {
+		reloadDataIfNeeded();
 		if (data.containsKey(productId)) {
 			data.remove(productId);
 			flush();
@@ -83,8 +98,20 @@ class BillingCache extends BillingBase {
 	}
 
 	public void clear() {
+		reloadDataIfNeeded();
 		data.clear();
 		flush();
+	}
+
+	private String getCurrentVersion() {
+		return loadString(getPreferencesVersionKey(), "0");
+	}
+
+	private void reloadDataIfNeeded() {
+		if (!version.equalsIgnoreCase(getCurrentVersion())) {
+			data.clear();
+			load();
+		}
 	}
 
 	public List<String> getContents() {
