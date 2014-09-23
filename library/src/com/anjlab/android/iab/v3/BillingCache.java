@@ -53,7 +53,7 @@ class BillingCache extends BillingBase {
 		for (String entry : loadString(getPreferencesCacheKey(), "").split(Pattern.quote(ENTRY_DELIMITER))) {
 			if (!TextUtils.isEmpty(entry)) {
 				String[] parts = entry.split(Pattern.quote(LINE_DELIMITER));
-				if (parts.length > 1)
+				if (parts.length > 2)
 					data.put(parts[0], new PurchaseInfo(parts[1], parts[2]));
 			}
 		}
