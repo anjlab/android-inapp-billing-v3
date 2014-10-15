@@ -145,7 +145,7 @@ public class BillingProcessor extends BillingBase {
 			if (bundle.getInt(Constants.RESPONSE_CODE) == Constants.BILLING_RESPONSE_RESULT_OK) {
 				cacheStorage.clear();
 				ArrayList<String> purchaseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
-				ArrayList<String> signatureList = bundle.getStringArrayList(Constants.RESPONSE_INAPP_SIGNATURE);
+				ArrayList<String> signatureList = bundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
 				for (int i = 0; i < purchaseList.size(); i++) {
 					String jsonData = purchaseList.get(i);
 					JSONObject purchase = new JSONObject(jsonData);
