@@ -34,6 +34,7 @@ class Constants {
 	public static final String DETAILS_LIST = "DETAILS_LIST";
     public static final String PRODUCTS_LIST = "ITEM_ID_LIST";
 	public static final String INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST";
+	public static final String INAPP_DATA_SIGNATURE_LIST = "INAPP_DATA_SIGNATURE_LIST";
 	public static final String BUY_INTENT = "BUY_INTENT";
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
     public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
