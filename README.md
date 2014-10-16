@@ -28,7 +28,7 @@ Getting Started
 ```
 * Create instance of BillingProcessor class and implement callback in your Activity source code. Constructor will take 3 parameters:
   - **Context**
-  - **Your Merchant Key from Google Developer console.** This will be used to verify purchase signatures. You can pass NULL if you would like to skip this check
+  - **Your License Key from Google Developer console.** This will be used to verify purchase signatures. You can pass NULL if you would like to skip this check (*You can find your key in Google Play Console -> Your App Name -> Services & APIs*)
   - **IBillingHandler Interface implementation to handle purchase results and errors** (see below)
 ```java
 public class SomeActivity extends Activity implements BillingProcessor.IBillingHandler {
