@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anjlab.android.iab.v3.BillingProcessor;
+import com.anjlab.android.iab.v3.SkuDetails;
 import com.anjlab.android.iab.v3.TransactionDetails;
 
 public class MainActivity extends Activity {
@@ -60,6 +61,7 @@ public class MainActivity extends Activity {
             }
             @Override
             public void onBillingInitialized() {
+				showToast("onBillingInitialized");
                 readyToPurchase = true;
                 updateTextViews();
             }
@@ -122,7 +124,8 @@ public class MainActivity extends Activity {
                     showToast("Successfully consumed");
                 break;
             case R.id.productDetailsButton:
-                showToast(bp.getPurchaseListingDetails(PRODUCT_ID).toString());
+				SkuDetails sku = bp.getPurchaseListingDetails(PRODUCT_ID);
+                showToast(sku != null ? sku.toString() : "Failed to load SKU details");
                 break;
             case R.id.subscribeButton:
                 bp.subscribe(SUBSCRIPTION_ID);
@@ -134,7 +137,8 @@ public class MainActivity extends Activity {
                 }
                 break;
             case R.id.subsDetailsButton:
-                showToast(bp.getSubscriptionListingDetails(SUBSCRIPTION_ID).toString());
+				SkuDetails subs = bp.getSubscriptionListingDetails(SUBSCRIPTION_ID);
+				showToast(subs != null ? subs.toString() : "Failed to load subscription details");
 				break;
 			case R.id.launchMoreButton:
 				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));
