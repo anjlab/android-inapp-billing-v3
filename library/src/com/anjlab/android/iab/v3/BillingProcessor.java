@@ -97,7 +97,9 @@ public class BillingProcessor extends BillingBase {
 
 	private void bindPlayServices() {
 		try {
-			getContext().bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), serviceConnection, Context.BIND_AUTO_CREATE);
+			Intent iapIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+			iapIntent.setPackage("com.android.vending");
+			getContext().bindService(iapIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 		} catch (Exception e) {
 			Log.e(LOG_TAG, e.toString());
 		}
