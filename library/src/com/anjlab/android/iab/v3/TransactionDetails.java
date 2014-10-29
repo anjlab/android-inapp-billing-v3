@@ -38,7 +38,7 @@ public class TransactionDetails {
 		productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
 		orderId = source.getString(Constants.RESPONSE_ORDER_ID);
 		purchaseToken = source.getString(Constants.RESPONSE_PURCHASE_TOKEN);
-		purchaseTime = new Date(source.getInt(Constants.RESPONSE_PURCHASE_TIME));
+		purchaseTime = new Date(source.getLong(Constants.RESPONSE_PURCHASE_TIME));
 	}
 
 	@Override
