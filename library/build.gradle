@@ -3,7 +3,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group 'com.anjlab.android.iab.v3'
-version '1.0.17'
+version '1.0.18'
 
 android {
     compileSdkVersion 8
@@ -31,7 +31,7 @@ signing {
 }
 
 task androidJavadocs(type: Javadoc) {
-    source = android.sourceSets.main.java
+    source = 'src/main/java'
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
@@ -41,7 +41,7 @@ task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
 
 task androidSourcesJar(type: Jar) {
     classifier = 'sources'
-    from android.sourceSets.main
+    from 'src/main/java'
 }
 
 artifacts {
