@@ -330,7 +330,7 @@ public class BillingProcessor extends BillingBase {
 			}
 		} else {
 			if (eventHandler != null)
-				eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, null);
+				eventHandler.onBillingError(responseCode, null);
 		}
 		return true;
 	}
