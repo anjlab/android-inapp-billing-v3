@@ -314,6 +314,15 @@ public class BillingProcessor extends BillingBase {
 						if (eventHandler != null)
 							eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
 					} else {
+                        //handle test purchase not having signature
+                        if(BuildConfig.DEBUG){
+                            if(productId.equals("android.test.purchased") && TextUtils.isEmpty(dataSignature)){
+                                cachedProducts.put(productId, purchaseData, dataSignature);
+                                if (eventHandler != null)
+                                    eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
+                                return true;
+                            }
+                        }
 						Log.e(LOG_TAG, "Public key signature doesn't match!");
 						if (eventHandler != null)
 							eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
