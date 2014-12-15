@@ -85,7 +85,7 @@ public class BillingProcessor extends BillingBase {
 		}
 	};
 
-	public BillingProcessor(Activity context, String licenseKey, IBillingHandler handler) {
+	public BillingProcessor(Context context, String licenseKey, IBillingHandler handler) {
 		super(context);
 		signatureBase64 = licenseKey;
 		eventHandler = handler;
@@ -170,15 +170,15 @@ public class BillingProcessor extends BillingBase {
 				loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
 	}
 
-	public boolean purchase(String productId) {
-		return purchase(productId, Constants.PRODUCT_TYPE_MANAGED);
+	public boolean purchase(Activity activity, String productId) {
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public boolean subscribe(String productId) {
-		return purchase(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	public boolean subscribe(Activity activity, String productId) {
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	private boolean purchase(String productId, String purchaseType) {
+	private boolean purchase(Activity activity, String productId, String purchaseType) {
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
@@ -189,8 +189,8 @@ public class BillingProcessor extends BillingBase {
 				int response = bundle.getInt(Constants.RESPONSE_CODE);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
-					if (getContext() != null)
-						getContext().startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
+					if (activity != null)
+						activity.startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
 					else if (eventHandler != null)
 						eventHandler.onBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
 				} else if (response == Constants.BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED) {

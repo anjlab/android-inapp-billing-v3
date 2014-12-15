@@ -15,9 +15,8 @@
  */
 package com.anjlab.android.iab.v3;
 
-import android.app.Activity;
+import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,7 +33,7 @@ class BillingCache extends BillingBase {
 	private String cacheKey;
 	private String version;
 
-	public BillingCache(Activity context, String key) {
+	public BillingCache(Context context, String key) {
 		super(context);
 		data = new HashMap<String, PurchaseInfo>();
 		cacheKey = key;

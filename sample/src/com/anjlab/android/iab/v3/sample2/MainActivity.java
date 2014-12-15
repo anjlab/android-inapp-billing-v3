@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
         }
         switch (v.getId()) {
             case R.id.purchaseButton:
-                bp.purchase(PRODUCT_ID);
+                bp.purchase(this,PRODUCT_ID);
                 break;
             case R.id.consumeButton:
                 Boolean consumed = bp.consumePurchase(PRODUCT_ID);
@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
                 showToast(sku != null ? sku.toString() : "Failed to load SKU details");
                 break;
             case R.id.subscribeButton:
-                bp.subscribe(SUBSCRIPTION_ID);
+                bp.subscribe(this,SUBSCRIPTION_ID);
                 break;
             case R.id.updateSubscriptionsButton:
                 if (bp.loadOwnedPurchasesFromGoogle()) {
