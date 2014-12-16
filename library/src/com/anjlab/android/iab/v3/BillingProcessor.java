@@ -308,21 +308,12 @@ public class BillingProcessor extends BillingBase {
 					developerPayload = "";
 				boolean purchasedSubscription = purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 				if (purchasePayload.equals(developerPayload)) {
-					if (verifyPurchaseSignature(purchaseData, dataSignature)) {
+					if (verifyPurchaseSignature(productId, purchaseData, dataSignature)) {
 						BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
 						cache.put(productId, purchaseData, dataSignature);
 						if (eventHandler != null)
 							eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
 					} else {
-                        //handle test purchase not having signature
-                        if(BuildConfig.DEBUG){
-                            if(productId.equals("android.test.purchased") && TextUtils.isEmpty(dataSignature)){
-                                cachedProducts.put(productId, purchaseData, dataSignature);
-                                if (eventHandler != null)
-                                    eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
-                                return true;
-                            }
-                        }
 						Log.e(LOG_TAG, "Public key signature doesn't match!");
 						if (eventHandler != null)
 							eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
@@ -344,16 +335,18 @@ public class BillingProcessor extends BillingBase {
 		return true;
 	}
 
-	private boolean verifyPurchaseSignature(String purchaseData, String dataSignature) {
-		if (!TextUtils.isEmpty(signatureBase64)) {
-			try {
-				return Security.verifyPurchase(signatureBase64, purchaseData, dataSignature);
-			} catch (Exception e) {
-				return false;
-			}
-		}
-		return true;
+	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature) {
+        try {
+            return Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
+        } catch (Exception e) {
+            return false;
+        }
 	}
+
+    public boolean isValid(TransactionDetails transactionDetails){
+        return verifyPurchaseSignature(transactionDetails.productId,
+                transactionDetails.purchaseInfo.responseData,transactionDetails.purchaseInfo.signature);
+    }
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
