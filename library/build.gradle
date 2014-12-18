@@ -3,11 +3,11 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group 'com.anjlab.android.iab.v3'
-version '1.0.18'
+version '1.0.19'
 
 android {
     compileSdkVersion 8
-    buildToolsVersion '21.0.2'
+    buildToolsVersion '21.1.2'
 
     defaultConfig {
         versionCode 1
