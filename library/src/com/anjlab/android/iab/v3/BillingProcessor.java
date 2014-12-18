@@ -308,7 +308,7 @@ public class BillingProcessor extends BillingBase {
 					developerPayload = "";
 				boolean purchasedSubscription = purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 				if (purchasePayload.equals(developerPayload)) {
-					if (verifyPurchaseSignature(purchaseData, dataSignature)) {
+					if (verifyPurchaseSignature(productId, purchaseData, dataSignature)) {
 						BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
 						cache.put(productId, purchaseData, dataSignature);
 						if (eventHandler != null)
@@ -335,16 +335,18 @@ public class BillingProcessor extends BillingBase {
 		return true;
 	}
 
-	private boolean verifyPurchaseSignature(String purchaseData, String dataSignature) {
-		if (!TextUtils.isEmpty(signatureBase64)) {
-			try {
-				return Security.verifyPurchase(signatureBase64, purchaseData, dataSignature);
-			} catch (Exception e) {
-				return false;
-			}
-		}
-		return true;
+	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature) {
+        try {
+            return Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
+        } catch (Exception e) {
+            return false;
+        }
 	}
+
+    public boolean isValid(TransactionDetails transactionDetails){
+        return verifyPurchaseSignature(transactionDetails.productId,
+                transactionDetails.purchaseInfo.responseData,transactionDetails.purchaseInfo.signature);
+    }
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
