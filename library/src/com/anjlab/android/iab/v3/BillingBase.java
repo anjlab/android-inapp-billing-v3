@@ -15,7 +15,7 @@
  */
 package com.anjlab.android.iab.v3;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -23,13 +23,13 @@ import java.lang.ref.WeakReference;
 
 class BillingBase {
 
-	private WeakReference<Activity> contextReference;
+	private WeakReference<Context> contextReference;
 
-	public BillingBase(Activity context) {
-		contextReference = new WeakReference<Activity>(context);
+	public BillingBase(Context context) {
+		contextReference = new WeakReference<Context>(context);
 	}
 
-	public Activity getContext() {
+	public Context getContext() {
 		return contextReference.get();
 	}
 
