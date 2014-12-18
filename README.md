@@ -86,8 +86,8 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 
 * Call `purchase` method for a BillingProcessor instance to initiate purchase or `subscribe` to initiate a subscription:
 ```java
-bp.purchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
-bp.subscribe("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 * **That's it! A super small and fast in-app library ever!**
 
