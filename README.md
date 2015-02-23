@@ -61,7 +61,7 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 	@Override
 	public void onBillingError(int errorCode, Throwable error) {
 		/*
-		 * Called then some error occured. See Constants class for more details
+		 * Called then some error occurred. See Constants class for more details
 		 */
 	}
 	
