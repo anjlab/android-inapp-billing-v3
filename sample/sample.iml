@@ -9,6 +9,7 @@
     <facet type="android" name="Android">
       <configuration>
         <option name="SELECTED_BUILD_VARIANT" value="release" />
+        <option name="SELECTED_TEST_ARTIFACT" value="_android_test_" />
         <option name="ASSEMBLE_TASK_NAME" value="assembleRelease" />
         <option name="COMPILE_JAVA_TASK_NAME" value="compileReleaseSources" />
         <option name="SOURCE_GEN_TASK_NAME" value="generateReleaseSources" />
