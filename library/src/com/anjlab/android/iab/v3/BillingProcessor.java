@@ -337,7 +337,15 @@ public class BillingProcessor extends BillingBase {
 
 	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature) {
         try {
-            return Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
+            /*
+             * Skip the signature check if the provided License Key is NULL and return true in order to
+             * continue the purchase flow
+             */
+            if (TextUtils.isEmpty(signatureBase64)) {
+                return true;
+            } else {
+                return Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
+            }
         } catch (Exception e) {
             return false;
         }
