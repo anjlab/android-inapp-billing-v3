@@ -54,9 +54,6 @@ class Security {
      * @param signature the signature for the data, signed with the private key
      */
     public static boolean verifyPurchase(String productId, String base64PublicKey, String signedData, String signature) {
-        if (base64PublicKey == null) {
-            return true;
-        }
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
                 TextUtils.isEmpty(signature)) {
 
