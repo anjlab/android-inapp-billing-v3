@@ -294,6 +294,10 @@ public class BillingProcessor extends BillingBase {
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != PURCHASE_FLOW_REQUEST_CODE)
 			return false;
+		if (data == null) {
+			Log.e(LOG_TAG, "handleActivityResult: data is null!");
+			return false;
+		}
 		int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
 		Log.d(LOG_TAG, String.format("resultCode = %d, responseCode = %d", resultCode, responseCode));
 		String purchasePayload = getPurchasePayload();
