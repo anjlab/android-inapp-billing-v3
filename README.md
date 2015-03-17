@@ -47,28 +47,28 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 	@Override
 	public void onBillingInitialized() {
 		/*
-		 * Called then BillingProcessor was initialized and its ready to purchase 
+		 * Called when BillingProcessor was initialized and it's ready to purchase 
 		 */
 	}
 	
 	@Override
 	public void onProductPurchased(String productId, TransactionDetails details) {
 		/*
-		 * Called then requested PRODUCT ID was successfully purchased
+		 * Called when requested PRODUCT ID was successfully purchased
 		 */
 	}
 	
 	@Override
 	public void onBillingError(int errorCode, Throwable error) {
 		/*
-		 * Called then some error occurred. See Constants class for more details
+		 * Called when some error occurred. See Constants class for more details
 		 */
 	}
 	
 	@Override
 	public void onPurchaseHistoryRestored() {
 		/*
-		 * Called then purchase history was restored and the list of all owned PRODUCT ID's 
+		 * Called when purchase history was restored and the list of all owned PRODUCT ID's 
 		 * was loaded from Google Play
 		 */
 	}
