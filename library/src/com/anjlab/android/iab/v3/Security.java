@@ -59,7 +59,7 @@ class Security {
 
             if(BuildConfig.DEBUG){
                 //handle test purchase not having signature
-                if(productId.equals("android.test.purchased") && TextUtils.isEmpty(signature)){
+                if(productId.equals("android.test.purchased")) {
                     return true;
                 }
             }
