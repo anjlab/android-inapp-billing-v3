@@ -275,12 +275,50 @@ public class BillingProcessor extends BillingBase {
 		return null;
 	}
 
+	private List<SkuDetails> getMultipleSkuDetails(ArrayList<String> productIdList, String purchaseType) {
+		if (billingService != null && productIdList != null && productIdList.size() > 0) {
+			try {
+				Bundle products = new Bundle();
+				products.putStringArrayList(Constants.PRODUCTS_LIST, productIdList);
+				Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseType, products);
+				int response = skuDetails.getInt(Constants.RESPONSE_CODE);
+
+				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
+					ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
+
+					for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
+						JSONObject object = new JSONObject(responseLine);
+						SkuDetails product = new SkuDetails(object);
+						productDetails.add(product);
+					}
+					return productDetails;
+
+				} else {
+					if (eventHandler != null)
+						eventHandler.onBillingError(response, null);
+					Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d", productIdList.size(), response));
+				}
+			} catch (Exception e) {
+				Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
+			}
+		}
+		return null;
+	}
+
 	public SkuDetails getPurchaseListingDetails(String productId) {
 		return getSkuDetails(productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
 	public SkuDetails getSubscriptionListingDetails(String productId) {
 		return getSkuDetails(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	}
+
+	public List<SkuDetails> getMultiplePurchaseListingDetails(ArrayList<String> productIdList) {
+		return getMultipleSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
+	}
+
+	public List<SkuDetails> getMultipleSubscriptionListingDetails(ArrayList<String> productIdList) {
+		return getMultipleSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
 	public TransactionDetails getPurchaseTransactionDetails(String productId) {
