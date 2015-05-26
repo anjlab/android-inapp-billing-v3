@@ -142,6 +142,17 @@ As a result you will get a `SkuDetails` object with the following info included:
     public final String priceText;
 ```
 
+To get info for multiple products / subscriptions on one query, you can use:
+
+```java
+	bp.getMultiplePurchaseListingDetails(arrayListOfProductIds);
+	bp.getMultipleSubscriptionListingDetails(arrayListOfProductIds);
+```
+
+where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for products or subscriptions.
+
+As a result you will get a `List<SkuDetails>` which contains objects described above.
+
 Getting Purchase Transaction Details
 --------------------------
 As a part or 1.0.9 changes, `TransactionDetails` object is passed to `onProductPurchased` method of a handler class.
