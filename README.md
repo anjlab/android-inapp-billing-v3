@@ -142,11 +142,11 @@ As a result you will get a `SkuDetails` object with the following info included:
     public final String priceText;
 ```
 
-To get info for multiple products / subscriptions on one query, you can use:
+To get info for multiple products / subscriptions on one query, just pass a list of product ids:
 
 ```java
-	bp.getMultiplePurchaseListingDetails(arrayListOfProductIds);
-	bp.getMultipleSubscriptionListingDetails(arrayListOfProductIds);
+	bp.getPurchaseListingDetails(arrayListOfProductIds);
+	bp.getSubscriptionListingDetails(arrayListOfProductIds);
 ```
 
 where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for products or subscriptions.
