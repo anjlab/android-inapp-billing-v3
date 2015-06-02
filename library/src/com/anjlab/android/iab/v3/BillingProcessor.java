@@ -248,34 +248,15 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	private SkuDetails getSkuDetails(String productId, String purchaseType) {
-		if (billingService != null) {
-			try {
-				ArrayList<String> skuList = new ArrayList<String>();
-				skuList.add(productId);
-				Bundle products = new Bundle();
-				products.putStringArrayList(Constants.PRODUCTS_LIST, skuList);
-				Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION, contextPackageName, purchaseType, products);
-				int response = skuDetails.getInt(Constants.RESPONSE_CODE);
-				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
-					for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
-						JSONObject object = new JSONObject(responseLine);
-						String responseProductId = object.getString(Constants.RESPONSE_PRODUCT_ID);
-						if (productId.equals(responseProductId))
-							return new SkuDetails(object);
-					}
-				} else {
-					if (eventHandler != null)
-						eventHandler.onBillingError(response, null);
-					Log.e(LOG_TAG, String.format("Failed to retrieve info for %s: error %d", productId, response));
-				}
-			} catch (Exception e) {
-				Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
-			}
-		}
+		ArrayList<String> productIdList = new ArrayList<String>();
+		productIdList.add(productId);
+		List<SkuDetails> skuDetailsList = getSkuDetails(productIdList, purchaseType);
+		if (skuDetailsList != null && skuDetailsList.size() > 0)
+			return skuDetailsList.get(0);
 		return null;
 	}
 
-	private List<SkuDetails> getMultipleSkuDetails(ArrayList<String> productIdList, String purchaseType) {
+	private List<SkuDetails> getSkuDetails(ArrayList<String> productIdList, String purchaseType) {
 		if (billingService != null && productIdList != null && productIdList.size() > 0) {
 			try {
 				Bundle products = new Bundle();
@@ -313,12 +294,12 @@ public class BillingProcessor extends BillingBase {
 		return getSkuDetails(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	public List<SkuDetails> getMultiplePurchaseListingDetails(ArrayList<String> productIdList) {
-		return getMultipleSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
+	public List<SkuDetails> getPurchaseListingDetails(ArrayList<String> productIdList) {
+		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public List<SkuDetails> getMultipleSubscriptionListingDetails(ArrayList<String> productIdList) {
-		return getMultipleSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
+		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
 	public TransactionDetails getPurchaseTransactionDetails(String productId) {
