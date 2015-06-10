@@ -36,7 +36,7 @@ public class TransactionDetails {
 		JSONObject source = new JSONObject(info.responseData);
 		purchaseInfo = info;
 		productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
-		orderId = source.getString(Constants.RESPONSE_ORDER_ID);
+		orderId = source.optString(Constants.RESPONSE_ORDER_ID);
 		purchaseToken = source.getString(Constants.RESPONSE_PURCHASE_TOKEN);
 		purchaseTime = new Date(source.getLong(Constants.RESPONSE_PURCHASE_TIME));
 	}
