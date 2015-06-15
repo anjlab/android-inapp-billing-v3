@@ -257,6 +257,7 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	private List<SkuDetails> getSkuDetails(ArrayList<String> productIdList, String purchaseType) {
+		ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
 		if (billingService != null && productIdList != null && productIdList.size() > 0) {
 			try {
 				Bundle products = new Bundle();
@@ -265,15 +266,11 @@ public class BillingProcessor extends BillingBase {
 				int response = skuDetails.getInt(Constants.RESPONSE_CODE);
 
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
-					ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
-
 					for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
 						JSONObject object = new JSONObject(responseLine);
 						SkuDetails product = new SkuDetails(object);
 						productDetails.add(product);
 					}
-					return productDetails;
-
 				} else {
 					if (eventHandler != null)
 						eventHandler.onBillingError(response, null);
@@ -283,7 +280,7 @@ public class BillingProcessor extends BillingBase {
 				Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
 			}
 		}
-		return null;
+		return productDetails;
 	}
 
 	public SkuDetails getPurchaseListingDetails(String productId) {
