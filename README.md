@@ -111,9 +111,9 @@ In some elder devices or chinese ones it may happen that Play Market is unavaila
 
 Simply call static method `BillingProcessor.isIabServiceAvailable()`:
 ```java
-    boolean isAvailable=BillingProcessor.isIabServiceAvailable();
+    boolean isAvailable = BillingProcessor.isIabServiceAvailable();
     if(!isAvailable) {
-        //blah-blah
+        // continue
     }
 ```
 
