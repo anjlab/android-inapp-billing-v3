@@ -103,6 +103,20 @@ bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE"
 	}
 ```
 
+Check Play Market services availability
+---------------------------------------
+Before any usage it's good practice to check in-app billing services availability.
+In some elder devices or chinese ones it may happen that Play Market is unavailable or is deprecated
+ and doesn't support in-app billing.
+
+Simply call static method `BillingProcessor.isIabServiceAvailable()`:
+```java
+    boolean isAvailable = BillingProcessor.isIabServiceAvailable();
+    if(!isAvailable) {
+        // continue
+    }
+```
+
 Consume Purchased Products
 --------------------------
 You can always consume made purchase and allow to buy same product multiple times. To do this you need:
@@ -175,6 +189,32 @@ As a result you will get a `TransactionDetails` object with the following info i
     // verify the purchase on your own server
     public final PurchaseInfo purchaseInfo;
 ```
+
+Protection against fake "markets"
+--------------------------------
+There are number of attacks which exploits some vulnerabilities of Google's Play Market.
+Among them is so-called *Freedom attack*: *Freedom* is special Android application, which
+intercepts application calls to Play Market services and substitutes them with fake ones. So in the
+  end attacked application *thinks* that it receives valid responses from Play Market.
+
+In order to protect from this kind of attack you should specify your `merchantId`, which
+can be found in your [Payments Merchant Account](https://payments.google.com/merchant).
+Selecting *Settings->Public Profile* you will find your unique `merchantId`
+
+**WARNING:** keep your `merchantId` in safe place!
+
+Then using `merchantId` just call constructor:
+
+    public BillingProcessor(Context context, String licenseKey, String merchantId, IBillingHandler handler);
+
+Later one can easily check transaction validity using method:
+
+    public boolean isValid(TransactionDetails transactionDetails);
+
+P.S. This kind of protection works only for transactions dated between 5th December 2012 and
+21st July 2015. Before December 2012 `orderId` wasn't contain `merchantId` and in the end of July this
+ year Google suddenly changed `orderId` format.
+
 
 ## License
 
