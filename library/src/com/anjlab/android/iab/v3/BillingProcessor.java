@@ -44,7 +44,7 @@ public class BillingProcessor extends BillingBase {
 	 * Callback methods where billing events are reported.
 	 * Apps must implement one of these to construct a BillingProcessor.
 	 */
-	public static interface IBillingHandler {
+	public interface IBillingHandler {
 		void onProductPurchased(String productId, TransactionDetails details);
 
 		void onPurchaseHistoryRestored();
@@ -54,8 +54,8 @@ public class BillingProcessor extends BillingBase {
 		void onBillingInitialized();
 	}
 
-	private static final Date dateMerchantLimit1=new Date(2012, 12, 5); //5th December 2012
-	private static final Date dateMerchantLimit2=new Date(2015, 7, 20); //21st July 2015
+	private static final Date dateMerchantLimit1 = new Date(2012, 12, 5); //5th December 2012
+	private static final Date dateMerchantLimit2 = new Date(2015, 7, 20); //21st July 2015
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
 	private static final String LOG_TAG = "iabv3";
@@ -92,16 +92,8 @@ public class BillingProcessor extends BillingBase {
 		}
 	};
 
-	//compatible with previous versions (w/o merchantId support)
 	public BillingProcessor(Context context, String licenseKey, IBillingHandler handler) {
-		super(context);
-		signatureBase64 = licenseKey;
-		eventHandler = handler;
-		contextPackageName = context.getApplicationContext().getPackageName();
-		cachedProducts = new BillingCache(context, MANAGED_PRODUCTS_CACHE_KEY);
-		cachedSubscriptions = new BillingCache(context, SUBSCRIPTIONS_CACHE_KEY);
-		developerMerchantId=null;
-		bindPlayServices();
+		this(context, licenseKey, null, handler);
 	}
 
 	public BillingProcessor(Context context, String licenseKey, String merchantId, IBillingHandler handler) {
@@ -111,7 +103,7 @@ public class BillingProcessor extends BillingBase {
 		contextPackageName = context.getApplicationContext().getPackageName();
 		cachedProducts = new BillingCache(context, MANAGED_PRODUCTS_CACHE_KEY);
 		cachedSubscriptions = new BillingCache(context, SUBSCRIPTIONS_CACHE_KEY);
-		developerMerchantId=merchantId;
+		developerMerchantId = merchantId;
 		bindPlayServices();
 	}
 
@@ -168,12 +160,13 @@ public class BillingProcessor extends BillingBase {
 				cacheStorage.clear();
 				ArrayList<String> purchaseList = bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
 				ArrayList<String> signatureList = bundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
-				for (int i = 0; i < purchaseList.size(); i++) {
-					String jsonData = purchaseList.get(i);
-					JSONObject purchase = new JSONObject(jsonData);
-					String signature = signatureList != null && signatureList.size() > i ? signatureList.get(i) : null;
-					cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
-				}
+				if (purchaseList != null)
+					for (int i = 0; i < purchaseList.size(); i++) {
+						String jsonData = purchaseList.get(i);
+						JSONObject purchase = new JSONObject(jsonData);
+						String signature = signatureList != null && signatureList.size() > i ? signatureList.get(i) : null;
+						cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
+					}
 			}
 			return true;
 		} catch (Exception e) {
@@ -209,7 +202,7 @@ public class BillingProcessor extends BillingBase {
 				int response = bundle.getInt(Constants.RESPONSE_CODE);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
-					if (activity != null)
+					if (activity != null && pendingIntent != null)
 						activity.startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
 					else if (eventHandler != null)
 						eventHandler.onBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
@@ -217,9 +210,9 @@ public class BillingProcessor extends BillingBase {
 					if (!isPurchased(productId) && !isSubscribed(productId))
 						loadOwnedPurchasesFromGoogle();
 					TransactionDetails details = getPurchaseTransactionDetails(productId);
-					if(!checkMerchant(details)) {
+					if (!checkMerchant(details)) {
 						Log.i(LOG_TAG, "Invalid or tampered merchant id!");
-						if(eventHandler!=null)
+						if (eventHandler != null)
 							eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
 						return false;
 					}
@@ -243,28 +236,24 @@ public class BillingProcessor extends BillingBase {
 	 * real merchant id, unless publisher GoogleId was hacked
 	 * If merchantId was not supplied function checks nothing
 	 *
-	 * @param details
+	 * @param details TransactionDetails
 	 * @return boolean
 	 */
 	private boolean checkMerchant(TransactionDetails details) {
-		if(developerMerchantId==null) //omit merchant id checking
+		if (developerMerchantId == null) //omit merchant id checking
 			return true;
-		if(details.purchaseTime.before(dateMerchantLimit1)) { //new format [merchantId].[orderId] applied or not?
+		if (details.purchaseTime.before(dateMerchantLimit1)) //new format [merchantId].[orderId] applied or not?
 			return true;
-		}
-		if(details.purchaseTime.after(dateMerchantLimit2)) { //newest format applied
+		if (details.purchaseTime.after(dateMerchantLimit2)) //newest format applied
 			return true;
-		}
 		if (details.orderId == null || details.orderId.trim().length() == 0)
 			return false;
-		int index=details.orderId.indexOf('.');
-		if(index <= 0)
-			return false; //protect on absense of merchant id
+		int index = details.orderId.indexOf('.');
+		if (index <= 0)
+			return false; //protect on missing merchant id
 		//extract merchant id
-		String merchantId=details.orderId.substring(0, index);
-		if(merchantId.compareTo(developerMerchantId)==0)   //check against merchantId in Google Play
-			return true;
-		return false;
+		String merchantId = details.orderId.substring(0, index);
+		return merchantId.compareTo(developerMerchantId) == 0;
 	}
 
 	private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache) {
@@ -321,12 +310,13 @@ public class BillingProcessor extends BillingBase {
 
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
 					ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
-
-					for (String responseLine : skuDetails.getStringArrayList(Constants.DETAILS_LIST)) {
-						JSONObject object = new JSONObject(responseLine);
-						SkuDetails product = new SkuDetails(object);
-						productDetails.add(product);
-					}
+					List<String> detailsList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
+					if (detailsList != null)
+						for (String responseLine : detailsList) {
+							JSONObject object = new JSONObject(responseLine);
+							SkuDetails product = new SkuDetails(object);
+							productDetails.add(product);
+						}
 					return productDetails;
 
 				} else {
@@ -414,27 +404,23 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature) {
-        try {
-            /*
+		try {
+			/*
              * Skip the signature check if the provided License Key is NULL and return true in order to
              * continue the purchase flow
              */
-            if (TextUtils.isEmpty(signatureBase64)) {
-                return true;
-            } else {
-                return Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
-            }
-        } catch (Exception e) {
-            return false;
-        }
+			return TextUtils.isEmpty(signatureBase64) || Security.verifyPurchase(productId, signatureBase64, purchaseData, dataSignature);
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
-    public boolean isValid(TransactionDetails transactionDetails){
-		boolean verified=verifyPurchaseSignature(transactionDetails.productId,
-                transactionDetails.purchaseInfo.responseData,transactionDetails.purchaseInfo.signature);
-		boolean checked=checkMerchant(transactionDetails);
+	public boolean isValid(TransactionDetails transactionDetails) {
+		boolean verified = verifyPurchaseSignature(transactionDetails.productId,
+				transactionDetails.purchaseInfo.responseData, transactionDetails.purchaseInfo.signature);
+		boolean checked = checkMerchant(transactionDetails);
 		return verified && checked;
-    }
+	}
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
