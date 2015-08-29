@@ -36,6 +36,9 @@ public class MainActivity extends Activity {
     private static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
     private static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
     private static final String LICENSE_KEY = null; // PUT YOUR MERCHANT KEY HERE;
+    // put your Google merchant id here (as stated in public profile of your Payments Merchant Center)
+    // if filled library will provide protection against Freedom alike Play Market simulators
+    private static final String MERCHANT_ID=null;
 
 	private BillingProcessor bp;
 	private boolean readyToPurchase = false;
@@ -49,7 +52,11 @@ public class MainActivity extends Activity {
 		TextView title = (TextView)findViewById(R.id.titleTextView);
 		title.setText(String.format(getString(R.string.title), getIntent().getIntExtra(ACTIVITY_NUMBER, 1)));
 
-        bp = new BillingProcessor(this, LICENSE_KEY, new BillingProcessor.IBillingHandler() {
+        if(!BillingProcessor.isIabServiceAvailable(this)) {
+            showToast("In-app billing service is unavailable, please upgrade Android Market/Play to version >= 3.9.16");
+        }
+
+        bp = new BillingProcessor(this, LICENSE_KEY, MERCHANT_ID, new BillingProcessor.IBillingHandler() {
             @Override
             public void onProductPurchased(String productId, TransactionDetails details) {
 				showToast("onProductPurchased: " + productId);

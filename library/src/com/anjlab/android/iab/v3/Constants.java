@@ -54,5 +54,6 @@ public class Constants {
 	public static final int BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE = 101;
 	public static final int BILLING_ERROR_INVALID_SIGNATURE = 102;
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
+	public static final int BILLING_ERROR_INVALID_MERCHANT_ID = 104;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 }
