@@ -45,4 +45,20 @@ public class TransactionDetails {
 	public String toString() {
 		return String.format("%s purchased at %s(%s). Token: %s, Signature: %s", productId, purchaseTime, orderId, purchaseToken, purchaseInfo.signature);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		TransactionDetails details = (TransactionDetails) o;
+
+		return !(orderId != null ? !orderId.equals(details.orderId) : details.orderId != null);
+
+	}
+
+	@Override
+	public int hashCode() {
+		return orderId != null ? orderId.hashCode() : 0;
+	}
 }
