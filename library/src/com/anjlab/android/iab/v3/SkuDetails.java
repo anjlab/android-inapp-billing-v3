@@ -51,4 +51,23 @@ public class SkuDetails {
 	public String toString() {
 		return String.format("%s: %s(%s) %f in %s (%s)", productId, title, description, priceValue, currency, priceText);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		SkuDetails that = (SkuDetails) o;
+
+		if (isSubscription != that.isSubscription) return false;
+		return !(productId != null ? !productId.equals(that.productId) : that.productId != null);
+
+	}
+
+	@Override
+	public int hashCode() {
+		int result = productId != null ? productId.hashCode() : 0;
+		result = 31 * result + (isSubscription ? 1 : 0);
+		return result;
+	}
 }
