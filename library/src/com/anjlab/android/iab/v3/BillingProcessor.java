@@ -227,6 +227,8 @@ public class BillingProcessor extends BillingBase {
 			return true;
 		} catch (Exception e) {
 			Log.e(LOG_TAG, e.toString());
+			if (eventHandler != null)
+				eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
 		return false;
 	}
@@ -287,6 +289,8 @@ public class BillingProcessor extends BillingBase {
 			}
 		} catch (Exception e) {
 			Log.e(LOG_TAG, e.toString());
+			if (eventHandler != null)
+				eventHandler.onBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, e);
 		}
 		return false;
 	}
@@ -326,6 +330,8 @@ public class BillingProcessor extends BillingBase {
 				}
 			} catch (Exception e) {
 				Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
+				if (eventHandler != null)
+					eventHandler.onBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 			}
 		}
 		return null;
@@ -394,7 +400,7 @@ public class BillingProcessor extends BillingBase {
 			} catch (Exception e) {
 				Log.e(LOG_TAG, e.toString());
 				if (eventHandler != null)
-					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, null);
+					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 			}
 		} else {
 			if (eventHandler != null)
