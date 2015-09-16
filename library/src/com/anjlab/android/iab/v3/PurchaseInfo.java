@@ -16,6 +16,8 @@
 
 package com.anjlab.android.iab.v3;
 
+import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,6 +30,8 @@ import java.util.Date;
  * a purchase you can find <a href="https://github.com/mgoldsborough/google-play-in-app-billing-verification/blob/master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64">here</a>
  */
 public class PurchaseInfo {
+
+    private static final String LOG_TAG = "iabv3.purchaseInfo";
 
     public enum PurchaseState {
         PurchasedSuccessfully, Canceled, Refunded, SubscriptionExpired;
@@ -83,7 +87,7 @@ public class PurchaseInfo {
             data.autoRenewing = json.optBoolean("autoRenewing");
             return data;
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Failed to parse response data " + e.toString());
             return null;
         }
     }
