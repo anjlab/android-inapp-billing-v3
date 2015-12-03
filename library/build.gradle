@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.5.0'
+    }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -5,22 +16,57 @@ apply plugin: 'signing'
 group 'com.anjlab.android.iab.v3'
 version '1.0.28'
 
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
 android {
     compileSdkVersion 23
-    buildToolsVersion '23.0.1'
+    buildToolsVersion '23.0.2'
+
+    /*
+       Test only modules require other artifacts like the classes.jar to be published, so the test can
+       reference the tested java sources and compile them correctly. In order to get all these
+       artifacts published from the tested module publishNonDefault needs to be set to true.
+    */
+    publishNonDefault true
 
     defaultConfig {
         versionCode 1
         versionName project.version
         minSdkVersion 8
         targetSdkVersion 23
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    sourceSets.main {
-        manifest.srcFile 'AndroidManifest.xml'
-        java.srcDir 'src'
-        aidl.srcDir 'src'
+    testOptions.unitTests {
+        // Don't throw runtime exceptions for android calls that are not mocked
+        returnDefaultValues = true
+
+        // Always show the result of every unit test, even if it passes.
+        all {
+            testLogging {
+                events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+            }
+        }
     }
+}
+
+dependencies {
+    // Dependencies for local unit tests
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-all:1.10.19'
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    // Android Testing Support Library's runner and rules
+    androidTestCompile 'com.android.support.test:runner:0.4'
+    androidTestCompile 'com.android.support.test:rules:0.4'
+    // Espresso UI Testing
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.1'
+
+    // UIAutomator Testing.
+    androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
 }
 
 configurations.archives.extendsFrom configurations.default
