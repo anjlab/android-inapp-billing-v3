@@ -32,6 +32,15 @@ public class SkuDetails {
 
 	public final Double priceValue;
 
+	/**
+	 * Use this value to return the raw price from the product.
+	 * This allows math to be performed without needing to worry about errors
+	 * caused by floating point representations of the product's price.
+	 *
+	 * This is in micros from the Play Store.
+	 */
+	public final long priceLong;
+
 	public final String priceText;
 
 	public SkuDetails(JSONObject source) throws JSONException {
@@ -43,7 +52,8 @@ public class SkuDetails {
 		description = source.optString(Constants.RESPONSE_DESCRIPTION);
 		isSubscription = responseType.equalsIgnoreCase(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 		currency = source.optString(Constants.RESPONSE_PRICE_CURRENCY);
-		priceValue = source.optDouble(Constants.RESPONSE_PRICE_MICROS) / 1000000;
+		priceLong = source.optLong(Constants.RESPONSE_PRICE_MICROS);
+		priceValue = (double) (priceLong / 1000000);
 		priceText = source.optString(Constants.RESPONSE_PRICE);
 	}
 
