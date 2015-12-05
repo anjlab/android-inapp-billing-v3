@@ -3,6 +3,7 @@ gen/
 .idea
 build
 local.properties
+gradle.properties
 .gradle
 *.iml
 .DS_Store
