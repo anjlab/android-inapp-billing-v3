@@ -16,6 +16,8 @@
 
 package com.anjlab.android.iab.v3;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -29,7 +31,7 @@ import java.util.Date;
  * server. An example implementation of how to verify
  * a purchase you can find <a href="https://github.com/mgoldsborough/google-play-in-app-billing-verification/blob/master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64">here</a>
  */
-public class PurchaseInfo {
+public class PurchaseInfo implements Parcelable {
 
     private static final String LOG_TAG = "iabv3.purchaseInfo";
 
@@ -45,7 +47,7 @@ public class PurchaseInfo {
         this.signature = signature;
     }
 
-    public class ResponseData {
+    public static class ResponseData implements Parcelable {
 
         public String orderId;
         public String packageName;
@@ -55,6 +57,49 @@ public class PurchaseInfo {
         public String developerPayload;
         public String purchaseToken;
         public boolean autoRenewing;
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(this.orderId);
+            dest.writeString(this.packageName);
+            dest.writeString(this.productId);
+            dest.writeLong(purchaseTime != null ? purchaseTime.getTime() : -1);
+            dest.writeInt(this.purchaseState == null ? -1 : this.purchaseState.ordinal());
+            dest.writeString(this.developerPayload);
+            dest.writeString(this.purchaseToken);
+            dest.writeByte(autoRenewing ? (byte) 1 : (byte) 0);
+        }
+
+        public ResponseData() {
+        }
+
+        protected ResponseData(Parcel in) {
+            this.orderId = in.readString();
+            this.packageName = in.readString();
+            this.productId = in.readString();
+            long tmpPurchaseTime = in.readLong();
+            this.purchaseTime = tmpPurchaseTime == -1 ? null : new Date(tmpPurchaseTime);
+            int tmpPurchaseState = in.readInt();
+            this.purchaseState = tmpPurchaseState == -1 ? null : PurchaseState.values()[tmpPurchaseState];
+            this.developerPayload = in.readString();
+            this.purchaseToken = in.readString();
+            this.autoRenewing = in.readByte() != 0;
+        }
+
+        public static final Parcelable.Creator<ResponseData> CREATOR = new Parcelable.Creator<ResponseData>() {
+            public ResponseData createFromParcel(Parcel source) {
+                return new ResponseData(source);
+            }
+
+            public ResponseData[] newArray(int size) {
+                return new ResponseData[size];
+            }
+        };
     }
 
     public static PurchaseState getPurchaseState(int state) {
@@ -87,8 +132,34 @@ public class PurchaseInfo {
             data.autoRenewing = json.optBoolean("autoRenewing");
             return data;
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Failed to parse response data " + e.toString());
+            Log.e(LOG_TAG, "Failed to parse response data", e);
             return null;
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.responseData);
+        dest.writeString(this.signature);
+    }
+
+    protected PurchaseInfo(Parcel in) {
+        this.responseData = in.readString();
+        this.signature = in.readString();
+    }
+
+    public static final Parcelable.Creator<PurchaseInfo> CREATOR = new Parcelable.Creator<PurchaseInfo>() {
+        public PurchaseInfo createFromParcel(Parcel source) {
+            return new PurchaseInfo(source);
+        }
+
+        public PurchaseInfo[] newArray(int size) {
+            return new PurchaseInfo[size];
+        }
+    };
 }
