@@ -163,9 +163,12 @@ public class BillingProcessor extends BillingBase {
 				if (purchaseList != null)
 					for (int i = 0; i < purchaseList.size(); i++) {
 						String jsonData = purchaseList.get(i);
-						JSONObject purchase = new JSONObject(jsonData);
-						String signature = signatureList != null && signatureList.size() > i ? signatureList.get(i) : null;
-						cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
+
+						if( !TextUtils.isEmpty(jsonData) ) {
+							JSONObject purchase = new JSONObject(jsonData);
+							String signature = signatureList != null && signatureList.size() > i ? signatureList.get(i) : null;
+							cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID), jsonData, signature);
+						}
 					}
 			}
 			return true;
