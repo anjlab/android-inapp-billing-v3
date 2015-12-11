@@ -13,6 +13,10 @@ buildscript {
 allprojects {
     apply plugin: 'license'
 
+    repositories {
+        mavenCentral()
+    }
+
     sourceSets {
         licenseSrc {
             java {
