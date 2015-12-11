@@ -56,7 +56,7 @@ public class SkuDetails implements Parcelable {
 		isSubscription = responseType.equalsIgnoreCase(Constants.PRODUCT_TYPE_SUBSCRIPTION);
 		currency = source.optString(Constants.RESPONSE_PRICE_CURRENCY);
 		priceLong = source.optLong(Constants.RESPONSE_PRICE_MICROS);
-		priceValue = (double) (priceLong / 1000000);
+		priceValue = priceLong / 1000000d;
 		priceText = source.optString(Constants.RESPONSE_PRICE);
 	}
 
