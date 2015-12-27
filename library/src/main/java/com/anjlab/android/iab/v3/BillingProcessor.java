@@ -187,14 +187,37 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean purchase(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
 	public boolean subscribe(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType) {
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 */
+	public boolean changeSubscribe(Activity activity, String oldProductId, String productId) {
+		List<String> oldProductIds = null;
+		if (!TextUtils.isEmpty(oldProductId)) {
+			oldProductIds = new ArrayList<>(1);
+			oldProductIds.add(oldProductId);
+		}
+		return changeSubscribe(activity, oldProductIds, productId);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
+     */
+	public boolean changeSubscribe(Activity activity, List<String> oldProductIds, String productId) {
+		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	}
+
+	private boolean purchase(Activity activity, List<String> oldProductIds, String productId, String purchaseType) {
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
@@ -203,7 +226,12 @@ public class BillingProcessor extends BillingBase {
 				purchasePayload += ":" + UUID.randomUUID().toString();
 			}
 			savePurchasePayload(purchasePayload);
-			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
+			Bundle bundle;
+			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+				bundle = billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_VERSION, contextPackageName, oldProductIds, productId, purchaseType, purchasePayload);
+			else
+				bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
+
 			if (bundle != null) {
 				int response = bundle.getInt(Constants.RESPONSE_CODE);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
