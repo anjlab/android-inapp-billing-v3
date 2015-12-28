@@ -42,7 +42,7 @@ public class PurchaseInfo implements Parcelable {
     public final String responseData;
     public final String signature;
 
-    PurchaseInfo(String responseData, String signature) {
+    public PurchaseInfo(String responseData, String signature) {
         this.responseData = responseData;
         this.signature = signature;
     }
