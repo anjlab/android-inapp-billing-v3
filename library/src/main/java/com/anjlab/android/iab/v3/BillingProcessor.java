@@ -187,20 +187,31 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean purchase(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, null);
 	}
 
 	public boolean subscribe(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType) {
+	public boolean purchase(Activity activity, String productId, String developerPayload) {
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
+	}
+
+	public boolean subscribe(Activity activity, String productId, String developerPayload) {
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+	}
+
+	private boolean purchase(Activity activity, String productId, String purchaseType, String developerPayload) {
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
 			String purchasePayload = purchaseType + ":" + productId;
 			if (!purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)) {
 				purchasePayload += ":" + UUID.randomUUID().toString();
+			}
+			if (developerPayload != null) {
+				purchasePayload += ":" + developerPayload;
 			}
 			savePurchasePayload(purchasePayload);
 			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
