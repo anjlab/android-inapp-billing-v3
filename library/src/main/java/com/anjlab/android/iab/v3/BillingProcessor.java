@@ -208,7 +208,11 @@ public class BillingProcessor extends BillingBase {
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
+	 * @param activity the activity calling this method
 	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId the new subscription id
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
 	 */
 	public boolean updateSubscription(Activity activity, String oldProductId, String productId) {
 		List<String> oldProductIds = null;
@@ -222,9 +226,15 @@ public class BillingProcessor extends BillingBase {
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
+	 * @param activity the activity calling this method
 	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId the new subscription id
+     * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
      */
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds, String productId) {
+		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+			return false;
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
