@@ -73,6 +73,7 @@ public class BillingProcessor extends BillingBase {
 	private BillingCache cachedSubscriptions;
 	private IBillingHandler eventHandler;
 	private String developerMerchantId;
+	private boolean isSubsUpdateSupported;
 
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override
@@ -196,9 +197,13 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean isSubscriptionUpdateSupported() {
+		// Avoid calling the service again if this value is true
+		if (isSubsUpdateSupported)
+			return true;
+
 		try {
 			int response = billingService.isBillingSupported(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION, contextPackageName, Constants.PRODUCT_TYPE_SUBSCRIPTION);
-			return response == Constants.BILLING_RESPONSE_RESULT_OK;
+			isSubsUpdateSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
