@@ -207,7 +207,7 @@ public class BillingProcessor extends BillingBase {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		return false;
+		return isSubsUpdateSupported;
 	}
 
 	/**
