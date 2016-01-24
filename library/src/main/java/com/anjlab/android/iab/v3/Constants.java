@@ -24,6 +24,7 @@ public class Constants {
 
 	public static final int BILLING_RESPONSE_RESULT_OK = 0; 				//Success
 	public static final int BILLING_RESPONSE_RESULT_USER_CANCELED =	1; 		//User pressed back or canceled a dialog
+	public static final int BILLING_RESPONSE_RESULT_SERVICE_UNAVAILABLE = 2; // Network connection is down
 	public static final int BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE = 3;//Billing API version is not supported for the type requested
 	public static final int BILLING_RESPONSE_RESULT_ITEM_UNAVAILABLE = 4; 	//Requested product is not available for purchase
 	public static final int BILLING_RESPONSE_RESULT_DEVELOPER_ERROR = 5; 	//Invalid arguments provided to the API. This error can also indicate that the application was not correctly signed or properly set up for In-app Billing in Google Play, or does not have the necessary permissions in its manifest
