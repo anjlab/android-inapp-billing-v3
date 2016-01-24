@@ -25,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -72,6 +73,7 @@ public class BillingProcessor extends BillingBase {
 	private BillingCache cachedSubscriptions;
 	private IBillingHandler eventHandler;
 	private String developerMerchantId;
+	private boolean isSubsUpdateSupported;
 
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override
@@ -187,14 +189,61 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean purchase(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
 	public boolean subscribe(Activity activity, String productId) {
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType) {
+	public boolean isSubscriptionUpdateSupported() {
+		// Avoid calling the service again if this value is true
+		if (isSubsUpdateSupported)
+			return true;
+
+		try {
+			int response = billingService.isBillingSupported(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION, contextPackageName, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+			isSubsUpdateSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		return isSubsUpdateSupported;
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity the activity calling this method
+	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId the new subscription id
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Activity activity, String oldProductId, String productId) {
+		List<String> oldProductIds = null;
+		if (!TextUtils.isEmpty(oldProductId)) {
+			oldProductIds = new ArrayList<>(1);
+			oldProductIds.add(oldProductId);
+		}
+		return updateSubscription(activity, oldProductIds, productId);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity the activity calling this method
+	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId the new subscription id
+     * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+     */
+	public boolean updateSubscription(Activity activity, List<String> oldProductIds, String productId) {
+		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+			return false;
+		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	}
+
+	private boolean purchase(Activity activity, List<String> oldProductIds, String productId, String purchaseType) {
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 			return false;
 		try {
@@ -203,7 +252,12 @@ public class BillingProcessor extends BillingBase {
 				purchasePayload += ":" + UUID.randomUUID().toString();
 			}
 			savePurchasePayload(purchasePayload);
-			Bundle bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
+			Bundle bundle;
+			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+				bundle = billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION, contextPackageName, oldProductIds, productId, purchaseType, purchasePayload);
+			else
+				bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION, contextPackageName, productId, purchaseType, purchasePayload);
+
 			if (bundle != null) {
 				int response = bundle.getInt(Constants.RESPONSE_CODE);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK) {
