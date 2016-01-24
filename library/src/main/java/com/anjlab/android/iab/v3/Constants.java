@@ -17,6 +17,7 @@ package com.anjlab.android.iab.v3;
 
 public class Constants {
     public static final int GOOGLE_API_VERSION = 3;
+	public static final int GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION = 5;
 
     public static final String PRODUCT_TYPE_MANAGED = "inapp";
     public static final String PRODUCT_TYPE_SUBSCRIPTION = "subs";
