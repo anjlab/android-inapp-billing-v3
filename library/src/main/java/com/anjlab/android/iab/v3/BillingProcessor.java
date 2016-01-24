@@ -55,8 +55,8 @@ public class BillingProcessor extends BillingBase {
 		void onBillingInitialized();
 	}
 
-	private static final Date dateMerchantLimit1 = new Date(2012, 12, 5); //5th December 2012
-	private static final Date dateMerchantLimit2 = new Date(2015, 7, 20); //21st July 2015
+	private static final Date DATE_MERCHANT_LIMIT_1 = new Date(2012, 12, 5); //5th December 2012
+	private static final Date DATE_MERCHANT_LIMIT_2 = new Date(2015, 7, 20); //21st July 2015
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 2061984;
 	private static final String LOG_TAG = "iabv3";
@@ -321,9 +321,9 @@ public class BillingProcessor extends BillingBase {
 	private boolean checkMerchant(TransactionDetails details) {
 		if (developerMerchantId == null) //omit merchant id checking
 			return true;
-		if (details.purchaseTime.before(dateMerchantLimit1)) //new format [merchantId].[orderId] applied or not?
+		if (details.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //new format [merchantId].[orderId] applied or not?
 			return true;
-		if (details.purchaseTime.after(dateMerchantLimit2)) //newest format applied
+		if (details.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
 			return true;
 		if (details.orderId == null || details.orderId.trim().length() == 0)
 			return false;
@@ -426,7 +426,7 @@ public class BillingProcessor extends BillingBase {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
+    public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
@@ -498,12 +498,13 @@ public class BillingProcessor extends BillingBase {
 		}
 	}
 
-	public boolean isValid(TransactionDetails transactionDetails) {
-		boolean verified = verifyPurchaseSignature(transactionDetails.productId,
-				transactionDetails.purchaseInfo.responseData, transactionDetails.purchaseInfo.signature);
-		boolean checked = checkMerchant(transactionDetails);
-		return verified && checked;
-	}
+	public boolean isValidTransactionDetails(TransactionDetails transactionDetails)
+    {
+        return verifyPurchaseSignature(transactionDetails.productId,
+                                       transactionDetails.purchaseInfo.responseData,
+                                       transactionDetails.purchaseInfo.signature) &&
+               checkMerchant(transactionDetails);
+    }
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
