@@ -62,7 +62,10 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 	public void onBillingError(int errorCode, Throwable error) {
 		/*
 		 * Called when some error occurred. See Constants class for more details
-		 */
+		 * 
+		 * Note - this includes handling the case where the user canceled the buy dialog:
+		 * errorCode = Constants.BILLING_RESPONSE_RESULT_USER_CANCELED
+		 /*
 	}
 	
 	@Override
