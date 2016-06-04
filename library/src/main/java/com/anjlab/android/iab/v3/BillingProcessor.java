@@ -115,7 +115,7 @@ public class BillingProcessor extends BillingBase {
 			iapIntent.setPackage("com.android.vending");
 			getContext().bindService(iapIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.toString());
+			Log.e(LOG_TAG, "error in bindPlayServices", e);
 		}
 	}
 
@@ -125,7 +125,7 @@ public class BillingProcessor extends BillingBase {
 			try {
 				getContext().unbindService(serviceConnection);
 			} catch (Exception e) {
-				Log.e(LOG_TAG, e.toString());
+				Log.e(LOG_TAG, "Error in release", e);
 			}
 			billingService = null;
 		}
@@ -177,7 +177,7 @@ public class BillingProcessor extends BillingBase {
 		} catch (Exception e) {
 			if (eventHandler != null)
 				eventHandler.onBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
-			Log.e(LOG_TAG, e.toString());
+			Log.e(LOG_TAG, "Error in loadPurchasesByType", e);
 		}
 		return false;
 	}
@@ -303,7 +303,7 @@ public class BillingProcessor extends BillingBase {
 			}
 			return true;
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.toString());
+			Log.e(LOG_TAG, "Error in purchase", e);
 			if (eventHandler != null)
 				eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
@@ -341,7 +341,7 @@ public class BillingProcessor extends BillingBase {
 			try {
 				return new TransactionDetails(details);
 			} catch (JSONException e) {
-				Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId);
+				Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId, e);
 			}
 		}
 		return null;
@@ -365,7 +365,7 @@ public class BillingProcessor extends BillingBase {
 				}
 			}
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.toString());
+			Log.e(LOG_TAG, "Error in consumePurchase", e);
 			if (eventHandler != null)
 				eventHandler.onBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, e);
 		}
@@ -406,7 +406,7 @@ public class BillingProcessor extends BillingBase {
 					Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d", productIdList.size(), response));
 				}
 			} catch (Exception e) {
-				Log.e(LOG_TAG, String.format("Failed to call getSkuDetails %s", e.toString()));
+				Log.e(LOG_TAG, "Failed to call getSkuDetails", e);
 				if (eventHandler != null)
 					eventHandler.onBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 			}
@@ -475,7 +475,7 @@ public class BillingProcessor extends BillingBase {
 						eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
 				}
 			} catch (Exception e) {
-				Log.e(LOG_TAG, e.toString());
+				Log.e(LOG_TAG, "Error in handleActivityResult", e);
 				if (eventHandler != null)
 					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 			}
