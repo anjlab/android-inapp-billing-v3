@@ -65,7 +65,7 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 		 * 
 		 * Note - this includes handling the case where the user canceled the buy dialog:
 		 * errorCode = Constants.BILLING_RESPONSE_RESULT_USER_CANCELED
-		 /*
+		 */
 	}
 	
 	@Override
