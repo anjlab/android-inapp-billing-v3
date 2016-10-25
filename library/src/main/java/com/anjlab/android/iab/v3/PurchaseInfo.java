@@ -35,98 +35,26 @@ public class PurchaseInfo implements Parcelable {
 
     private static final String LOG_TAG = "iabv3.purchaseInfo";
 
-    public enum PurchaseState {
-        PurchasedSuccessfully, Canceled, Refunded, SubscriptionExpired;
-    }
-
     public final String responseData;
     public final String signature;
+    public final PurchaseData purchaseData;
 
     public PurchaseInfo(String responseData, String signature) {
         this.responseData = responseData;
         this.signature = signature;
+        this.purchaseData = parseResponseData();
     }
 
-    public static class ResponseData implements Parcelable {
-
-        public String orderId;
-        public String packageName;
-        public String productId;
-        public Date purchaseTime;
-        public PurchaseState purchaseState;
-        public String developerPayload;
-        public String purchaseToken;
-        public boolean autoRenewing;
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            dest.writeString(this.orderId);
-            dest.writeString(this.packageName);
-            dest.writeString(this.productId);
-            dest.writeLong(purchaseTime != null ? purchaseTime.getTime() : -1);
-            dest.writeInt(this.purchaseState == null ? -1 : this.purchaseState.ordinal());
-            dest.writeString(this.developerPayload);
-            dest.writeString(this.purchaseToken);
-            dest.writeByte(autoRenewing ? (byte) 1 : (byte) 0);
-        }
-
-        public ResponseData() {
-        }
-
-        protected ResponseData(Parcel in) {
-            this.orderId = in.readString();
-            this.packageName = in.readString();
-            this.productId = in.readString();
-            long tmpPurchaseTime = in.readLong();
-            this.purchaseTime = tmpPurchaseTime == -1 ? null : new Date(tmpPurchaseTime);
-            int tmpPurchaseState = in.readInt();
-            this.purchaseState = tmpPurchaseState == -1 ? null : PurchaseState.values()[tmpPurchaseState];
-            this.developerPayload = in.readString();
-            this.purchaseToken = in.readString();
-            this.autoRenewing = in.readByte() != 0;
-        }
-
-        public static final Parcelable.Creator<ResponseData> CREATOR = new Parcelable.Creator<ResponseData>() {
-            public ResponseData createFromParcel(Parcel source) {
-                return new ResponseData(source);
-            }
-
-            public ResponseData[] newArray(int size) {
-                return new ResponseData[size];
-            }
-        };
-    }
-
-    public static PurchaseState getPurchaseState(int state) {
-        switch (state) {
-            case 0:
-                return PurchaseState.PurchasedSuccessfully;
-            case 1:
-                return PurchaseState.Canceled;
-            case 2:
-                return PurchaseState.Refunded;
-            case 3:
-                return PurchaseState.SubscriptionExpired;
-            default:
-                return PurchaseState.Canceled;
-        }
-    }
-
-    public ResponseData parseResponseData() {
+    private PurchaseData parseResponseData() {
         try {
             JSONObject json = new JSONObject(responseData);
-            ResponseData data = new ResponseData();
+            PurchaseData data = new PurchaseData();
             data.orderId = json.optString("orderId");
             data.packageName = json.optString("packageName");
             data.productId = json.optString("productId");
             long purchaseTimeMillis = json.optLong("purchaseTime", 0);
             data.purchaseTime = purchaseTimeMillis != 0 ? new Date(purchaseTimeMillis) : null;
-            data.purchaseState = getPurchaseState(json.optInt("purchaseState", 1));
+            data.purchaseState = PurchaseState.values()[json.optInt("purchaseState", 1)];
             data.developerPayload = json.optString("developerPayload");
             data.purchaseToken = json.getString("purchaseToken");
             data.autoRenewing = json.optBoolean("autoRenewing");
@@ -151,6 +79,7 @@ public class PurchaseInfo implements Parcelable {
     protected PurchaseInfo(Parcel in) {
         this.responseData = in.readString();
         this.signature = in.readString();
+        this.purchaseData = parseResponseData();
     }
 
     public static final Parcelable.Creator<PurchaseInfo> CREATOR = new Parcelable.Creator<PurchaseInfo>() {
