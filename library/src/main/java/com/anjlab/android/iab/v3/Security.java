@@ -57,12 +57,15 @@ class Security {
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
                 TextUtils.isEmpty(signature)) {
 
-            if(BuildConfig.DEBUG){
-                //handle test purchase not having signature
-                if(productId.equals("android.test.purchased")) {
-                    return true;
-                }
+            if (
+                productId.equals("android.test.purchased") ||
+                productId.equals("android.test.canceled") ||
+                productId.equals("android.test.refunded") ||
+                productId.equals("android.test.item_unavailable")
+            ) {
+                return true;
             }
+
             Log.e(TAG, "Purchase verification failed: missing data.");
             return false;
         }
