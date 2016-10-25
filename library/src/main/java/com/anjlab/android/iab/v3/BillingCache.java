@@ -33,9 +33,9 @@ class BillingCache extends BillingBase {
 	private String cacheKey;
 	private String version;
 
-	public BillingCache(Context context, String key) {
+	BillingCache(Context context, String key) {
 		super(context);
-		data = new HashMap<String, PurchaseInfo>();
+		data = new HashMap<>();
 		cacheKey = key;
 		load();
 	}
@@ -63,7 +63,7 @@ class BillingCache extends BillingBase {
 	}
 
 	private void flush() {
-		ArrayList<String> output = new ArrayList<String>();
+		ArrayList<String> output = new ArrayList<>();
 		for (String productId : data.keySet()) {
 			PurchaseInfo info = data.get(productId);
 			output.add(productId + LINE_DELIMITER + info.responseData + LINE_DELIMITER + info.signature);
@@ -73,17 +73,17 @@ class BillingCache extends BillingBase {
 		saveString(getPreferencesVersionKey(), version);
 	}
 
-	public boolean includesProduct(String productId) {
+	boolean includesProduct(String productId) {
 		reloadDataIfNeeded();
 		return data.containsKey(productId);
 	}
 
-	public PurchaseInfo getDetails(String productId) {
+	PurchaseInfo getDetails(String productId) {
 		reloadDataIfNeeded();
 		return data.containsKey(productId) ? data.get(productId) : null;
 	}
 
-	public void put(String productId, String details, String signature) {
+	void put(String productId, String details, String signature) {
 		reloadDataIfNeeded();
 		if (!data.containsKey(productId)) {
 			data.put(productId, new PurchaseInfo(details, signature));
@@ -91,7 +91,7 @@ class BillingCache extends BillingBase {
 		}
 	}
 
-	public void remove(String productId) {
+	void remove(String productId) {
 		reloadDataIfNeeded();
 		if (data.containsKey(productId)) {
 			data.remove(productId);
@@ -99,7 +99,7 @@ class BillingCache extends BillingBase {
 		}
 	}
 
-	public void clear() {
+	void clear() {
 		reloadDataIfNeeded();
 		data.clear();
 		flush();
@@ -116,8 +116,8 @@ class BillingCache extends BillingBase {
 		}
 	}
 
-	public List<String> getContents() {
-		return new ArrayList<String>(data.keySet());
+	List<String> getContents() {
+		return new ArrayList<>(data.keySet());
 	}
 
 	@Override

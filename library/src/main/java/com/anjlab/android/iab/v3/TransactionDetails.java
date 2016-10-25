@@ -19,29 +19,43 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Date;
 
 public class TransactionDetails implements Parcelable {
 
+	/**
+	 * @deprecated use {@see purchaseInfo.purchaseData.productId}} instead.
+	 */
+	@Deprecated
 	public final String productId;
 
+	/**
+	 * @deprecated use {@see purchaseInfo.purchaseData.orderId}} instead.
+	 */
+	@Deprecated
 	public final String orderId;
 
+	/**
+	 * @deprecated use {@see purchaseInfo.purchaseData.purchaseToken}} instead.
+	 */
+	@Deprecated
 	public final String purchaseToken;
 
+	/**
+	 * @deprecated use {@see purchaseInfo.purchaseData.purchaseTime}} instead.
+	 */
+	@Deprecated
 	public final Date purchaseTime;
 
 	public final PurchaseInfo purchaseInfo;
 
 	public TransactionDetails(PurchaseInfo info) throws JSONException {
-		JSONObject source = new JSONObject(info.responseData);
 		purchaseInfo = info;
-		productId = source.getString(Constants.RESPONSE_PRODUCT_ID);
-		orderId = source.optString(Constants.RESPONSE_ORDER_ID);
-		purchaseToken = source.getString(Constants.RESPONSE_PURCHASE_TOKEN);
-		purchaseTime = new Date(source.getLong(Constants.RESPONSE_PURCHASE_TIME));
+		productId = purchaseInfo.purchaseData.productId;
+		orderId = purchaseInfo.purchaseData.orderId;
+		purchaseToken = purchaseInfo.purchaseData.purchaseToken;
+		purchaseTime = purchaseInfo.purchaseData.purchaseTime;
 	}
 
 	@Override
@@ -57,7 +71,6 @@ public class TransactionDetails implements Parcelable {
 		TransactionDetails details = (TransactionDetails) o;
 
 		return !(orderId != null ? !orderId.equals(details.orderId) : details.orderId != null);
-
 	}
 
 	@Override
@@ -72,20 +85,15 @@ public class TransactionDetails implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeString(this.productId);
-		dest.writeString(this.orderId);
-		dest.writeString(this.purchaseToken);
-		dest.writeLong(purchaseTime != null ? purchaseTime.getTime() : -1);
 		dest.writeParcelable(this.purchaseInfo, flags);
 	}
 
 	protected TransactionDetails(Parcel in) {
-		this.productId = in.readString();
-		this.orderId = in.readString();
-		this.purchaseToken = in.readString();
-		long tmpPurchaseTime = in.readLong();
-		this.purchaseTime = tmpPurchaseTime == -1 ? null : new Date(tmpPurchaseTime);
 		this.purchaseInfo = in.readParcelable(PurchaseInfo.class.getClassLoader());
+		this.productId = purchaseInfo.purchaseData.productId;
+		this.orderId = purchaseInfo.purchaseData.orderId;
+		this.purchaseToken = purchaseInfo.purchaseData.purchaseToken;
+		this.purchaseTime = purchaseInfo.purchaseData.purchaseTime;
 	}
 
 	public static final Parcelable.Creator<TransactionDetails> CREATOR = new Parcelable.Creator<TransactionDetails>() {
