@@ -7,3 +7,7 @@ gradle.properties
 .gradle
 *.iml
 .DS_Store
+.classpath
+.project
+.settings/
+project.properties
