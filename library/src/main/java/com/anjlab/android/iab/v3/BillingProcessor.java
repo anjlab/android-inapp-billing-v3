@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -75,6 +76,31 @@ public class BillingProcessor extends BillingBase {
 	private String developerMerchantId;
 	private boolean isSubsUpdateSupported;
 
+	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(Void... nothing)
+		{
+			if (!isPurchaseHistoryRestored()) {
+				loadOwnedPurchasesFromGoogle();
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean restored)
+		{
+			if (restored) {
+				setPurchaseHistoryRestored();
+				if (eventHandler != null)
+					eventHandler.onPurchaseHistoryRestored();
+			}
+			if (eventHandler != null)
+				eventHandler.onBillingInitialized();
+		}
+	}
+
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
@@ -84,13 +110,7 @@ public class BillingProcessor extends BillingBase {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			billingService = IInAppBillingService.Stub.asInterface(service);
-			if (!isPurchaseHistoryRestored() && loadOwnedPurchasesFromGoogle()) {
-				setPurchaseHistoryRestored();
-				if (eventHandler != null)
-					eventHandler.onPurchaseHistoryRestored();
-			}
-			if (eventHandler != null)
-				eventHandler.onBillingInitialized();
+			new HistoryInitializationTask().execute();
 		}
 	};
 
@@ -116,6 +136,8 @@ public class BillingProcessor extends BillingBase {
 			getContext().bindService(iapIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 		} catch (Exception e) {
 			Log.e(LOG_TAG, "error in bindPlayServices", e);
+			if (eventHandler != null)
+				eventHandler.onBillingError(Constants.BILLING_ERROR_BIND_PLAY_STORE_FAILED, e);
 		}
 	}
 
