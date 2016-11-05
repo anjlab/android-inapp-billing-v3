@@ -109,14 +109,24 @@ public class BillingProcessor extends BillingBase {
 		bindPlayServices();
 	}
 
+	private static Intent getBindServiceIntent() {
+		Intent intent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+		intent.setPackage("com.android.vending");
+		return intent;
+	}
+
 	private void bindPlayServices() {
 		try {
-			Intent iapIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
-			iapIntent.setPackage("com.android.vending");
-			getContext().bindService(iapIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+			getContext().bindService(getBindServiceIntent(), serviceConnection, Context.BIND_AUTO_CREATE);
 		} catch (Exception e) {
 			Log.e(LOG_TAG, "error in bindPlayServices", e);
 		}
+	}
+
+	public static boolean isIabServiceAvailable(Context context) {
+		final PackageManager packageManager = context.getPackageManager();
+		List<ResolveInfo> list = packageManager.queryIntentServices(getBindServiceIntent(), 0);
+		return list.size() > 0;
 	}
 
 	@Override
@@ -520,12 +530,5 @@ public class BillingProcessor extends BillingBase {
 
 	private String getPurchasePayload() {
 		return loadString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, null);
-	}
-
-	public static boolean isIabServiceAvailable(Context context) {
-		final PackageManager packageManager = context.getPackageManager();
-		final Intent intent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
-		List<ResolveInfo> list = packageManager.queryIntentServices(intent, 0);
-		return list.size() > 0;
 	}
 }
