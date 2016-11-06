@@ -1,12 +1,10 @@
-Android In-App Billing v3 Library
-=======================
+# Android In-App Billing v3 Library
 
 This is a simple, straight-forward implementation of the Android v3 In-app billing API.
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
-Getting Started
-===============
+## Getting Started
 
 * You project should build against Android 2.2 SDK at least.
 
@@ -106,8 +104,13 @@ bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE"
 	}
 ```
 
-Check Play Market services availability
----------------------------------------
+## Testing In-app Billing
+
+Here is a [complete guide](https://developer.android.com/google/play/billing/billing_testing.html).
+Make sure you read it before you start testing
+
+## Check Play Market services availability
+
 Before any usage it's good practice to check in-app billing services availability.
 In some elder devices or chinese ones it may happen that Play Market is unavailable or is deprecated
  and doesn't support in-app billing.
@@ -120,21 +123,21 @@ Simply call static method `BillingProcessor.isIabServiceAvailable()`:
     }
 ```
 
-Consume Purchased Products
---------------------------
+## Consume Purchased Products
+
 You can always consume made purchase and allow to buy same product multiple times. To do this you need:
 ```java
 	bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 
-Restore Purchases & Subscriptions
---------------------------
+## Restore Purchases & Subscriptions
+
 ```java
 	bp.loadOwnedPurchasesFromGoogle();
 ```
 
-Getting Listing Details of Your Products
---------------------------
+## Getting Listing Details of Your Products
+
 To query listing price and a description of your product / subscription listed in Google Play use these methods:
 
 ```java
@@ -165,8 +168,7 @@ where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for p
 
 As a result you will get a `List<SkuDetails>` which contains objects described above.
 
-Getting Purchase Transaction Details
---------------------------
+## Getting Purchase Transaction Details
 As a part or 1.0.9 changes, `TransactionDetails` object is passed to `onProductPurchased` method of a handler class.
 However, you can always retrieve it later calling these methods:
 
@@ -188,16 +190,15 @@ As a result you will get a `TransactionDetails` object with the following info i
     public final PurchaseInfo purchaseInfo;
 ```
 
-Handle Canceled Subscriptions
---------------------------
+## Handle Canceled Subscriptions
 
 Call `bp.getSubscriptionTransactionDetails(...)` and check the `purchaseInfo.purchaseData.autoRenewing` flag.
 It will be set to `False` once subscription gets cancelled.
 Also notice, that you will need to call periodically `bp.loadOwnedPurchasesFromGoogle()` method in order to update subscription information
 
 
-Protection against fake "markets"
---------------------------------
+## Protection Against Fake "Markets"
+
 There are number of attacks which exploits some vulnerabilities of Google's Play Market.
 Among them is so-called *Freedom attack*: *Freedom* is special Android application, which
 intercepts application calls to Play Market services and substitutes them with fake ones. So in the
@@ -220,7 +221,6 @@ Later one can easily check transaction validity using method:
 P.S. This kind of protection works only for transactions dated between 5th December 2012 and
 21st July 2015. Before December 2012 `orderId` wasn't contain `merchantId` and in the end of July this
  year Google suddenly changed `orderId` format.
-
 
 ## License
 
