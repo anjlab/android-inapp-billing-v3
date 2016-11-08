@@ -192,7 +192,7 @@ As a result you will get a `TransactionDetails` object with the following info i
 
 ## Handle Canceled Subscriptions
 
-Call `bp.getSubscriptionTransactionDetails(...)` and check the `purchaseInfo.purchaseData.autoRenewing` flag.
+Call `bp.getSubscriptionTransactionDetails(...)` and check the `purchaseInfo.parseResponseData().autoRenewing` flag.
 It will be set to `False` once subscription gets cancelled.
 Also notice, that you will need to call periodically `bp.loadOwnedPurchasesFromGoogle()` method in order to update subscription information
 
