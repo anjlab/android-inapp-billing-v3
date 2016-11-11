@@ -19,38 +19,30 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import java.lang.ref.WeakReference;
-
 class BillingBase {
 
-	private WeakReference<Context> contextReference;
+	private Context context;
 
-	public BillingBase(Context context) {
-		contextReference = new WeakReference<Context>(context);
+	BillingBase(Context context) {
+		this.context = context;
 	}
 
-	public Context getContext() {
-		return contextReference.get();
+	Context getContext() {
+		return context;
 	}
 
-	protected String getPreferencesBaseKey() {
-		return contextReference.get().getPackageName() + "_preferences";
+	String getPreferencesBaseKey() {
+		return getContext().getPackageName() + "_preferences";
 	}
 
 	private SharedPreferences getPreferences() {
-		if (contextReference.get() != null)
-			return PreferenceManager.getDefaultSharedPreferences(contextReference.get());
-		return null;
+		return PreferenceManager.getDefaultSharedPreferences(getContext());
 	}
 
-	public void release() {
-		if (contextReference != null)
-			contextReference.clear();
-	}
-
-	protected boolean saveString(String key, String value) {
+	boolean saveString(String key, String value) {
 		SharedPreferences sp = getPreferences();
-		if (sp != null) {
+		if (sp != null)
+		{
 			SharedPreferences.Editor spe = sp.edit();
 			spe.putString(key, value);
 			spe.commit();
@@ -59,16 +51,17 @@ class BillingBase {
 		return false;
 	}
 
-	protected String loadString(String key, String defValue) {
+	String loadString(String key, String defValue) {
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
 			return sp.getString(key, defValue);
 		return defValue;
 	}
 
-	protected boolean saveBoolean(String key, Boolean value) {
+	boolean saveBoolean(String key, Boolean value) {
 		SharedPreferences sp = getPreferences();
-		if (sp != null) {
+		if (sp != null)
+		{
 			SharedPreferences.Editor spe = sp.edit();
 			spe.putBoolean(key, value);
 			spe.commit();
@@ -77,7 +70,7 @@ class BillingBase {
 		return false;
 	}
 
-	protected boolean loadBoolean(String key, boolean defValue) {
+	boolean loadBoolean(String key, boolean defValue) {
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
 			return sp.getBoolean(key, defValue);
