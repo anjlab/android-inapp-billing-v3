@@ -119,12 +119,12 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public BillingProcessor(Context context, String licenseKey, String merchantId, IBillingHandler handler) {
-		super(context);
+		super(context.getApplicationContext());
 		signatureBase64 = licenseKey;
 		eventHandler = handler;
-		contextPackageName = context.getApplicationContext().getPackageName();
-		cachedProducts = new BillingCache(context, MANAGED_PRODUCTS_CACHE_KEY);
-		cachedSubscriptions = new BillingCache(context, SUBSCRIPTIONS_CACHE_KEY);
+		contextPackageName = getContext().getPackageName();
+		cachedProducts = new BillingCache(getContext(), MANAGED_PRODUCTS_CACHE_KEY);
+		cachedSubscriptions = new BillingCache(getContext(), SUBSCRIPTIONS_CACHE_KEY);
 		developerMerchantId = merchantId;
 		bindPlayServices();
 	}
@@ -151,9 +151,8 @@ public class BillingProcessor extends BillingBase {
 		return list.size() > 0;
 	}
 
-	@Override
 	public void release() {
-		if (serviceConnection != null && getContext() != null) {
+		if (isInitialized() && serviceConnection != null) {
 			try {
 				getContext().unbindService(serviceConnection);
 			} catch (Exception e) {
@@ -161,8 +160,6 @@ public class BillingProcessor extends BillingBase {
 			}
 			billingService = null;
 		}
-		cachedProducts.release();
-		super.release();
 	}
 
 	public boolean isInitialized() {
