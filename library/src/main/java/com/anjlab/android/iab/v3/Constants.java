@@ -60,4 +60,5 @@ public class Constants {
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
 	public static final int BILLING_ERROR_SKUDETAILS_FAILED = 112;
+	public static final int BILLING_ERROR_BIND_PLAY_STORE_FAILED = 113;
 }
