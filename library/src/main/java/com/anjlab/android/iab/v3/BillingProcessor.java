@@ -148,7 +148,7 @@ public class BillingProcessor extends BillingBase {
 	public static boolean isIabServiceAvailable(Context context) {
 		final PackageManager packageManager = context.getPackageManager();
 		List<ResolveInfo> list = packageManager.queryIntentServices(getBindServiceIntent(), 0);
-		return list.size() > 0;
+		return list != null && list.size() > 0;
 	}
 
 	public void release() {
