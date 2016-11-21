@@ -112,7 +112,7 @@ Make sure you read it before you start testing
 ## Check Play Market services availability
 
 Before any usage it's good practice to check in-app billing services availability.
-In some elder devices or chinese ones it may happen that Play Market is unavailable or is deprecated
+In some older devices or chinese ones it may happen that Play Market is unavailable or is deprecated
  and doesn't support in-app billing.
 
 Simply call static method `BillingProcessor.isIabServiceAvailable()`:
