@@ -45,7 +45,11 @@ public class PurchaseInfo implements Parcelable {
         this.purchaseData = parseResponseData();
     }
 
-    private PurchaseData parseResponseData() {
+    /**
+     * @deprecated dont call it directly, use {@see purchaseData}} instead.
+     */
+    @Deprecated
+    public PurchaseData parseResponseData() {
         try {
             JSONObject json = new JSONObject(responseData);
             PurchaseData data = new PurchaseData();
