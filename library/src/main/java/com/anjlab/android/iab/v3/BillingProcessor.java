@@ -467,6 +467,24 @@ public class BillingProcessor extends BillingBase {
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
 	}
 
+	private String getDeveloperPayloadFromPurchaseData(JSONObject purchase) {
+		String value = null;
+		try
+		{
+			value = purchase.has(Constants.RESPONSE_PAYLOAD)
+					? purchase.getString(Constants.RESPONSE_PAYLOAD) : null;
+		}
+		catch (JSONException e)
+		{
+			Log.e(LOG_TAG, "Failed to extract developer payload value!");
+		}
+		return value != null ? value : "";
+	}
+
+	private boolean validateDeveloperPayload(String expectedValue, String actualValue) {
+		return expectedValue.equals(actualValue);
+	}
+
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != PURCHASE_FLOW_REQUEST_CODE)
 			return false;
@@ -483,11 +501,9 @@ public class BillingProcessor extends BillingBase {
 			try {
 				JSONObject purchase = new JSONObject(purchaseData);
 				String productId = purchase.getString(Constants.RESPONSE_PRODUCT_ID);
-				String developerPayload = purchase.getString(Constants.RESPONSE_PAYLOAD);
-				if (developerPayload == null)
-					developerPayload = "";
+				String developerPayload = getDeveloperPayloadFromPurchaseData(purchase);
 				boolean purchasedSubscription = purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
-				if (purchasePayload.equals(developerPayload)) {
+				if (validateDeveloperPayload(purchasePayload, developerPayload)) {
 					if (verifyPurchaseSignature(productId, purchaseData, dataSignature)) {
 						BillingCache cache = purchasedSubscription ? cachedSubscriptions : cachedProducts;
 						cache.put(productId, purchaseData, dataSignature);
@@ -501,7 +517,7 @@ public class BillingProcessor extends BillingBase {
 				} else {
 					Log.e(LOG_TAG, String.format("Payload mismatch: %s != %s", purchasePayload, developerPayload));
 					if (eventHandler != null)
-						eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
+						eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD, null);
 				}
 			} catch (Exception e) {
 				Log.e(LOG_TAG, "Error in handleActivityResult", e);
@@ -539,7 +555,7 @@ public class BillingProcessor extends BillingBase {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
 	}
 
-	public void setPurchaseHistoryRestored() {
+	private void setPurchaseHistoryRestored() {
 		saveBoolean(getPreferencesBaseKey() + RESTORE_KEY, true);
 	}
 
