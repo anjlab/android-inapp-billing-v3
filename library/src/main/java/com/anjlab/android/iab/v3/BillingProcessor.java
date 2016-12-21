@@ -21,8 +21,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -145,10 +143,32 @@ public class BillingProcessor extends BillingBase {
 		}
 	}
 
-	public static boolean isIabServiceAvailable(Context context) {
-		final PackageManager packageManager = context.getPackageManager();
-		List<ResolveInfo> list = packageManager.queryIntentServices(getBindServiceIntent(), 0);
-		return list != null && list.size() > 0;
+	public boolean isIabProductManagedSupported(Context context){
+		if (isInitialized()){
+			try {
+				return Constants.BILLING_RESPONSE_RESULT_OK == billingService.isBillingSupported(Constants.GOOGLE_API_VERSION, context.getPackageName(), Constants.PRODUCT_TYPE_MANAGED);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isIabProductSubscriptionSupported(Context context){
+		if (isInitialized()){
+			try {
+				// Check for v5 subscriptions support. This is needed for
+				// getBuyIntentToReplaceSku which allows for subscription update
+				return Constants.BILLING_RESPONSE_RESULT_OK == billingService.isBillingSupported(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION, context.getPackageName(), Constants.PRODUCT_TYPE_SUBSCRIPTION);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	public void release() {
@@ -271,19 +291,19 @@ public class BillingProcessor extends BillingBase {
 	 * @param activity the activity calling this method
 	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
 	 * @param productId the new subscription id
-     * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
-     */
+	 */
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds, String productId) {
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 			return false;
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-    private boolean purchase(Activity activity, String productId, String purchaseType,
-                             String developerPayload) {
-        return purchase(activity, null, productId, purchaseType, developerPayload);
-    }
+	private boolean purchase(Activity activity, String productId, String purchaseType,
+							 String developerPayload) {
+		return purchase(activity, null, productId, purchaseType, developerPayload);
+	}
 
 	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
 							 String purchaseType, String developerPayload) {
@@ -455,7 +475,7 @@ public class BillingProcessor extends BillingBase {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-    public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
+	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
@@ -506,7 +526,7 @@ public class BillingProcessor extends BillingBase {
 			} catch (Exception e) {
 				Log.e(LOG_TAG, "Error in handleActivityResult", e);
 				if (eventHandler != null)
-					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
+					eventHandler.onBillingError(responseCode, e);
 			}
 		} else {
 			if (eventHandler != null)
@@ -528,12 +548,12 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean isValidTransactionDetails(TransactionDetails transactionDetails)
-    {
-        return verifyPurchaseSignature(transactionDetails.productId,
-                                       transactionDetails.purchaseInfo.responseData,
-                                       transactionDetails.purchaseInfo.signature) &&
-               checkMerchant(transactionDetails);
-    }
+	{
+		return verifyPurchaseSignature(transactionDetails.productId,
+				transactionDetails.purchaseInfo.responseData,
+				transactionDetails.purchaseInfo.signature) &&
+				checkMerchant(transactionDetails);
+	}
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
