@@ -73,62 +73,62 @@ artifacts {
     archives androidJavadocsJar
 }
 
-uploadArchives {
-    configuration = configurations.archives
-    repositories.mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-        repository(url: sonatypeRepo) {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
-        }
-
-        pom.project {
-            name 'Android In-App Billing v3 Library'
-            packaging 'aar'
-            description 'A lightweight implementation of Android In-app Billing Version 3'
-            url 'https://github.com/anjlab/android-inapp-billing-v3'
-
-            scm {
-                url 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-                connection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-                developerConnection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-            }
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-
-            developers {
-                developer {
-                    id 'serggl'
-                    name 'Sergey Glukhov'
-                    email 'sergey.glukhov@gmail.com'
-                }
-            }
-        }
-    }
-}
-
-android.libraryVariants.all { variant ->
-    def name = variant.buildType.name
-    if (name.equals('com.android.builder.BuilderConstants.DEBUG')) {
-        return; // Skip debug builds.
-    }
-    def task = project.tasks.create "jar${name.capitalize()}", Jar
-    task.dependsOn variant.javaCompile
-    task.from variant.javaCompile.destinationDir
-    task.baseName 'anjlab-iabv3'
-    task.doLast{
-        println "Copying jar to sample project..."
-        copy {
-            from task.archivePath
-            into '../sample/libs'
-            rename { String fileName -> 'anjlab-iabv3-current.jar' }
-        }
-    }
-    artifacts.add('archives', task);
-}
+//uploadArchives {
+//    configuration = configurations.archives
+//    repositories.mavenDeployer {
+//        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+//
+//        repository(url: sonatypeRepo) {
+//            authentication(userName: sonatypeUsername, password: sonatypePassword)
+//        }
+//
+//        pom.project {
+//            name 'Android In-App Billing v3 Library'
+//            packaging 'aar'
+//            description 'A lightweight implementation of Android In-app Billing Version 3'
+//            url 'https://github.com/anjlab/android-inapp-billing-v3'
+//
+//            scm {
+//                url 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+//                connection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+//                developerConnection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+//            }
+//
+//            licenses {
+//                license {
+//                    name 'The Apache Software License, Version 2.0'
+//                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                    distribution 'repo'
+//                }
+//            }
+//
+//            developers {
+//                developer {
+//                    id 'serggl'
+//                    name 'Sergey Glukhov'
+//                    email 'sergey.glukhov@gmail.com'
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//android.libraryVariants.all { variant ->
+//    def name = variant.buildType.name
+//    if (name.equals('com.android.builder.BuilderConstants.DEBUG')) {
+//        return; // Skip debug builds.
+//    }
+//    def task = project.tasks.create "jar${name.capitalize()}", Jar
+//    task.dependsOn variant.javaCompile
+//    task.from variant.javaCompile.destinationDir
+//    task.baseName 'anjlab-iabv3'
+//    task.doLast{
+//        println "Copying jar to sample project..."
+//        copy {
+//            from task.archivePath
+//            into '../sample/libs'
+//            rename { String fileName -> 'anjlab-iabv3-current.jar' }
+//        }
+//    }
+//    artifacts.add('archives', task);
+//}
