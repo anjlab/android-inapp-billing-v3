@@ -235,9 +235,8 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean isOnTimePurchaseSupported(){
-		if (isOneTimePurchaseSupported){
+		if (isOneTimePurchaseSupported)
 			return true;
-		}
 
 		try {
 			int response = billingService.isBillingSupported(Constants.GOOGLE_API_VERSION, contextPackageName, Constants.PRODUCT_TYPE_MANAGED);
@@ -245,7 +244,6 @@ public class BillingProcessor extends BillingBase {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-
 		return isOneTimePurchaseSupported;
 	}
 
@@ -287,19 +285,19 @@ public class BillingProcessor extends BillingBase {
 	 * @param activity the activity calling this method
 	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
 	 * @param productId the new subscription id
-	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+     * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
-	 */
+     */
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds, String productId) {
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 			return false;
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType,
-							 String developerPayload) {
-		return purchase(activity, null, productId, purchaseType, developerPayload);
-	}
+    private boolean purchase(Activity activity, String productId, String purchaseType,
+                             String developerPayload) {
+        return purchase(activity, null, productId, purchaseType, developerPayload);
+    }
 
 	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
 							 String purchaseType, String developerPayload) {
@@ -471,7 +469,7 @@ public class BillingProcessor extends BillingBase {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
+    public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList) {
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
@@ -538,7 +536,7 @@ public class BillingProcessor extends BillingBase {
 			} catch (Exception e) {
 				Log.e(LOG_TAG, "Error in handleActivityResult", e);
 				if (eventHandler != null)
-					eventHandler.onBillingError(responseCode, e);
+					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 			}
 		} else {
 			if (eventHandler != null)
@@ -560,12 +558,12 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean isValidTransactionDetails(TransactionDetails transactionDetails)
-	{
-		return verifyPurchaseSignature(transactionDetails.productId,
-				transactionDetails.purchaseInfo.responseData,
-				transactionDetails.purchaseInfo.signature) &&
-				checkMerchant(transactionDetails);
-	}
+    {
+        return verifyPurchaseSignature(transactionDetails.productId,
+                                       transactionDetails.purchaseInfo.responseData,
+                                       transactionDetails.purchaseInfo.signature) &&
+               checkMerchant(transactionDetails);
+    }
 
 	private boolean isPurchaseHistoryRestored() {
 		return loadBoolean(getPreferencesBaseKey() + RESTORE_KEY, false);
