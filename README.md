@@ -122,15 +122,15 @@ Simply call static method `BillingProcessor.isIabServiceAvailable()`:
         // continue
     }
 ```
-Please take a note that calling to `BillingProcessor.isIabServiceAvailable()` (only checks Play Market app installed or not) is not enough because there might be a case when it returns true but still payment won't success. Therefore, it's better to
-call to method `isOnTimePurchaseSupported()` after initializing `BillingProcessor`:
+Please notice that calling `BillingProcessor.isIabServiceAvailable()` (only checks Play Market app installed or not) is not enough because there might be a case when it returns true but still payment won't succeed.
+Therefore, it's better to call `isOneTimePurchaseSupported()` after initializing `BillingProcessor`:
 ```java
-    boolean isOneTimePurchaseSupported = billingProcessor.isOnTimePurchaseSupported();
+    boolean isOneTimePurchaseSupported = billingProcessor.isOneTimePurchaseSupported();
     if(isOneTimePurchaseSupported) {
         // launch payment flow
     }
 ```
-or call to method `isSubscriptionUpdateSupported()` for checking update subcription usecase:
+or call `isSubscriptionUpdateSupported()` for checking update subscription use case:
 ```java
     boolean isSubsUpdateSupported = billingProcessor.isSubscriptionUpdateSupported();
     if(isSubsUpdateSupported) {
