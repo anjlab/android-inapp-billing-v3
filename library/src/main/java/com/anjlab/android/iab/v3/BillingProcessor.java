@@ -74,7 +74,7 @@ public class BillingProcessor extends BillingBase {
 	private BillingCache cachedSubscriptions;
 	private IBillingHandler eventHandler;
 	private String developerMerchantId;
-	private boolean isOneTimePurchaseSupported;
+	private boolean isOneTimePurchasesSupported;
 	private boolean isSubsUpdateSupported;
 
 	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
@@ -235,16 +235,16 @@ public class BillingProcessor extends BillingBase {
 	}
 
 	public boolean isOnTimePurchaseSupported(){
-		if (isOneTimePurchaseSupported)
+		if (isOneTimePurchasesSupported)
 			return true;
 
 		try {
 			int response = billingService.isBillingSupported(Constants.GOOGLE_API_VERSION, contextPackageName, Constants.PRODUCT_TYPE_MANAGED);
-			isOneTimePurchaseSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+			isOneTimePurchasesSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		return isOneTimePurchaseSupported;
+		return isOneTimePurchasesSupported;
 	}
 
 	public boolean isSubscriptionUpdateSupported() {
