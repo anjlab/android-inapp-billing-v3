@@ -234,7 +234,7 @@ public class BillingProcessor extends BillingBase {
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
-	public boolean isOnTimePurchaseSupported(){
+	public boolean isOneTimePurchaseSupported(){
 		if (isOneTimePurchasesSupported)
 			return true;
 
