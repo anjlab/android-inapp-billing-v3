@@ -1,3 +1,9 @@
+## 1.0.38 (1/1/2017)
+
+#### Bug Fixes
+
+* [#224](https://github.com/anjlab/android-inapp-billing-v3/pull/224):  Minor type for the function isOneTimePurchaseSupported() - [@omerfarukyilmaz](https://github.com/omerfarukyilmaz).
+
 ## 1.0.37 (12/24/2016)
 
 #### Features
