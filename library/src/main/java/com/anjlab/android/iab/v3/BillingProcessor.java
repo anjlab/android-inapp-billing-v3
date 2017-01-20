@@ -141,8 +141,7 @@ public class BillingProcessor extends BillingBase {
 			getContext().bindService(getBindServiceIntent(), serviceConnection, Context.BIND_AUTO_CREATE);
 		} catch (Exception e) {
 			Log.e(LOG_TAG, "error in bindPlayServices", e);
-			if (eventHandler != null)
-				eventHandler.onBillingError(Constants.BILLING_ERROR_BIND_PLAY_STORE_FAILED, e);
+			reportBillingError(Constants.BILLING_ERROR_BIND_PLAY_STORE_FAILED, e);
 		}
 	}
 
@@ -205,8 +204,7 @@ public class BillingProcessor extends BillingBase {
 			}
 			return true;
 		} catch (Exception e) {
-			if (eventHandler != null)
-				eventHandler.onBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
+			reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
 			Log.e(LOG_TAG, "Error in loadPurchasesByType", e);
 		}
 		return false;
@@ -324,16 +322,15 @@ public class BillingProcessor extends BillingBase {
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
 					if (activity != null && pendingIntent != null)
 						activity.startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE, new Intent(), 0, 0, 0);
-					else if (eventHandler != null)
-						eventHandler.onBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
+					else
+						reportBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
 				} else if (response == Constants.BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED) {
 					if (!isPurchased(productId) && !isSubscribed(productId))
 						loadOwnedPurchasesFromGoogle();
 					TransactionDetails details = getPurchaseTransactionDetails(productId);
 					if (!checkMerchant(details)) {
 						Log.i(LOG_TAG, "Invalid or tampered merchant id!");
-						if (eventHandler != null)
-							eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
+						reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
 						return false;
 					}
 					if (eventHandler != null) {
@@ -341,14 +338,15 @@ public class BillingProcessor extends BillingBase {
 							details = getSubscriptionTransactionDetails(productId);
 						eventHandler.onProductPurchased(productId, details);
 					}
-				} else if (eventHandler != null)
-					eventHandler.onBillingError(Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
+				}
+				else {
+					reportBillingError(Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
+				}
 			}
 			return true;
 		} catch (Exception e) {
 			Log.e(LOG_TAG, "Error in purchase", e);
-			if (eventHandler != null)
-				eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
+			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
 		return false;
 	}
@@ -402,15 +400,13 @@ public class BillingProcessor extends BillingBase {
 					Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
 					return true;
 				} else {
-					if (eventHandler != null)
-						eventHandler.onBillingError(response, null);
+					reportBillingError(response, null);
 					Log.e(LOG_TAG, String.format("Failed to consume %s: error %d", productId, response));
 				}
 			}
 		} catch (Exception e) {
 			Log.e(LOG_TAG, "Error in consumePurchase", e);
-			if (eventHandler != null)
-				eventHandler.onBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, e);
+			reportBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, e);
 		}
 		return false;
 	}
@@ -444,14 +440,12 @@ public class BillingProcessor extends BillingBase {
 					return productDetails;
 
 				} else {
-					if (eventHandler != null)
-						eventHandler.onBillingError(response, null);
+					reportBillingError(response, null);
 					Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d", productIdList.size(), response));
 				}
 			} catch (Exception e) {
 				Log.e(LOG_TAG, "Failed to call getSkuDetails", e);
-				if (eventHandler != null)
-					eventHandler.onBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
+				reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 			}
 		}
 		return null;
@@ -525,22 +519,18 @@ public class BillingProcessor extends BillingBase {
 							eventHandler.onProductPurchased(productId, new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
 					} else {
 						Log.e(LOG_TAG, "Public key signature doesn't match!");
-						if (eventHandler != null)
-							eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
+						reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
 					}
 				} else {
 					Log.e(LOG_TAG, String.format("Payload mismatch: %s != %s", purchasePayload, developerPayload));
-					if (eventHandler != null)
-						eventHandler.onBillingError(Constants.BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD, null);
+					reportBillingError(Constants.BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD, null);
 				}
 			} catch (Exception e) {
 				Log.e(LOG_TAG, "Error in handleActivityResult", e);
-				if (eventHandler != null)
-					eventHandler.onBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
+				reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 			}
 		} else {
-			if (eventHandler != null)
-				eventHandler.onBillingError(responseCode, null);
+			reportBillingError(responseCode, null);
 		}
 		return true;
 	}
@@ -579,5 +569,10 @@ public class BillingProcessor extends BillingBase {
 
 	private String getPurchasePayload() {
 		return loadString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, null);
+	}
+
+	private void reportBillingError(int errorCode, Throwable error) {
+		if (eventHandler != null)
+			eventHandler.onBillingError(errorCode, error);
 	}
 }
