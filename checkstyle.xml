@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+<module name="Checker">
+    <module name="TreeWalker">
+        <property name="tabWidth" value="4"/>
+
+        <module name="LineLength">
+            <property name="max" value="130"/>
+        </module>
+
+        <module name="ParameterNumber">
+            <property name="max" value="10"/>
+        </module>
+
+        <module name="NestedIfDepth">
+            <property name="max" value="3"/>
+        </module>
+
+        <module name="RedundantImport"/>
+
+        <module name="UnusedImports"/>
+
+        <module name="MethodName"/>
+
+        <module name="PackageName"/>
+
+        <module name="NeedBraces"/>
+
+        <module name="LeftCurly">
+            <property name="option" value="nl"/>
+        </module>
+    </module>
+
+    <module name="RegexpMultiline">
+        <property name="format" value="\r?\n[ \t\x0B\f]*\r?\n[ \t\x0B\f]*\r?\n"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="Two consecutive empty lines"/>
+    </module>
+</module>

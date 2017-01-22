@@ -32,12 +32,14 @@ public class PurchaseData implements Parcelable
     public boolean autoRenewing;
 
     @Override
-    public int describeContents() {
+    public int describeContents()
+    {
         return 0;
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(Parcel dest, int flags)
+    {
         dest.writeString(this.orderId);
         dest.writeString(this.packageName);
         dest.writeString(this.productId);
@@ -48,29 +50,36 @@ public class PurchaseData implements Parcelable
         dest.writeByte(autoRenewing ? (byte) 1 : (byte) 0);
     }
 
-    public PurchaseData() {
+    public PurchaseData()
+    {
     }
 
-    protected PurchaseData(Parcel in) {
+    protected PurchaseData(Parcel in)
+    {
         this.orderId = in.readString();
         this.packageName = in.readString();
         this.productId = in.readString();
         long tmpPurchaseTime = in.readLong();
         this.purchaseTime = tmpPurchaseTime == -1 ? null : new Date(tmpPurchaseTime);
         int tmpPurchaseState = in.readInt();
-        this.purchaseState = tmpPurchaseState == -1 ? null : PurchaseState.values()[tmpPurchaseState];
+        this.purchaseState =
+                tmpPurchaseState == -1 ? null : PurchaseState.values()[tmpPurchaseState];
         this.developerPayload = in.readString();
         this.purchaseToken = in.readString();
         this.autoRenewing = in.readByte() != 0;
     }
 
-    public static final Parcelable.Creator<PurchaseData> CREATOR = new Parcelable.Creator<PurchaseData>() {
-        public PurchaseData createFromParcel(Parcel source) {
-            return new PurchaseData(source);
-        }
+    public static final Parcelable.Creator<PurchaseData> CREATOR =
+            new Parcelable.Creator<PurchaseData>()
+            {
+                public PurchaseData createFromParcel(Parcel source)
+                {
+                    return new PurchaseData(source);
+                }
 
-        public PurchaseData[] newArray(int size) {
-            return new PurchaseData[size];
-        }
-    };
+                public PurchaseData[] newArray(int size)
+                {
+                    return new PurchaseData[size];
+                }
+            };
 }
