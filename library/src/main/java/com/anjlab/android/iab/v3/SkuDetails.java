@@ -21,7 +21,10 @@ import android.os.Parcelable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SkuDetails implements Parcelable {
+import java.util.Locale;
+
+public class SkuDetails implements Parcelable
+{
 
 	public final String productId;
 
@@ -39,17 +42,20 @@ public class SkuDetails implements Parcelable {
 	 * Use this value to return the raw price from the product.
 	 * This allows math to be performed without needing to worry about errors
 	 * caused by floating point representations of the product's price.
-	 *
+	 * <p>
 	 * This is in micros from the Play Store.
 	 */
 	public final long priceLong;
 
 	public final String priceText;
 
-	public SkuDetails(JSONObject source) throws JSONException {
+	public SkuDetails(JSONObject source) throws JSONException
+	{
 		String responseType = source.optString(Constants.RESPONSE_TYPE);
 		if (responseType == null)
+		{
 			responseType = Constants.PRODUCT_TYPE_MANAGED;
+		}
 		productId = source.optString(Constants.RESPONSE_PRODUCT_ID);
 		title = source.optString(Constants.RESPONSE_TITLE);
 		description = source.optString(Constants.RESPONSE_DESCRIPTION);
@@ -61,36 +67,55 @@ public class SkuDetails implements Parcelable {
 	}
 
 	@Override
-	public String toString() {
-		return String.format("%s: %s(%s) %f in %s (%s)", productId, title, description, priceValue, currency, priceText);
+	public String toString()
+	{
+		return String.format(Locale.US, "%s: %s(%s) %f in %s (%s)",
+							 productId,
+							 title,
+							 description,
+							 priceValue,
+							 currency,
+							 priceText);
 	}
 
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
 
 		SkuDetails that = (SkuDetails) o;
 
-		if (isSubscription != that.isSubscription) return false;
+		if (isSubscription != that.isSubscription)
+		{
+			return false;
+		}
 		return !(productId != null ? !productId.equals(that.productId) : that.productId != null);
-
 	}
 
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		int result = productId != null ? productId.hashCode() : 0;
 		result = 31 * result + (isSubscription ? 1 : 0);
 		return result;
 	}
 
 	@Override
-	public int describeContents() {
+	public int describeContents()
+	{
 		return 0;
 	}
 
 	@Override
-	public void writeToParcel(Parcel dest, int flags) {
+	public void writeToParcel(Parcel dest, int flags)
+	{
 		dest.writeString(this.productId);
 		dest.writeString(this.title);
 		dest.writeString(this.description);
@@ -101,7 +126,8 @@ public class SkuDetails implements Parcelable {
 		dest.writeString(this.priceText);
 	}
 
-	protected SkuDetails(Parcel in) {
+	protected SkuDetails(Parcel in)
+	{
 		this.productId = in.readString();
 		this.title = in.readString();
 		this.description = in.readString();
@@ -112,13 +138,17 @@ public class SkuDetails implements Parcelable {
 		this.priceText = in.readString();
 	}
 
-	public static final Parcelable.Creator<SkuDetails> CREATOR = new Parcelable.Creator<SkuDetails>() {
-		public SkuDetails createFromParcel(Parcel source) {
-			return new SkuDetails(source);
-		}
+	public static final Parcelable.Creator<SkuDetails> CREATOR =
+			new Parcelable.Creator<SkuDetails>()
+			{
+				public SkuDetails createFromParcel(Parcel source)
+				{
+					return new SkuDetails(source);
+				}
 
-		public SkuDetails[] newArray(int size) {
-			return new SkuDetails[size];
-		}
-	};
+				public SkuDetails[] newArray(int size)
+				{
+					return new SkuDetails[size];
+				}
+			};
 }
