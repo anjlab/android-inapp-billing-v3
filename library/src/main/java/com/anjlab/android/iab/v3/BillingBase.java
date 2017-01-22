@@ -19,27 +19,32 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-class BillingBase {
-
+class BillingBase
+{
 	private Context context;
 
-	BillingBase(Context context) {
+	BillingBase(Context context)
+	{
 		this.context = context;
 	}
 
-	Context getContext() {
+	Context getContext()
+	{
 		return context;
 	}
 
-	String getPreferencesBaseKey() {
+	String getPreferencesBaseKey()
+	{
 		return getContext().getPackageName() + "_preferences";
 	}
 
-	private SharedPreferences getPreferences() {
+	private SharedPreferences getPreferences()
+	{
 		return PreferenceManager.getDefaultSharedPreferences(getContext());
 	}
 
-	boolean saveString(String key, String value) {
+	boolean saveString(String key, String value)
+	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
 		{
@@ -51,14 +56,18 @@ class BillingBase {
 		return false;
 	}
 
-	String loadString(String key, String defValue) {
+	String loadString(String key, String defValue)
+	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
+		{
 			return sp.getString(key, defValue);
+		}
 		return defValue;
 	}
 
-	boolean saveBoolean(String key, Boolean value) {
+	boolean saveBoolean(String key, Boolean value)
+	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
 		{
@@ -70,10 +79,13 @@ class BillingBase {
 		return false;
 	}
 
-	boolean loadBoolean(String key, boolean defValue) {
+	boolean loadBoolean(String key, boolean defValue)
+	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
+		{
 			return sp.getBoolean(key, defValue);
+		}
 		return defValue;
 	}
 }
