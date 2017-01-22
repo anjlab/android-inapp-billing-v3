@@ -21,8 +21,10 @@ import android.os.Parcelable;
 import org.json.JSONException;
 
 import java.util.Date;
+import java.util.Locale;
 
-public class TransactionDetails implements Parcelable {
+public class TransactionDetails implements Parcelable
+{
 
 	/**
 	 * @deprecated use {@see purchaseInfo.purchaseData.productId}} instead.
@@ -50,7 +52,8 @@ public class TransactionDetails implements Parcelable {
 
 	public final PurchaseInfo purchaseInfo;
 
-	public TransactionDetails(PurchaseInfo info) throws JSONException {
+	public TransactionDetails(PurchaseInfo info) throws JSONException
+	{
 		purchaseInfo = info;
 		productId = purchaseInfo.purchaseData.productId;
 		orderId = purchaseInfo.purchaseData.orderId;
@@ -59,14 +62,27 @@ public class TransactionDetails implements Parcelable {
 	}
 
 	@Override
-	public String toString() {
-		return String.format("%s purchased at %s(%s). Token: %s, Signature: %s", productId, purchaseTime, orderId, purchaseToken, purchaseInfo.signature);
+	public String toString()
+	{
+		return String.format(Locale.US, "%s purchased at %s(%s). Token: %s, Signature: %s",
+							 productId,
+							 purchaseTime,
+							 orderId,
+							 purchaseToken,
+							 purchaseInfo.signature);
 	}
 
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
 
 		TransactionDetails details = (TransactionDetails) o;
 
@@ -74,21 +90,25 @@ public class TransactionDetails implements Parcelable {
 	}
 
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		return orderId != null ? orderId.hashCode() : 0;
 	}
 
 	@Override
-	public int describeContents() {
+	public int describeContents()
+	{
 		return 0;
 	}
 
 	@Override
-	public void writeToParcel(Parcel dest, int flags) {
+	public void writeToParcel(Parcel dest, int flags)
+	{
 		dest.writeParcelable(this.purchaseInfo, flags);
 	}
 
-	protected TransactionDetails(Parcel in) {
+	protected TransactionDetails(Parcel in)
+	{
 		this.purchaseInfo = in.readParcelable(PurchaseInfo.class.getClassLoader());
 		this.productId = purchaseInfo.purchaseData.productId;
 		this.orderId = purchaseInfo.purchaseData.orderId;
@@ -96,13 +116,17 @@ public class TransactionDetails implements Parcelable {
 		this.purchaseTime = purchaseInfo.purchaseData.purchaseTime;
 	}
 
-	public static final Parcelable.Creator<TransactionDetails> CREATOR = new Parcelable.Creator<TransactionDetails>() {
-		public TransactionDetails createFromParcel(Parcel source) {
-			return new TransactionDetails(source);
-		}
+	public static final Parcelable.Creator<TransactionDetails> CREATOR =
+			new Parcelable.Creator<TransactionDetails>()
+			{
+				public TransactionDetails createFromParcel(Parcel source)
+				{
+					return new TransactionDetails(source);
+				}
 
-		public TransactionDetails[] newArray(int size) {
-			return new TransactionDetails[size];
-		}
-	};
+				public TransactionDetails[] newArray(int size)
+				{
+					return new TransactionDetails[size];
+				}
+			};
 }
