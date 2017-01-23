@@ -17,7 +17,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-   - ./gradlew connectedCheck --project-prop sonatypeUsername=none --project-prop sonatypePassword=none --project-prop sonatypeRepo=none
+   - ./gradlew build connectedCheck --project-prop sonatypeUsername=none --project-prop sonatypePassword=none --project-prop sonatypeRepo=none
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
