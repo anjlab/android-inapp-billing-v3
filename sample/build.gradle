@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 dependencies {
     compile project(':library')
-//    compile 'com.anjlab.android.iab.v3:library:1.0.29'
 //    compile fileTree(dir: 'libs', include: '*.jar')
 }
 
