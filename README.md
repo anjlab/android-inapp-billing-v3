@@ -38,6 +38,8 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 		setContentView(R.layout.activity_main);
 
 		bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
+		// or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
+		// See below on why this is a useful alternative
 	}
 	
 	// IBillingHandler implementation
@@ -102,6 +104,13 @@ bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE"
 		
 		super.onDestroy();
 	}
+```
+
+### Instantiating a `BillingProcessor` with late initialization
+The basic `new BillingProcessor(...)` actually binds to Play Services inside the constructor. This can, very rarely, lead to a race condition where Play Services are bound and `onBillingInitialized()` is called before the constructor finishes, and can lead to NPEs. To avoid this, we have the following:
+```java
+bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this); // doesn't bind
+bp.initialize(); // binds
 ```
 
 ## Testing In-app Billing
