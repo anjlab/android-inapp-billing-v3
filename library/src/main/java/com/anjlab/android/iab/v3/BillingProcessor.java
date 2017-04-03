@@ -125,6 +125,25 @@ public class BillingProcessor extends BillingBase
 		}
 	};
 
+	/**
+	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
+	 * this factory, then you must call {@link #initialize()} afterwards.
+	 */
+	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, IBillingHandler handler)
+	{
+		return newBillingProcessor(context, licenseKey, null, handler);
+	}
+
+	/**
+	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
+	 * this factory, then you must call {@link #initialize()} afterwards.
+	 */
+	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, String merchantId,
+													   IBillingHandler handler)
+	{
+		return new BillingProcessor(context, licenseKey, merchantId, handler, false);
+	}
+
 	public BillingProcessor(Context context, String licenseKey, IBillingHandler handler)
 	{
 		this(context, licenseKey, null, handler);
@@ -133,6 +152,12 @@ public class BillingProcessor extends BillingBase
 	public BillingProcessor(Context context, String licenseKey, String merchantId,
 							IBillingHandler handler)
 	{
+		this(context, licenseKey, merchantId, handler, true);
+	}
+
+	private BillingProcessor(Context context, String licenseKey, String merchantId, IBillingHandler handler,
+							 boolean bindImmediately)
+	{
 		super(context.getApplicationContext());
 		signatureBase64 = licenseKey;
 		eventHandler = handler;
@@ -140,6 +165,18 @@ public class BillingProcessor extends BillingBase
 		cachedProducts = new BillingCache(getContext(), MANAGED_PRODUCTS_CACHE_KEY);
 		cachedSubscriptions = new BillingCache(getContext(), SUBSCRIPTIONS_CACHE_KEY);
 		developerMerchantId = merchantId;
+		if (bindImmediately)
+		{
+			bindPlayServices();
+		}
+	}
+
+	/**
+	 * Binds to Play Services. When complete, caller will be notified via
+	 * {@link IBillingHandler#onBillingInitialized()}.
+	 */
+	public void initialize()
+	{
 		bindPlayServices();
 	}
 
