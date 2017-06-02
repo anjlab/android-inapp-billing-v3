@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -377,8 +378,7 @@ public class BillingProcessor extends BillingBase
 		List<String> oldProductIds = null;
 		if (!TextUtils.isEmpty(oldProductId))
 		{
-			oldProductIds = new ArrayList<>(1);
-			oldProductIds.add(oldProductId);
+			oldProductIds = Collections.singletonList(oldProductId);
 		}
 		return updateSubscription(activity, oldProductIds, productId);
 	}
