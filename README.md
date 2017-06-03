@@ -12,12 +12,12 @@ It supports: In-App Product Purchases (both non-consumable and consumable) and S
   - If you guys are using Eclipse, download latest jar version from the [releases](https://github.com/anjlab/android-inapp-billing-v3/releases) section of this repository and add it as a dependency
   - If you guys are using Android Studio and Gradle, add this to you build.gradle file:
 ```groovy
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-       compile 'com.anjlab.android.iab.v3:library:1.0.+'
-    }
+repositories {
+  mavenCentral()
+}
+dependencies {
+  compile 'com.anjlab.android.iab.v3:library:1.0.+'
+}
 ```
 
 * Open the *AndroidManifest.xml* of your application and add this permission:
@@ -30,61 +30,62 @@ It supports: In-App Product Purchases (both non-consumable and consumable) and S
   - **IBillingHandler Interface implementation to handle purchase results and errors** (see below)
 ```java
 public class SomeActivity extends Activity implements BillingProcessor.IBillingHandler {
-	BillingProcessor bp;
+  BillingProcessor bp;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
 
-		bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
-		// or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
-		// See below on why this is a useful alternative
-	}
+    bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
+    // or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
+    // See below on why this is a useful alternative
+  }
 	
-	// IBillingHandler implementation
+  // IBillingHandler implementation
 	
-	@Override
-	public void onBillingInitialized() {
-		/*
-		 * Called when BillingProcessor was initialized and it's ready to purchase 
-		 */
-	}
+  @Override
+  public void onBillingInitialized() {
+    /*
+    * Called when BillingProcessor was initialized and it's ready to purchase 
+    */
+  }
 	
-	@Override
-	public void onProductPurchased(String productId, TransactionDetails details) {
-		/*
-		 * Called when requested PRODUCT ID was successfully purchased
-		 */
-	}
+  @Override
+  public void onProductPurchased(String productId, TransactionDetails details) {
+    /*
+    * Called when requested PRODUCT ID was successfully purchased
+    */
+  }
 	
-	@Override
-	public void onBillingError(int errorCode, Throwable error) {
-		/*
-		 * Called when some error occurred. See Constants class for more details
-		 * 
-		 * Note - this includes handling the case where the user canceled the buy dialog:
-		 * errorCode = Constants.BILLING_RESPONSE_RESULT_USER_CANCELED
-		 */
-	}
+  @Override
+  public void onBillingError(int errorCode, Throwable error) {
+    /*
+    * Called when some error occurred. See Constants class for more details
+    * 
+    * Note - this includes handling the case where the user canceled the buy dialog:
+    * errorCode = Constants.BILLING_RESPONSE_RESULT_USER_CANCELED
+    */
+  }
 	
-	@Override
-	public void onPurchaseHistoryRestored() {
-		/*
-		 * Called when purchase history was restored and the list of all owned PRODUCT ID's 
-		 * was loaded from Google Play
-		 */
-	}
+  @Override
+  public void onPurchaseHistoryRestored() {
+    /*
+    * Called when purchase history was restored and the list of all owned PRODUCT ID's 
+    * was loaded from Google Play
+    */
+  }
 }
 ```
 
 * override Activity's onActivityResult method:
 ```java
-  @Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (!bp.handleActivityResult(requestCode, resultCode, data))
-			super.onActivityResult(requestCode, resultCode, data);
-	}
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+  if (!bp.handleActivityResult(requestCode, resultCode, data)) {
+    super.onActivityResult(requestCode, resultCode, data);
+  }  
+}
 ```
 
 * Call `purchase` method for a BillingProcessor instance to initiate purchase or `subscribe` to initiate a subscription:
@@ -105,13 +106,13 @@ _IMPORTANT: when you provide a payload, internally the library prepends a string
 * **And don't forget**
  to release your BillingProcessor instance! 
 ```java
-	@Override
-	public void onDestroy() {
-		if (bp != null) 
-			bp.release();
-		
-		super.onDestroy();
-	}
+@Override
+public void onDestroy() {
+  if (bp != null) {
+    bp.release();
+  }		
+  super.onDestroy();
+}
 ```
 
 ### Instantiating a `BillingProcessor` with late initialization
@@ -134,38 +135,38 @@ In some older devices or chinese ones it may happen that Play Market is unavaila
 
 Simply call static method `BillingProcessor.isIabServiceAvailable()`:
 ```java
-    boolean isAvailable = BillingProcessor.isIabServiceAvailable();
-    if(!isAvailable) {
-        // continue
-    }
+boolean isAvailable = BillingProcessor.isIabServiceAvailable();
+if(!isAvailable) {
+  // continue
+}
 ```
 Please notice that calling `BillingProcessor.isIabServiceAvailable()` (only checks Play Market app installed or not) is not enough because there might be a case when it returns true but still payment won't succeed.
 Therefore, it's better to call `isOneTimePurchaseSupported()` after initializing `BillingProcessor`:
 ```java
-    boolean isOneTimePurchaseSupported = billingProcessor.isOneTimePurchaseSupported();
-    if(isOneTimePurchaseSupported) {
-        // launch payment flow
-    }
+boolean isOneTimePurchaseSupported = billingProcessor.isOneTimePurchaseSupported();
+if(isOneTimePurchaseSupported) {
+  // launch payment flow
+}
 ```
 or call `isSubscriptionUpdateSupported()` for checking update subscription use case:
 ```java
-    boolean isSubsUpdateSupported = billingProcessor.isSubscriptionUpdateSupported();
-    if(isSubsUpdateSupported) {
-        // launch payment flow
-    }
+boolean isSubsUpdateSupported = billingProcessor.isSubscriptionUpdateSupported();
+if(isSubsUpdateSupported) {
+  // launch payment flow
+}
 ```
 
 ## Consume Purchased Products
 
 You can always consume made purchase and allow to buy same product multiple times. To do this you need:
 ```java
-	bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 
 ## Restore Purchases & Subscriptions
 
 ```java
-	bp.loadOwnedPurchasesFromGoogle();
+bp.loadOwnedPurchasesFromGoogle();
 ```
 
 ## Getting Listing Details of Your Products
@@ -173,27 +174,27 @@ You can always consume made purchase and allow to buy same product multiple time
 To query listing price and a description of your product / subscription listed in Google Play use these methods:
 
 ```java
-    bp.getPurchaseListingDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
-    bp.getSubscriptionListingDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getPurchaseListingDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getSubscriptionListingDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 
 As a result you will get a `SkuDetails` object with the following info included:
 
 ```java
-    public final String productId;
-    public final String title;
-    public final String description;
-    public final boolean isSubscription;
-    public final String currency;
-    public final Double priceValue;
-    public final String priceText;
+public final String productId;
+public final String title;
+public final String description;
+public final boolean isSubscription;
+public final String currency;
+public final Double priceValue;
+public final String priceText;
 ```
 
 To get info for multiple products / subscriptions on one query, just pass a list of product ids:
 
 ```java
-	bp.getPurchaseListingDetails(arrayListOfProductIds);
-	bp.getSubscriptionListingDetails(arrayListOfProductIds);
+bp.getPurchaseListingDetails(arrayListOfProductIds);
+bp.getSubscriptionListingDetails(arrayListOfProductIds);
 ```
 
 where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for products or subscriptions.
@@ -205,21 +206,21 @@ As a part or 1.0.9 changes, `TransactionDetails` object is passed to `onProductP
 However, you can always retrieve it later calling these methods:
 
 ```java
-    bp.getPurchaseTransactionDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
-    bp.getSubscriptionTransactionDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getPurchaseTransactionDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getSubscriptionTransactionDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 
 As a result you will get a `TransactionDetails` object with the following info included:
 
 ```java
-    public final String productId;
-    public final String orderId;
-    public final String purchaseToken;
-    public final Date purchaseTime;
+public final String productId;
+public final String orderId;
+public final String purchaseToken;
+public final Date purchaseTime;
     
-    // containing the raw json string from google play and the signature to
-    // verify the purchase on your own server
-    public final PurchaseInfo purchaseInfo;
+// containing the raw json string from google play and the signature to
+// verify the purchase on your own server
+public final PurchaseInfo purchaseInfo;
 ```
 
 ## Handle Canceled Subscriptions
