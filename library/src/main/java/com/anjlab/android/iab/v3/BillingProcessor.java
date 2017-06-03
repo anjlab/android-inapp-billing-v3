@@ -375,12 +375,27 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean updateSubscription(Activity activity, String oldProductId, String productId)
 	{
+		return updateSubscription(activity, oldProductId, productId, null);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity     the activity calling this method
+	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId    the new subscription id
+	 * @param developerPayload the developer payload
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Activity activity, String oldProductId, String productId, String developerPayload)
+	{
 		List<String> oldProductIds = null;
 		if (!TextUtils.isEmpty(oldProductId))
 		{
 			oldProductIds = Collections.singletonList(oldProductId);
 		}
-		return updateSubscription(activity, oldProductIds, productId);
+		return updateSubscription(activity, oldProductIds, productId, developerPayload);
 	}
 
 	/**
@@ -395,11 +410,27 @@ public class BillingProcessor extends BillingBase
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
 									  String productId)
 	{
+		return updateSubscription(activity, oldProductIds, productId, null);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity      the activity calling this method
+	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId     the new subscription id
+	 * @param developerPayload the developer payload
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
+									  String productId, String developerPayload)
+	{
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
 		}
-		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
+		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
 	private boolean purchase(Activity activity, String productId, String purchaseType,
