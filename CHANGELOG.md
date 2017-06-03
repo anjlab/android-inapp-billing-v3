@@ -1,3 +1,13 @@
+## 1.0.40 (6/3/2017)
+
+#### Features
+
+* [#273](https://github.com/anjlab/android-inapp-billing-v3/pull/273):  Added ability to include developer payload in updateSubscription() methods - [@autonomousapps](https://github.com/autonomousapps).
+
+#### Refactor
+
+* [#271](https://github.com/anjlab/android-inapp-billing-v3/pull/271):  Converted single-element arraylist into singleton list - [@autonomousapps](https://github.com/autonomousapps).
+
 ## 1.0.39 (4/3/2017)
 
 #### Features
