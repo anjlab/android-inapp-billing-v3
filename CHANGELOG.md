@@ -1,3 +1,9 @@
+## 1.0.39 (4/3/2017)
+
+#### Features
+
+* [#252](https://github.com/anjlab/android-inapp-billing-v3/pull/252):  Created new factory constructors that allow for late-init of play services - [@autonomousapps](https://github.com/autonomousapps).
+
 ## 1.0.38 (1/1/2017)
 
 #### Bug Fixes
