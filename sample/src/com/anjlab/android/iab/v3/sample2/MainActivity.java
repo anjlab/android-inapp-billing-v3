@@ -150,6 +150,27 @@ public class MainActivity extends Activity {
 			case R.id.launchMoreButton:
 				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));
 				break;
+            case R.id.pastHistoryButton:
+                bp.loadPastHistoryPurchasesFromGoogle(new BillingProcessor.IBillingPastHistoryHandler() {
+                    @Override
+                    public void onPastHistoryRestored() {
+                        showToast("Past history loaded!");
+                        for (String sku : bp.listPastHistoryProducts()) {
+                            TransactionDetails td = bp.getPastPurchaseTransactionDetails(sku);
+                            Log.d(LOG_TAG, "Past Managed Product: " + sku + " :\n" + td.toString());
+                        }
+                        for (String sku : bp.listPastHistorySubscriptions()) {
+                            TransactionDetails td = bp.getPastSubscriptionTransactionDetails(sku);
+                            Log.d(LOG_TAG, "Past Subscription: " + sku + " :\n" + td.toString());
+                        }
+                    }
+
+                    @Override
+                    public void onPastHistoryError() {
+                        showToast("Failed to load past history");
+                    }
+                });
+
             default:
                 break;
         }

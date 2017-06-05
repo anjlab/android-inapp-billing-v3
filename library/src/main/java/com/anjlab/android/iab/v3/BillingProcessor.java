@@ -58,6 +58,17 @@ public class BillingProcessor extends BillingBase
 		void onBillingInitialized();
 	}
 
+    /**
+     * Callback methods to be passed to loadPastHistoryPurchasesFromGoogle.
+     * It's separated from IBillingHandler, because this method will be unlikely
+     * to be called so frequently, also requires server call from PlayStore.
+     */
+    public interface IBillingPastHistoryHandler {
+        void onPastHistoryRestored();
+
+        void onPastHistoryError();
+    }
+
 	private static final Date DATE_MERCHANT_LIMIT_1 = new Date(2012, 12, 5); //5th December 2012
 	private static final Date DATE_MERCHANT_LIMIT_2 = new Date(2015, 7, 20); //21st July 2015
 
@@ -67,6 +78,8 @@ public class BillingProcessor extends BillingBase
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
 	private static final String MANAGED_PRODUCTS_CACHE_KEY = ".products.cache" + SETTINGS_VERSION;
 	private static final String SUBSCRIPTIONS_CACHE_KEY = ".subscriptions.cache" + SETTINGS_VERSION;
+    private static final String MANAGED_PRODUCTS_CACHE_KEY_PAST = ".products.cache.past" + SETTINGS_VERSION;
+    private static final String SUBSCRIPTIONS_CACHE_KEY_PAST = ".subscriptions.cache.past" + SETTINGS_VERSION;
 	private static final String PURCHASE_PAYLOAD_CACHE_KEY = ".purchase.last" + SETTINGS_VERSION;
 
 	private IInAppBillingService billingService;
@@ -74,10 +87,13 @@ public class BillingProcessor extends BillingBase
 	private String signatureBase64;
 	private BillingCache cachedProducts;
 	private BillingCache cachedSubscriptions;
+    private BillingCache cachedProductsPast;
+    private BillingCache cachedSubscriptionsPast;
 	private IBillingHandler eventHandler;
 	private String developerMerchantId;
 	private boolean isOneTimePurchasesSupported;
 	private boolean isSubsUpdateSupported;
+    private boolean isFullHistorySupported;
 
 	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
 	{
@@ -110,7 +126,34 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	private ServiceConnection serviceConnection = new ServiceConnection()
+    /**
+     * AsyncTask to load PastHistory items
+     */
+    private class LoadPastHistoryTask extends AsyncTask<Void, Void, Boolean> {
+        IBillingPastHistoryHandler callback;
+
+        public LoadPastHistoryTask(IBillingPastHistoryHandler callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... nothing) {
+            return isInitialized() && isFullHistorySupported() &&
+                    loadPastHistoryPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProductsPast) &&
+                    loadPastHistoryPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptionsPast);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean restored) {
+            if (callback != null)
+                if (restored) {
+                    callback.onPastHistoryRestored();
+                } else
+                    callback.onPastHistoryError();
+        }
+    }
+
+    private ServiceConnection serviceConnection = new ServiceConnection()
 	{
 		@Override
 		public void onServiceDisconnected(ComponentName name)
@@ -165,6 +208,8 @@ public class BillingProcessor extends BillingBase
 		contextPackageName = getContext().getPackageName();
 		cachedProducts = new BillingCache(getContext(), MANAGED_PRODUCTS_CACHE_KEY);
 		cachedSubscriptions = new BillingCache(getContext(), SUBSCRIPTIONS_CACHE_KEY);
+        cachedProductsPast = new BillingCache(getContext(), MANAGED_PRODUCTS_CACHE_KEY_PAST);
+        cachedSubscriptionsPast = new BillingCache(getContext(), SUBSCRIPTIONS_CACHE_KEY_PAST);
 		developerMerchantId = merchantId;
 		if (bindImmediately)
 		{
@@ -311,7 +356,107 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	public boolean purchase(Activity activity, String productId, String developerPayload)
+    /**
+     *
+     * @return List of skus for past one-time items
+     */
+    public List<String> listPastHistoryProducts() {
+        return cachedProductsPast.getContents();
+    }
+
+    /**
+     *
+     * @return List of skus for past subscriptions
+     */
+    public List<String> listPastHistorySubscriptions() {
+        return cachedSubscriptionsPast.getContents();
+    }
+
+    /**
+     * Returns the most recent purchases made by the user for each SKU,
+     * even if that purchase is expired, canceled, or consumed.
+     * Note: The getPurchaseHistory() method has higher overhead than getPurchases(),
+     * because it requires a call to the Google Play server. You should use getPurchases()
+     * if you do not actually need the user's purchase history.
+     * Also is not called in onServiceConnected, but only by user's request.
+     *
+     * When is done you can reach the updated history from listPastHistoryProducts() and
+     * listPastHistorySubscriptions()
+     * @param callback - notifies the client when the history is updated or there is
+     *                 an error
+     */
+    public void  loadPastHistoryPurchasesFromGoogle(IBillingPastHistoryHandler callback) {
+        new LoadPastHistoryTask(callback).execute();
+    }
+
+    /**
+     * Load past history items for specific type.
+     * This method is called in LoadPastHistoryTask
+     * @param type - "inapp" or "subs"
+     * @param cacheStorage - cache holder cachedProductsPast or cachedSubscriptionsPast
+     * @return true if is OK, false if error
+     */
+    private boolean loadPastHistoryPurchasesByType(String type, BillingCache cacheStorage) {
+        if (!isInitialized()) {
+            return false;
+        }
+
+        String continuationToken = loadPastHistoryPurchasesByType(type, cacheStorage, null);
+        //get next pages if any, if continuationToken = "" there was an error
+        while (!TextUtils.isEmpty(continuationToken)) {
+            continuationToken = loadPastHistoryPurchasesByType(type, cacheStorage, continuationToken);
+        }
+
+        //if continuationToken = null then we got full response
+        return continuationToken == null;
+    }
+
+    /**
+     * Get and parse the items for 1 page
+     * @param type - "inapp" or "subs"
+     * @param cacheStorage - cache holder cachedProductsPast or cachedSubscriptionsPast
+     * @param continuationToken - if is null is for first page else is reference to specific page
+     * @return - empty string if there was an error, some token if there are extra items to be requested
+     * on next page and null if all items are returned
+     */
+    private String loadPastHistoryPurchasesByType(String type, BillingCache cacheStorage, String continuationToken) {
+        try {
+            Bundle bundle = billingService.getPurchaseHistory(Constants.GOOGLE_API_VERSION_FOR_HISTORY,
+                    contextPackageName, type, continuationToken, new Bundle());
+            if (bundle.getInt(Constants.RESPONSE_CODE) == Constants.BILLING_RESPONSE_RESULT_OK) {
+                if (continuationToken == null)//first request
+                    cacheStorage.clear();
+                ArrayList<String> purchaseList =
+                        bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
+                ArrayList<String> signatureList =
+                        bundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
+                if (purchaseList != null) {
+                    for (int i = 0; i < purchaseList.size(); i++) {
+                        String jsonData = purchaseList.get(i);
+
+                        if (!TextUtils.isEmpty(jsonData)) {
+                            JSONObject purchase = new JSONObject(jsonData);
+                            String signature = signatureList != null && signatureList.size() >
+                                    i ? signatureList.get(i) : null;
+                            cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID),
+                                    jsonData,
+                                    signature);
+                        }
+                    }
+                }
+                continuationToken = bundle.getString(Constants.INAPP_CONTINUATION_TOKEN);
+            } else
+                continuationToken = "";
+        } catch (Exception e) {
+            reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PAST_HISTORY_PURCHASES, e);
+            Log.e(LOG_TAG, "Error in loadPastHistoryPurchasesByType", e);
+            continuationToken = "";
+        }
+        return continuationToken;
+    }
+
+
+    public boolean purchase(Activity activity, String productId, String developerPayload)
 	{
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
 	}
@@ -364,7 +509,26 @@ public class BillingProcessor extends BillingBase
 		return isSubsUpdateSupported;
 	}
 
-	/**
+    public boolean isFullHistorySupported() {
+        // Avoid calling the service again if this value is true
+        if (isFullHistorySupported) {
+            return true;
+        }
+
+        try {
+            int response =
+                    billingService.isBillingSupported(Constants.GOOGLE_API_VERSION_FOR_HISTORY,
+                            contextPackageName,
+                            Constants.PRODUCT_TYPE_MANAGED);
+            isFullHistorySupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return isFullHistorySupported;
+    }
+
+
+    /**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
 	 * @param activity     the activity calling this method
@@ -707,6 +871,14 @@ public class BillingProcessor extends BillingBase
 	{
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
 	}
+
+    public TransactionDetails getPastPurchaseTransactionDetails(String productId) {
+        return getPurchaseTransactionDetails(productId, cachedProductsPast);
+    }
+
+    public TransactionDetails getPastSubscriptionTransactionDetails(String productId) {
+        return getPurchaseTransactionDetails(productId, cachedSubscriptionsPast);
+    }
 
 	private String getDeveloperPayloadFromPurchaseData(JSONObject purchase)
 	{
