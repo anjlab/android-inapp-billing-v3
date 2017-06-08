@@ -78,7 +78,8 @@ public class Constants
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
 	public static final int BILLING_ERROR_INVALID_MERCHANT_ID = 104;
 	public static final int BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD = 105;
-    public static final int BILLING_ERROR_FAILED_LOAD_PAST_HISTORY_PURCHASES = 106;
+    public static final int BILLING_ERROR_RECENT_HISTORY_NOT_SUPPORTED = 106;
+    public static final int BILLING_ERROR_NOT_INITIALIZED = 107;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
 	public static final int BILLING_ERROR_SKUDETAILS_FAILED = 112;
