@@ -19,6 +19,7 @@ public class Constants
 {
 	public static final int GOOGLE_API_VERSION = 3;
 	public static final int GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION = 5;
+    public static final int GOOGLE_API_VERSION_FOR_HISTORY = 6;
 
 	public static final String PRODUCT_TYPE_MANAGED = "inapp";
 	public static final String PRODUCT_TYPE_SUBSCRIPTION = "subs";
@@ -60,6 +61,7 @@ public class Constants
 	public static final String INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
 	public static final String RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
 	public static final String INAPP_DATA_SIGNATURE_LIST = "INAPP_DATA_SIGNATURE_LIST";
+    public static final String INAPP_CONTINUATION_TOKEN = "INAPP_CONTINUATION_TOKEN";
 	public static final String RESPONSE_ORDER_ID = "orderId";
 	public static final String RESPONSE_PRODUCT_ID = "productId";
 	public static final String RESPONSE_TYPE = "type";
@@ -76,6 +78,8 @@ public class Constants
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
 	public static final int BILLING_ERROR_INVALID_MERCHANT_ID = 104;
 	public static final int BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD = 105;
+    public static final int BILLING_ERROR_RECENT_HISTORY_NOT_SUPPORTED = 106;
+    public static final int BILLING_ERROR_NOT_INITIALIZED = 107;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
 	public static final int BILLING_ERROR_SKUDETAILS_FAILED = 112;
