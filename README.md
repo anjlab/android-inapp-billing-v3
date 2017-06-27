@@ -240,7 +240,7 @@ Still, there are couple of workarounds you can use:
 1. Handle `BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD` error code in your `onBillingError` implementation. You can check out [#156](https://github.com/anjlab/android-inapp-billing-v3/issues/156) for a suggested workaround. This does not look nice, but it works.
 2. Avoid using promo codes in a purchase dialog, prefer entering these codes in Google Play's App _Redeem promo code_ menu.
 One way to do this is to distribute your promo codes in form of a redeem link (`https://play.google.com/redeem?code=YOURPROMOCODE`) instead of just a `YOURPROMOCODE` values.
-You can find a sample on how to bundle it inside your app [here](https://gist.github.com/SuperThomasLab/6d44b4920dbdc8482a2467d95f66c5df).
+You can find a sample on how to bundle it inside your app [here](https://gist.github.com/Thomas-Vos/6d44b4920dbdc8482a2467d95f66c5df).
 
 ## Protection Against Fake "Markets"
 
