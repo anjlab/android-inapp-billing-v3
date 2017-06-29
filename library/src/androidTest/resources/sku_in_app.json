@@ -1,0 +1,9 @@
+{
+  "productId": "test-id",
+  "type": "inapp",
+  "price": "€7.99",
+  "price_amount_micros": "7990000",
+  "price_currency_code": "GBP",
+  "title": "Test Product",
+  "description": "A great product for testing."
+}

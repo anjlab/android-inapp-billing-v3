@@ -1,0 +1,10 @@
+{
+  "productId": "test-id",
+  "type": "subs",
+  "price": "€7.99",
+  "price_amount_micros": "7990000",
+  "price_currency_code": "GBP",
+  "title": "Test Subscription",
+  "description": "A great subscription for testing.",
+  "subscriptionPeriod": "P1M"
+}
