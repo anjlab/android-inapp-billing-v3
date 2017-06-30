@@ -8,22 +8,26 @@ import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
-public class SkuDetailsParcelableTest {
-  @Test public void testInAppParcelable() throws Exception {
+public class SkuDetailsParcelableTest
+{
+  @Test public void testInAppParcelable() throws Exception
+  {
     String skuDetailsJson = "{\"productId\": \"test-id\",\"type\": \"inapp\",\"price\": \"€7.99\","
         + "\"price_amount_micros\": \"7990000\",\"price_currency_code\": \"GBP\","
         + "\"title\": \"Test Product\",\"description\": \"A great product for testing.\"}";
     testParcelable(skuDetailsJson);
   }
 
-  @Test public void testSubsParcelable() throws Exception {
+  @Test public void testSubsParcelable() throws Exception
+  {
     String skuDetailsJson = "{\"productId\": \"test-id\",\"type\": \"subs\",\"price\": \"€7.99\","
         + "\"price_amount_micros\": \"7990000\",\"price_currency_code\": \"GBP\","
         + "\"title\": \"Test Product\",\"description\": \"A great product for testing.\"}";
     testParcelable(skuDetailsJson);
   }
 
-  @Test public void testSubsWithIntroductoryPriceParcelable() throws Exception {
+  @Test public void testSubsWithIntroductoryPriceParcelable() throws Exception
+  {
     String skuDetailsJson =
         "{\"productId\":\"test_id\",\"type\":\"subs\",\"price\":\"£45.00\",\"price_amount_micros\""
             + ":45000000,\"price_currency_code\":\"GBP\",\""
@@ -32,7 +36,8 @@ public class SkuDetailsParcelableTest {
     testParcelable(skuDetailsJson);
   }
 
-  private void testParcelable(String skuDetailsJson) throws JSONException {
+  private void testParcelable(String skuDetailsJson) throws JSONException
+  {
     JSONObject details = new JSONObject(skuDetailsJson);
     SkuDetails skuDetails = new SkuDetails(details);
 

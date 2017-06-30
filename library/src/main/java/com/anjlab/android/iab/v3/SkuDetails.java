@@ -23,7 +23,8 @@ import org.json.JSONObject;
 
 import java.util.Locale;
 
-public class SkuDetails implements Parcelable {
+public class SkuDetails implements Parcelable
+{
 
   public final String productId;
 
@@ -59,9 +60,11 @@ public class SkuDetails implements Parcelable {
 
   public final Double introductoryPriceCycles;
 
-  public SkuDetails(JSONObject source) throws JSONException {
+  public SkuDetails(JSONObject source) throws JSONException
+  {
     String responseType = source.optString(Constants.RESPONSE_TYPE);
-    if (responseType == null) {
+    if (responseType == null)
+    {
       responseType = Constants.PRODUCT_TYPE_MANAGED;
     }
     productId = source.optString(Constants.RESPONSE_PRODUCT_ID);
@@ -77,39 +80,46 @@ public class SkuDetails implements Parcelable {
     introductoryPriceCycles = source.optDouble(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+  {
     return String.format(Locale.US, "%s: %s(%s) %f in %s (%s)", productId, title, description,
         priceValue, currency, priceText);
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o) {
+  @Override public boolean equals(Object o)
+  {
+    if (this == o)
+    {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || getClass() != o.getClass())
+    {
       return false;
     }
 
     SkuDetails that = (SkuDetails) o;
 
-    if (isSubscription != that.isSubscription) {
+    if (isSubscription != that.isSubscription)
+    {
       return false;
     }
     return !(productId != null ? !productId.equals(that.productId) : that.productId != null);
   }
 
-  @Override public int hashCode() {
+  @Override public int hashCode()
+  {
     int result = productId != null ? productId.hashCode() : 0;
     result = 31 * result + (isSubscription ? 1 : 0);
     return result;
   }
 
-
-  @Override public int describeContents() {
+  @Override public int describeContents()
+  {
     return 0;
   }
 
-  @Override public void writeToParcel(Parcel dest, int flags) {
+  @Override public void writeToParcel(Parcel dest, int flags)
+  {
     dest.writeString(this.productId);
     dest.writeString(this.title);
     dest.writeString(this.description);
@@ -123,7 +133,8 @@ public class SkuDetails implements Parcelable {
     dest.writeDouble(this.introductoryPriceCycles);
   }
 
-  protected SkuDetails(Parcel in) {
+  protected SkuDetails(Parcel in)
+  {
     this.productId = in.readString();
     this.title = in.readString();
     this.description = in.readString();
@@ -137,12 +148,15 @@ public class SkuDetails implements Parcelable {
     this.introductoryPriceCycles = in.readDouble();
   }
 
-  public static final Creator<SkuDetails> CREATOR = new Creator<SkuDetails>() {
-    @Override public SkuDetails createFromParcel(Parcel source) {
+  public static final Creator<SkuDetails> CREATOR = new Creator<SkuDetails>()
+  {
+    @Override public SkuDetails createFromParcel(Parcel source)
+    {
       return new SkuDetails(source);
     }
 
-    @Override public SkuDetails[] newArray(int size) {
+    @Override public SkuDetails[] newArray(int size)
+    {
       return new SkuDetails[size];
     }
   };
