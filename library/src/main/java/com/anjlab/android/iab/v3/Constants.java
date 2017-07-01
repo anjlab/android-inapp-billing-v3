@@ -68,6 +68,9 @@ public class Constants
 	public static final String RESPONSE_PRICE = "price";
 	public static final String RESPONSE_PRICE_CURRENCY = "price_currency_code";
 	public static final String RESPONSE_PRICE_MICROS = "price_amount_micros";
+	public static final String RESPONSE_INTRODUCTORY_PRICE = "introductoryPrice";
+	public static final String RESPONSE_INTRODUCTORY_PRICE_CYCLES = "introductoryPriceCycles";
+	public static final String RESPONSE_INTRODUCTORY_PRICE_PERIOD = "introductoryPricePeriod";
 	public static final String RESPONSE_PAYLOAD = "developerPayload";
 
 	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;
