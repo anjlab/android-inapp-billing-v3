@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 AnjLab
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package com.anjlab.android.iab.v3;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,7 +52,6 @@ public class SkuDetails implements Parcelable
    * Returned only for subscriptions which have an introductory period configured
    * ref. https://developer.android.com/google/play/billing/billing_reference.html#getSkuDetails
    */
-
   public final String introductoryPrice;
 
   public final String introductoryPricePeriod;
@@ -80,13 +78,15 @@ public class SkuDetails implements Parcelable
     introductoryPriceCycles = source.optDouble(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
   }
 
-  @Override public String toString()
+  @Override
+  public String toString()
   {
     return String.format(Locale.US, "%s: %s(%s) %f in %s (%s)", productId, title, description,
-        priceValue, currency, priceText);
+            priceValue, currency, priceText);
   }
 
-  @Override public boolean equals(Object o)
+  @Override
+  public boolean equals(Object o)
   {
     if (this == o)
     {
@@ -106,19 +106,22 @@ public class SkuDetails implements Parcelable
     return !(productId != null ? !productId.equals(that.productId) : that.productId != null);
   }
 
-  @Override public int hashCode()
+  @Override
+  public int hashCode()
   {
     int result = productId != null ? productId.hashCode() : 0;
     result = 31 * result + (isSubscription ? 1 : 0);
     return result;
   }
 
-  @Override public int describeContents()
+  @Override
+  public int describeContents()
   {
     return 0;
   }
 
-  @Override public void writeToParcel(Parcel dest, int flags)
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
   {
     dest.writeString(this.productId);
     dest.writeString(this.title);
@@ -150,12 +153,14 @@ public class SkuDetails implements Parcelable
 
   public static final Creator<SkuDetails> CREATOR = new Creator<SkuDetails>()
   {
-    @Override public SkuDetails createFromParcel(Parcel source)
+    @Override
+    public SkuDetails createFromParcel(Parcel source)
     {
       return new SkuDetails(source);
     }
 
-    @Override public SkuDetails[] newArray(int size)
+    @Override
+    public SkuDetails[] newArray(int size)
     {
       return new SkuDetails[size];
     }
