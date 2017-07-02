@@ -1,3 +1,9 @@
+## 1.0.41 (7/2/2017)
+
+#### Features
+
+* [#281](https://github.com/anjlab/android-inapp-billing-v3/pull/281):  Support for introductory price on subscriptions - [@landarskiy](https://github.com/landarskiy).
+
 ## 1.0.40 (6/3/2017)
 
 #### Features
