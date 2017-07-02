@@ -18,6 +18,7 @@ package com.anjlab.android.iab.v3;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.joda.time.Period;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,6 +39,20 @@ public class SkuDetails implements Parcelable
 
 	public final Double priceValue;
 
+    public final boolean haveTrialPeriod;
+
+	public final Period subscriptionPeriod;
+
+	public final Period subscriptionFreeTrialPeriod;
+
+    public final boolean haveIntroductoryPeriod;
+
+	public final double introductoryPriceValue;
+
+	public final Period introductoryPricePeriod;
+
+	public final int introductoryPriceCycles;
+
 	/**
 	 * Use this value to return the raw price from the product.
 	 * This allows math to be performed without needing to worry about errors
@@ -49,22 +64,40 @@ public class SkuDetails implements Parcelable
 
 	public final String priceText;
 
+    public final long introductoryPriceLong;
+
+    public final String introductoryPriceText;
+
 	public SkuDetails(JSONObject source) throws JSONException
 	{
 		String responseType = source.optString(Constants.RESPONSE_TYPE);
 		if (responseType == null)
 		{
-			responseType = Constants.PRODUCT_TYPE_MANAGED;
-		}
-		productId = source.optString(Constants.RESPONSE_PRODUCT_ID);
-		title = source.optString(Constants.RESPONSE_TITLE);
-		description = source.optString(Constants.RESPONSE_DESCRIPTION);
-		isSubscription = responseType.equalsIgnoreCase(Constants.PRODUCT_TYPE_SUBSCRIPTION);
-		currency = source.optString(Constants.RESPONSE_PRICE_CURRENCY);
-		priceLong = source.optLong(Constants.RESPONSE_PRICE_MICROS);
-		priceValue = priceLong / 1000000d;
-		priceText = source.optString(Constants.RESPONSE_PRICE);
-	}
+            responseType = Constants.PRODUCT_TYPE_MANAGED;
+        }
+        productId = source.optString(Constants.RESPONSE_PRODUCT_ID);
+        title = source.optString(Constants.RESPONSE_TITLE);
+        description = source.optString(Constants.RESPONSE_DESCRIPTION);
+        isSubscription = responseType.equalsIgnoreCase(Constants.PRODUCT_TYPE_SUBSCRIPTION);
+        currency = source.optString(Constants.RESPONSE_PRICE_CURRENCY);
+        priceLong = source.optLong(Constants.RESPONSE_PRICE_MICROS);
+        priceValue = priceLong / 1000000d;
+        priceText = source.optString(Constants.RESPONSE_PRICE);
+        subscriptionPeriod = parsePeriod(source.optString(Constants.RESPONSE_SUBSCRIPTION_PERIOD, "P"));
+        subscriptionFreeTrialPeriod = parsePeriod(source.optString(Constants.RESPONSE_FREE_TRIAL_PERIOD, "P"));
+        haveTrialPeriod = subscriptionFreeTrialPeriod.toStandardSeconds().getSeconds() != 0;
+        introductoryPriceLong = source.optLong(Constants.RESPONSE_INTRODUCTORY_PRICE_MICROS);
+        introductoryPriceValue = introductoryPriceLong / 1000000d;
+        introductoryPriceText = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE, null);
+        introductoryPricePeriod = parsePeriod(source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE_PERIOD, "P"));
+        haveIntroductoryPeriod = introductoryPricePeriod.toStandardSeconds().getSeconds() != 0;
+        introductoryPriceCycles = source.optInt(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
+    }
+
+	private Period parsePeriod(String iso8601representation)
+	{
+        return Period.parse(iso8601representation);
+    }
 
 	@Override
 	public String toString()
@@ -116,27 +149,45 @@ public class SkuDetails implements Parcelable
 	@Override
 	public void writeToParcel(Parcel dest, int flags)
 	{
-		dest.writeString(this.productId);
-		dest.writeString(this.title);
-		dest.writeString(this.description);
-		dest.writeByte(isSubscription ? (byte) 1 : (byte) 0);
-		dest.writeString(this.currency);
-		dest.writeDouble(this.priceValue);
-		dest.writeLong(this.priceLong);
-		dest.writeString(this.priceText);
-	}
+        dest.writeString(this.productId);
+        dest.writeString(this.title);
+        dest.writeString(this.description);
+        dest.writeByte(isSubscription ? (byte) 1 : (byte) 0);
+        dest.writeString(this.currency);
+        dest.writeDouble(this.priceValue);
+        dest.writeLong(this.priceLong);
+        dest.writeString(this.priceText);
+        dest.writeString(this.subscriptionPeriod.toString());
+        dest.writeString(this.subscriptionFreeTrialPeriod.toString());
+        dest.writeByte(this.haveTrialPeriod ? (byte) 1 : (byte) 0);
+        dest.writeDouble(this.introductoryPriceValue);
+        dest.writeLong(this.introductoryPriceLong);
+        dest.writeString(this.introductoryPriceText);
+        dest.writeString(this.introductoryPricePeriod.toString());
+        dest.writeByte(this.haveIntroductoryPeriod ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.introductoryPriceCycles);
+    }
 
 	protected SkuDetails(Parcel in)
 	{
-		this.productId = in.readString();
-		this.title = in.readString();
-		this.description = in.readString();
-		this.isSubscription = in.readByte() != 0;
-		this.currency = in.readString();
-		this.priceValue = in.readDouble();
-		this.priceLong = in.readLong();
-		this.priceText = in.readString();
-	}
+        this.productId = in.readString();
+        this.title = in.readString();
+        this.description = in.readString();
+        this.isSubscription = in.readByte() != 0;
+        this.currency = in.readString();
+        this.priceValue = in.readDouble();
+        this.priceLong = in.readLong();
+        this.priceText = in.readString();
+        this.subscriptionPeriod = parsePeriod(in.readString());
+        this.subscriptionFreeTrialPeriod = parsePeriod(in.readString());
+        this.haveTrialPeriod = in.readByte() != 0;
+        this.introductoryPriceValue = in.readDouble();
+        this.introductoryPriceLong = in.readLong();
+        this.introductoryPriceText = in.readString();
+        this.introductoryPricePeriod = parsePeriod(in.readString());
+        this.haveIntroductoryPeriod = in.readByte() != 0;
+        this.introductoryPriceCycles = in.readInt();
+    }
 
 	public static final Parcelable.Creator<SkuDetails> CREATOR =
 			new Parcelable.Creator<SkuDetails>()

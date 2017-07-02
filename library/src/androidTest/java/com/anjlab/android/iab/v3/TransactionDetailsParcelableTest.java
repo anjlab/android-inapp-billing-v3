@@ -2,6 +2,8 @@ package com.anjlab.android.iab.v3;
 
 import android.os.Parcel;
 
+import com.anjlab.android.iab.v3.util.ResourcesUtil;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -12,13 +14,7 @@ public class TransactionDetailsParcelableTest
     @Test
     public void testParcelable() throws Exception
     {
-        String purchaseInfoJson =
-                "{\"orderId\": \"GPA.1234-5678-9012-34567\",\"packageName\": \"com.example.app\"," +
-                "\"productId\": \"exampleSku\",\"purchaseTime\": 1345678900000,\"purchaseState\": 0," +
-                "\"developerPayload\": \"bGoa+V7g/yqDXvKRqq+JTFn4uQZbPiQJo4pf9RzJ\"," +
-                "\"purchaseToken\": \"opaque-token-up-to-1000-characters\"}";
-
-        PurchaseInfo purchaseInfo = new PurchaseInfo(purchaseInfoJson, "signature");
+        PurchaseInfo purchaseInfo = new PurchaseInfo(ResourcesUtil.loadFile("transaction_details.json"), "signature");
 
         TransactionDetails details = new TransactionDetails(purchaseInfo);
 

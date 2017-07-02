@@ -2,6 +2,8 @@ package com.anjlab.android.iab.v3;
 
 import android.os.Parcel;
 
+import com.anjlab.android.iab.v3.util.ResourcesUtil;
+
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -10,15 +12,37 @@ import static junit.framework.Assert.assertEquals;
 public class SkuDetailsParcelableTest
 {
     @Test
-    public void testParcelable() throws Exception
+    public void testParcelableInApp() throws Exception
     {
-        String skuDetailsJson =
-                "{\"productId\": \"test-id\",\"type\": \"inapp\",\"price\": \"€7.99\","+
-                "\"price_amount_micros\": \"7990000\",\"price_currency_code\": \"GBP\","+
-                "\"title\": \"Test Product\",\"description\": \"A great product for testing.\"}";
-        JSONObject details = new JSONObject(skuDetailsJson);
-        SkuDetails skuDetails = new SkuDetails(details);
+        testParcelable(loadSkuDetails("sku_in_app.json"));
+    }
 
+    @Test
+    public void testParcelableSubscription() throws Exception
+    {
+        testParcelable(loadSkuDetails("sku_subscription.json"));
+    }
+
+    @Test
+    public void testParcelableSubscriptionIntroductory() throws Exception
+    {
+        testParcelable(loadSkuDetails("sku_subscription_introductory.json"));
+    }
+
+    @Test
+    public void testParcelableSubscriptionTrial() throws Exception
+    {
+        testParcelable(loadSkuDetails("sku_subscription_trial.json"));
+    }
+
+    private SkuDetails loadSkuDetails(String jsonFilePath) throws Exception
+    {
+        JSONObject details = new JSONObject(ResourcesUtil.loadFile(jsonFilePath));
+        return new SkuDetails(details);
+    }
+
+    private void testParcelable(SkuDetails skuDetails) throws Exception
+    {
         Parcel parcel = Parcel.obtain();
 
         skuDetails.writeToParcel(parcel, 0);
@@ -35,5 +59,12 @@ public class SkuDetailsParcelableTest
         assertEquals(skuDetails.isSubscription, result.isSubscription);
         assertEquals(skuDetails.currency, result.currency);
         assertEquals(skuDetails.title, result.title);
+        assertEquals(skuDetails.subscriptionPeriod, result.subscriptionPeriod);
+        assertEquals(skuDetails.subscriptionFreeTrialPeriod, result.subscriptionFreeTrialPeriod);
+        assertEquals(skuDetails.introductoryPriceValue, result.introductoryPriceValue);
+        assertEquals(skuDetails.introductoryPricePeriod, result.introductoryPricePeriod);
+        assertEquals(skuDetails.introductoryPriceCycles, result.introductoryPriceCycles);
+        assertEquals(skuDetails.introductoryPriceLong, result.introductoryPriceLong);
+        assertEquals(skuDetails.introductoryPriceText, result.introductoryPriceText);
     }
 }
