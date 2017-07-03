@@ -32,7 +32,6 @@ android {
 }
 
 dependencies {
-    compile 'joda-time:joda-time:2.9.9'
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support.test:rules:0.5'
 }
@@ -125,7 +124,7 @@ android.libraryVariants.all { variant ->
     task.dependsOn variant.javaCompile
     task.from variant.javaCompile.destinationDir
     task.baseName 'anjlab-iabv3'
-    task.doLast{
+    task.doLast {
         println "Copying jar to sample project..."
         copy {
             from task.archivePath
