@@ -77,12 +77,12 @@ public class SkuDetails implements Parcelable
         priceLong = source.optLong(Constants.RESPONSE_PRICE_MICROS);
         priceValue = priceLong / 1000000d;
         priceText = source.optString(Constants.RESPONSE_PRICE);
-        subscriptionPeriod = source.optString(Constants.RESPONSE_SUBSCRIPTION_PERIOD, "P");
-        subscriptionFreeTrialPeriod = source.optString(Constants.RESPONSE_FREE_TRIAL_PERIOD, "P");
+        subscriptionPeriod = source.optString(Constants.RESPONSE_SUBSCRIPTION_PERIOD);
+        subscriptionFreeTrialPeriod = source.optString(Constants.RESPONSE_FREE_TRIAL_PERIOD);
         introductoryPriceLong = source.optLong(Constants.RESPONSE_INTRODUCTORY_PRICE_MICROS);
         introductoryPriceValue = introductoryPriceLong / 1000000d;
         introductoryPriceText = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE);
-        introductoryPricePeriod = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE_PERIOD, "P");
+        introductoryPricePeriod = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE_PERIOD);
         introductoryPriceCycles = source.optInt(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
     }
 
