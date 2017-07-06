@@ -17,6 +17,7 @@ package com.anjlab.android.iab.v3;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -41,9 +42,13 @@ public class SkuDetails implements Parcelable
 
     public final String subscriptionFreeTrialPeriod;
 
+    public final boolean haveTrialPeriod;
+
     public final double introductoryPriceValue;
 
     public final String introductoryPricePeriod;
+
+    public final boolean haveIntroductoryPeriod;
 
     public final int introductoryPriceCycles;
 
@@ -79,10 +84,12 @@ public class SkuDetails implements Parcelable
         priceText = source.optString(Constants.RESPONSE_PRICE);
         subscriptionPeriod = source.optString(Constants.RESPONSE_SUBSCRIPTION_PERIOD);
         subscriptionFreeTrialPeriod = source.optString(Constants.RESPONSE_FREE_TRIAL_PERIOD);
+        haveTrialPeriod = !TextUtils.isEmpty(subscriptionFreeTrialPeriod);
         introductoryPriceLong = source.optLong(Constants.RESPONSE_INTRODUCTORY_PRICE_MICROS);
         introductoryPriceValue = introductoryPriceLong / 1000000d;
         introductoryPriceText = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE);
         introductoryPricePeriod = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE_PERIOD);
+        haveIntroductoryPeriod = !TextUtils.isEmpty(introductoryPricePeriod);
         introductoryPriceCycles = source.optInt(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
     }
 
@@ -146,10 +153,12 @@ public class SkuDetails implements Parcelable
         dest.writeString(this.priceText);
         dest.writeString(this.subscriptionPeriod);
         dest.writeString(this.subscriptionFreeTrialPeriod);
+        dest.writeByte(this.haveTrialPeriod ? (byte) 1 : (byte) 0);
         dest.writeDouble(this.introductoryPriceValue);
         dest.writeLong(this.introductoryPriceLong);
         dest.writeString(this.introductoryPriceText);
         dest.writeString(this.introductoryPricePeriod);
+        dest.writeByte(this.haveIntroductoryPeriod ? (byte) 1 : (byte) 0);
         dest.writeInt(this.introductoryPriceCycles);
     }
 
@@ -165,10 +174,12 @@ public class SkuDetails implements Parcelable
         this.priceText = in.readString();
         this.subscriptionPeriod = in.readString();
         this.subscriptionFreeTrialPeriod = in.readString();
+        this.haveTrialPeriod = in.readByte() != 0;
         this.introductoryPriceValue = in.readDouble();
         this.introductoryPriceLong = in.readLong();
         this.introductoryPriceText = in.readString();
         this.introductoryPricePeriod = in.readString();
+        this.haveIntroductoryPeriod = in.readByte() != 0;
         this.introductoryPriceCycles = in.readInt();
     }
 
