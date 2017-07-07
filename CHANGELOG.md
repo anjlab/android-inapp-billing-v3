@@ -1,3 +1,9 @@
+## 1.0.42 (7/7/2017)
+
+#### Bug Fixes
+
+* [#286](https://github.com/anjlab/android-inapp-billing-v3/pull/286):  Removed Joda Time dependency introduced in 1.0.41 - [@moni890185](https://github.com/moni890185).
+
 ## 1.0.41 (7/2/2017)
 
 #### Features
