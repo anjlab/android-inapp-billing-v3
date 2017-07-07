@@ -14,25 +14,25 @@ public class SkuDetailsParcelableTest
     @Test
     public void testParcelableInApp() throws Exception
     {
-        testParcelable(loadSkuDetails("sku_in_app.json"));
+        testParcelable(loadSkuDetails("sku_in_app.json"), false, false);
     }
 
     @Test
     public void testParcelableSubscription() throws Exception
     {
-        testParcelable(loadSkuDetails("sku_subscription.json"));
+        testParcelable(loadSkuDetails("sku_subscription.json"), false, false);
     }
 
     @Test
     public void testParcelableSubscriptionIntroductory() throws Exception
     {
-        testParcelable(loadSkuDetails("sku_subscription_introductory.json"));
+        testParcelable(loadSkuDetails("sku_subscription_introductory.json"), true, false);
     }
 
     @Test
     public void testParcelableSubscriptionTrial() throws Exception
     {
-        testParcelable(loadSkuDetails("sku_subscription_trial.json"));
+        testParcelable(loadSkuDetails("sku_subscription_trial.json"), false, true);
     }
 
     private SkuDetails loadSkuDetails(String jsonFilePath) throws Exception
@@ -41,7 +41,7 @@ public class SkuDetailsParcelableTest
         return new SkuDetails(details);
     }
 
-    private void testParcelable(SkuDetails skuDetails) throws Exception
+    private void testParcelable(SkuDetails skuDetails, boolean isIntroPrice, boolean isTrial) throws Exception
     {
         Parcel parcel = Parcel.obtain();
 
@@ -61,10 +61,15 @@ public class SkuDetailsParcelableTest
         assertEquals(skuDetails.title, result.title);
         assertEquals(skuDetails.subscriptionPeriod, result.subscriptionPeriod);
         assertEquals(skuDetails.subscriptionFreeTrialPeriod, result.subscriptionFreeTrialPeriod);
+        assertEquals(skuDetails.haveTrialPeriod, result.haveTrialPeriod);
         assertEquals(skuDetails.introductoryPriceValue, result.introductoryPriceValue);
         assertEquals(skuDetails.introductoryPricePeriod, result.introductoryPricePeriod);
         assertEquals(skuDetails.introductoryPriceCycles, result.introductoryPriceCycles);
         assertEquals(skuDetails.introductoryPriceLong, result.introductoryPriceLong);
+        assertEquals(skuDetails.haveIntroductoryPeriod, result.haveIntroductoryPeriod);
         assertEquals(skuDetails.introductoryPriceText, result.introductoryPriceText);
+
+        assertEquals(skuDetails.haveIntroductoryPeriod, isIntroPrice);
+        assertEquals(skuDetails.haveTrialPeriod, isTrial);
     }
 }
