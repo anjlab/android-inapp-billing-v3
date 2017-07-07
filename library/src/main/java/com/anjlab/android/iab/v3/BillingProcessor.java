@@ -38,6 +38,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,7 +59,23 @@ public class BillingProcessor extends BillingBase
 		void onBillingInitialized();
 	}
 
-	private static final Date DATE_MERCHANT_LIMIT_1 = new Date(2012, 12, 5); //5th December 2012
+    /**
+     * Callback methods to be passed to loadHistoryPurchasesFromGoogle().
+     */
+    public interface IBillingHistoryHandler
+    {
+        void onHistoryRestored(HistoryPurchases historyPurchases);
+
+        /**
+         *
+         * @param errorCode possible error codes are
+         *                  Constants.BILLING_ERROR_NOT_INITIALIZED - BillingProcessor is not initialized yet
+         *                  Constants.BILLING_ERROR_RECENT_HISTORY_NOT_SUPPORTED - lower Google API than 6
+         */
+        void onHistoryError(int errorCode);
+    }
+
+    private static final Date DATE_MERCHANT_LIMIT_1 = new Date(2012, 12, 5); //5th December 2012
 	private static final Date DATE_MERCHANT_LIMIT_2 = new Date(2015, 7, 20); //21st July 2015
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 32459;
@@ -78,6 +95,7 @@ public class BillingProcessor extends BillingBase
 	private String developerMerchantId;
 	private boolean isOneTimePurchasesSupported;
 	private boolean isSubsUpdateSupported;
+    private boolean isFullHistorySupported;
 
 	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
 	{
@@ -110,7 +128,73 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	private ServiceConnection serviceConnection = new ServiceConnection()
+    /**
+     * AsyncTask to load RecentHistory items no matter consumed,canceled or not
+     */
+    private class LoadRecentHistoryTask extends AsyncTask<Void, Void, LoadRecentHistoryTask.HistoryResponse>
+    {
+        IBillingHistoryHandler callback;
+
+        LoadRecentHistoryTask(IBillingHistoryHandler callback)
+        {
+            this.callback = callback;
+        }
+
+        @Override
+        protected HistoryResponse doInBackground(Void... nothing)
+        {
+            HistoryResponse historyResponse = null;
+            if (!isInitialized())
+            {
+                historyResponse = new HistoryResponse(Constants.BILLING_ERROR_NOT_INITIALIZED);
+            } else if (!isHistorySupported())
+            {
+                historyResponse = new HistoryResponse(Constants.BILLING_ERROR_RECENT_HISTORY_NOT_SUPPORTED);
+            } else
+            {
+                HashMap<String, PurchaseInfo> inappMap = loadHistoryPurchasesByType(Constants
+                        .PRODUCT_TYPE_MANAGED, null, null);
+                HashMap<String, PurchaseInfo> subsMap = loadHistoryPurchasesByType(Constants
+                        .PRODUCT_TYPE_SUBSCRIPTION, null, null);
+                historyResponse = new HistoryResponse(new HistoryPurchases(inappMap, subsMap));
+            }
+            return historyResponse;
+        }
+
+        @Override
+        protected void onPostExecute(HistoryResponse historyResponse)
+        {
+            if (callback != null)
+            {
+                if (historyResponse.error == 0)
+                {
+                    callback.onHistoryRestored(historyResponse.historyPurchases);
+                } else
+                {
+                    callback.onHistoryError(historyResponse.error);
+                }
+            }
+        }
+
+        class HistoryResponse
+        {
+            HistoryPurchases historyPurchases;
+            int error = 0;
+
+            public HistoryResponse(int error)
+            {
+                this.error = error;
+            }
+
+            public HistoryResponse(HistoryPurchases historyPurchases)
+            {
+                this.historyPurchases = historyPurchases;
+            }
+        }
+    }
+
+
+    private ServiceConnection serviceConnection = new ServiceConnection()
 	{
 		@Override
 		public void onServiceDisconnected(ComponentName name)
@@ -311,7 +395,86 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	public boolean purchase(Activity activity, String productId, String developerPayload)
+    /**
+     * Returns the most recent purchases made by the user for each SKU,
+     * even if that purchase is expired, canceled, or consumed.
+     * Basically this method will return the last purchase for any in-app or subscription
+     * item that is activated for the project and is ordered at least once.
+     * <p>
+     * Note: This method has higher overhead than loadOwnedPurchasesFromGoogle(),
+     * because it requires a call to the Google Play server. You should use
+     * loadOwnedPurchasesFromGoogle() if you do not actually need the user's purchase history.
+     * Also is not called when the BillingProcessor is created, but only by user's request.
+     * <p>
+     * The result or error will be passed to the callback methods.
+     *
+     * @param callback - passes to the client the recent history or the error code
+     */
+    public void loadHistoryPurchasesFromGoogle(IBillingHistoryHandler callback)
+    {
+        new LoadRecentHistoryTask(callback).execute();
+    }
+
+    /**
+     * Get and parse the items for 1 page
+     *
+     * @param type              - "inapp" or "subs"
+     * @param responseMap       - cache holder to be passed btw pages, for first time call set null
+     * @param continuationToken - if is null is for first page else is reference to specific page
+     * @return - HashMap<String, PurchaseInfo> - key is productId , value is PurchaseInfo object
+     */
+    private HashMap<String, PurchaseInfo> loadHistoryPurchasesByType(String type, HashMap<String, PurchaseInfo> responseMap, String continuationToken)
+    {
+        try
+        {
+            Bundle bundle = billingService.getPurchaseHistory(Constants.GOOGLE_API_VERSION_FOR_HISTORY,
+                    contextPackageName, type, continuationToken, new Bundle());
+            if (bundle.getInt(Constants.RESPONSE_CODE) == Constants.BILLING_RESPONSE_RESULT_OK)
+            {
+                if (responseMap == null)
+                {
+                    responseMap = new HashMap<>();
+                }
+                ArrayList<String> purchaseList =
+                        bundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
+                ArrayList<String> signatureList =
+                        bundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
+                if (purchaseList != null)
+                {
+                    for (int i = 0; i < purchaseList.size(); i++)
+                    {
+                        String jsonData = purchaseList.get(i);
+
+                        if (!TextUtils.isEmpty(jsonData))
+                        {
+                            JSONObject purchase = new JSONObject(jsonData);
+                            String signature = signatureList != null && signatureList.size() >
+                                    i ? signatureList.get(i) : null;
+                            responseMap.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID),
+                                    new PurchaseInfo(jsonData, signature));
+                        }
+                    }
+                }
+                continuationToken = bundle.getString(Constants.INAPP_CONTINUATION_TOKEN);
+            } else
+            {
+                continuationToken = "";
+            }
+        } catch (Exception e)
+        {
+//            reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PAST_HISTORY_PURCHASES, e);
+            Log.e(LOG_TAG, "Error in loadHistoryPurchasesByType", e);
+            continuationToken = "";
+        }
+        if (!TextUtils.isEmpty(continuationToken))
+        {
+            responseMap = loadHistoryPurchasesByType(type, responseMap, continuationToken);
+        }
+        return responseMap;
+    }
+
+
+    public boolean purchase(Activity activity, String productId, String developerPayload)
 	{
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
 	}
@@ -364,7 +527,30 @@ public class BillingProcessor extends BillingBase
 		return isSubsUpdateSupported;
 	}
 
-	/**
+    public boolean isHistorySupported()
+    {
+        // Avoid calling the service again if this value is true
+        if (isFullHistorySupported)
+        {
+            return true;
+        }
+
+        try
+        {
+            int response =
+                    billingService.isBillingSupported(Constants.GOOGLE_API_VERSION_FOR_HISTORY,
+                            contextPackageName,
+                            Constants.PRODUCT_TYPE_MANAGED);
+            isFullHistorySupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+        } catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        return isFullHistorySupported;
+    }
+
+
+    /**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
 	 * @param activity     the activity calling this method

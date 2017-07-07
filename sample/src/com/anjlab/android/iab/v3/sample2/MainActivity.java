@@ -24,8 +24,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anjlab.android.iab.v3.BillingProcessor;
+import com.anjlab.android.iab.v3.Constants;
+import com.anjlab.android.iab.v3.PurchaseInfo;
+import com.anjlab.android.iab.v3.HistoryPurchases;
 import com.anjlab.android.iab.v3.SkuDetails;
 import com.anjlab.android.iab.v3.TransactionDetails;
+
+import java.util.Map;
 
 public class MainActivity extends Activity {
 	// SAMPLE APP CONSTANTS
@@ -150,6 +155,43 @@ public class MainActivity extends Activity {
 			case R.id.launchMoreButton:
 				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));
 				break;
+            case R.id.pastHistoryButton:
+                bp.loadHistoryPurchasesFromGoogle(new BillingProcessor.IBillingHistoryHandler() {
+                    @Override
+                    public void onHistoryRestored(HistoryPurchases historyPurchases) {
+                        showToast("Recent history loaded!");
+                        if(historyPurchases.getInapps()!=null){
+                            for (Map.Entry<String, PurchaseInfo> inapp : historyPurchases.getInapps().entrySet())
+                            {
+                                Log.d(LOG_TAG, "Managed Product ID : " + inapp.getKey() + " :\n" +
+                                        inapp.getValue().purchaseData.toString());
+                            }
+                        }
+                        if(historyPurchases.getSubscriptions()!=null){
+                            for (Map.Entry<String, PurchaseInfo> subscription : historyPurchases.getSubscriptions()
+                                    .entrySet())
+                            {
+                                Log.d(LOG_TAG, "Subscription ID : " + subscription.getKey() + " :\n" +
+                                        subscription.getValue().purchaseData.toString());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onHistoryError(int errorCode) {
+                        switch (errorCode){
+                            case Constants.BILLING_ERROR_NOT_INITIALIZED :
+                                showToast("Failed to load recent history\n BillingProcessor is not initialized yet");
+                                break;
+                            case Constants.BILLING_ERROR_RECENT_HISTORY_NOT_SUPPORTED :
+                                showToast("Failed to load recent history\nGoogle API < 6");
+                                break;
+                        }
+
+                    }
+                });
+                break;
+
             default:
                 break;
         }

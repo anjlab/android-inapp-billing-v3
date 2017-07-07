@@ -118,7 +118,13 @@
                 android:id="@+id/subsDetailsButton"/>
 
         </LinearLayout>
-
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Past History"
+            android:onClick="onClick"
+            android:id="@+id/pastHistoryButton"/>
     </LinearLayout>
 
 </ScrollView>
