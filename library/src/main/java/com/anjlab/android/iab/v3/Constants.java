@@ -22,7 +22,6 @@ public class Constants
 	public static final int GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION = 6;
 	public static final int GOOGLE_API_VR_SUPPORTED_VERSION = 7;
 
-
 	public static final String PRODUCT_TYPE_MANAGED = "inapp";
 	public static final String PRODUCT_TYPE_SUBSCRIPTION = "subs";
 
@@ -92,6 +91,4 @@ public class Constants
 
 	public static final String EXTRA_PARAMS_KEY_VR = "vr";
 	public static final String EXTRA_PARAMS_KEY_SKU_TO_REPLACE = "skusToReplace";
-
-
 }
