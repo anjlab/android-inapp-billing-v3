@@ -499,8 +499,7 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION,
 				developerPayload, extraParamsBundle);
 	}
-
-
+	
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
