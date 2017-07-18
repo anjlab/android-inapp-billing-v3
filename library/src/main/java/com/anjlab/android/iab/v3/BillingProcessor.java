@@ -303,22 +303,62 @@ public class BillingProcessor extends BillingBase
 
 	public boolean purchase(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, null);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, null, null);
 	}
 
 	public boolean subscribe(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null, null);
 	}
 
 	public boolean purchase(Activity activity, String productId, String developerPayload)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, null);
 	}
 
 	public boolean subscribe(Activity activity, String productId, String developerPayload)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, null);
+	}
+
+	/***
+	 * Purchase a product
+	 *
+	 * @param activity the activity calling this method
+	 * @param productId the product id to purchase
+	 * @param extraParamsBundle A bundle object containing extra parameters to pass to
+	 *                          getBuyIntentExtraParams()
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra params documentation on developer.android.com</a>
+	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
+	 * or if an exception occurs. Will return {@code true} otherwise.
+	 */
+	public boolean purchase(Activity activity, String productId, Bundle extraParamsBundle)
+	{
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, null, extraParamsBundle);
+	}
+
+	/**
+	 * Subscribe to a product
+	 *
+	 * @param activity the activity calling this method
+	 * @param productId the product id to purchase
+	 * @param extraParamsBundle A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra params documentation on developer.android.com</a>
+	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs. Will return {@code true} otherwise.
+	 */
+	public boolean subscribe(Activity activity, String productId, Bundle extraParamsBundle)
+	{
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null, extraParamsBundle);
+	}
+
+	public boolean purchase(Activity activity, String productId, String developerPayload, Bundle extraParamsBundle)
+	{
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParamsBundle);
+	}
+
+	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParamsBundle)
+	{
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParamsBundle);
 	}
 
 	public boolean isOneTimePurchaseSupported()
@@ -375,7 +415,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean updateSubscription(Activity activity, String oldProductId, String productId)
 	{
-		return updateSubscription(activity, oldProductId, productId, null);
+		return updateSubscription(activity, oldProductId, productId, null, null);
 	}
 
 	/**
@@ -390,13 +430,32 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean updateSubscription(Activity activity, String oldProductId, String productId, String developerPayload)
 	{
+		return updateSubscription(activity, oldProductId, productId, developerPayload, null);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity     the activity calling this method
+	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId    the new subscription id
+	 * @param developerPayload the developer payload
+	 * @param extraParamsBundle A bundle object containing extra parameters (See developer.android.com documentation)
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra params documentation on developer.android.com</a>
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Activity activity, String oldProductId, String productId,
+									  String developerPayload, Bundle extraParamsBundle)
+	{
 		List<String> oldProductIds = null;
 		if (!TextUtils.isEmpty(oldProductId))
 		{
 			oldProductIds = Collections.singletonList(oldProductId);
 		}
-		return updateSubscription(activity, oldProductIds, productId, developerPayload);
+		return updateSubscription(activity, oldProductIds, productId, developerPayload, extraParamsBundle);
 	}
+
 
 	/**
 	 * Change subscription i.e. upgrade or downgrade
@@ -410,8 +469,34 @@ public class BillingProcessor extends BillingBase
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
 									  String productId)
 	{
-		return updateSubscription(activity, oldProductIds, productId, null);
+		return updateSubscription(activity, oldProductIds, productId, null, null);
 	}
+
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param activity      the activity calling this method
+	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId     the new subscription id
+	 * @param developerPayload the developer payload
+	 * @param extraParamsBundle A bundle object containing extra parameters (See developer.android.com documentation)
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra params documentation on developer.android.com</a>
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
+									  String productId, String developerPayload,
+									  Bundle extraParamsBundle)
+	{
+		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+		{
+			return false;
+		}
+		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION,
+				developerPayload, extraParamsBundle);
+	}
+
 
 	/**
 	 * Change subscription i.e. upgrade or downgrade
@@ -430,17 +515,17 @@ public class BillingProcessor extends BillingBase
 		{
 			return false;
 		}
-		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, null);
 	}
 
 	private boolean purchase(Activity activity, String productId, String purchaseType,
-							 String developerPayload)
+							 String developerPayload, Bundle extraParamsBundle)
 	{
-		return purchase(activity, null, productId, purchaseType, developerPayload);
+		return purchase(activity, null, productId, purchaseType, developerPayload, extraParamsBundle);
 	}
 
 	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
-							 String purchaseType, String developerPayload)
+							 String purchaseType, String developerPayload, Bundle extraParamsBundle)
 	{
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 		{
@@ -461,21 +546,28 @@ public class BillingProcessor extends BillingBase
 			Bundle bundle;
 			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 			{
-				bundle =
-						billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION,
-																 contextPackageName,
-																 oldProductIds,
-																 productId,
-																 purchaseType,
-																 purchasePayload);
+				int apiVersion = Constants.GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION;
+
+				if (extraParamsBundle == null)
+				{
+					extraParamsBundle = new Bundle();
+				}
+
+				if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
+				{
+					extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE, new ArrayList<String>(oldProductIds));
+				}
+
+				if( extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_VR))
+				{
+					apiVersion = Constants.GOOGLE_API_VR_SUPPORTED_VERSION;
+				}
+
+				bundle = billingService.getBuyIntentExtraParams(apiVersion, contextPackageName, productId, purchaseType,purchasePayload, extraParamsBundle);
 			}
 			else
 			{
-				bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION,
-													 contextPackageName,
-													 productId,
-													 purchaseType,
-													 purchasePayload);
+				bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION, contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
 			}
 
 			if (bundle != null)
