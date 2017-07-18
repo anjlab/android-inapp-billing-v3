@@ -479,7 +479,8 @@ public class BillingProcessor extends BillingBase
 	 * is not supported.
 	 */
 	public boolean updateSubscriptionWithExtraParams(Activity activity, List<String> oldProductIds,
-													 String productId, String developerPayload, Bundle extraParams){
+													 String productId, String developerPayload, Bundle extraParams)
+	{
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
@@ -494,7 +495,8 @@ public class BillingProcessor extends BillingBase
 	}
 
 	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
-							 String purchaseType, String developerPayload){
+							 String purchaseType, String developerPayload)
+	{
 		return purchase(activity, oldProductIds, productId, purchaseType, developerPayload, null);
 	}
 
