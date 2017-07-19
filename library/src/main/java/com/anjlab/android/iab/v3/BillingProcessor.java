@@ -78,6 +78,8 @@ public class BillingProcessor extends BillingBase
 	private String developerMerchantId;
 	private boolean isOneTimePurchasesSupported;
 	private boolean isSubsUpdateSupported;
+	private boolean isSubscriptionExtraParamsSupported;
+	private boolean isOneTimePurchaseExtraParamsSupported;
 
 	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
 	{
@@ -303,12 +305,12 @@ public class BillingProcessor extends BillingBase
 
 	public boolean purchase(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, null);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
 	}
 
 	public boolean subscribe(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
 	public boolean purchase(Activity activity, String productId, String developerPayload)
@@ -333,9 +335,16 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
 	 * or if an exception occurs. Will return {@code true} otherwise.
 	 */
-	public boolean purchaseWithExtraParams(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean purchase(Activity activity, String productId, String developerPayload, Bundle extraParams)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
+		if(!isOneTimePurchaseWithExtraParamsSupported(extraParams))
+		{
+			return purchase(activity, productId, developerPayload);
+		}
+		else
+		{
+			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
+		}
 	}
 
 	/**
@@ -349,9 +358,16 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
 	 * Will return {@code true} otherwise.
 	 */
-	public boolean subscribeWithExtraParams(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParams)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParams);
+		if (!isSubscriptionWithExtraParamsSupported(extraParams))
+		{
+			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		}
+		else
+		{
+			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParams);
+		}
 	}
 
 	public boolean isOneTimePurchaseSupported()
@@ -395,6 +411,50 @@ public class BillingProcessor extends BillingBase
 			e.printStackTrace();
 		}
 		return isSubsUpdateSupported;
+	}
+
+	public boolean isSubscriptionWithExtraParamsSupported(Bundle extraParams)
+	{
+		if(isSubscriptionExtraParamsSupported)
+		{
+			return true;
+		}
+
+		try
+		{
+			int response =
+					billingService.isBillingSupportedExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
+							contextPackageName,
+							Constants.PRODUCT_TYPE_SUBSCRIPTION, extraParams);
+			isSubscriptionExtraParamsSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+		}
+		catch (RemoteException e)
+		{
+			e.printStackTrace();
+		}
+		return isSubscriptionExtraParamsSupported;
+	}
+
+	public boolean isOneTimePurchaseWithExtraParamsSupported(Bundle extraParams)
+	{
+		if(isOneTimePurchaseExtraParamsSupported)
+		{
+			return true;
+		}
+
+		try
+		{
+			int response =
+					billingService.isBillingSupportedExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
+							contextPackageName,
+							Constants.PRODUCT_TYPE_MANAGED, extraParams);
+			isOneTimePurchaseExtraParamsSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
+		}
+		catch (RemoteException e)
+		{
+			e.printStackTrace();
+		}
+		return isOneTimePurchaseExtraParamsSupported;
 	}
 
 	/**
@@ -478,13 +538,20 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscriptionWithExtraParams(Activity activity, List<String> oldProductIds,
+	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
 													 String productId, String developerPayload, Bundle extraParams)
 	{
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
 		}
+
+		// if API v7 is not supported, let's fallback to the previous method
+		if( !isSubscriptionWithExtraParamsSupported(extraParams))
+		{
+			return updateSubscription(activity, oldProductIds, productId, developerPayload);
+		}
+
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParams);
 	}
 
@@ -522,31 +589,48 @@ public class BillingProcessor extends BillingBase
 			Bundle bundle;
 			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 			{
-				int apiVersion = Constants.GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION;
-
-				if (extraParamsBundle == null)
+				if(extraParamsBundle == null) // API v3
 				{
-					extraParamsBundle = new Bundle();
+					bundle = billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION,
+							contextPackageName,
+							oldProductIds,
+							productId,
+							purchaseType,
+							purchasePayload);
 				}
-
-				if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
+				else // API v7+ supported
 				{
-					extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE,
-							new ArrayList<String>(oldProductIds));
-				}
+					if (extraParamsBundle == null)
+					{
+						extraParamsBundle = new Bundle();
+					}
 
-				if(extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_VR))
-				{
-					apiVersion = Constants.GOOGLE_API_VR_SUPPORTED_VERSION;
-				}
+					if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
+					{
+						extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE,
+								new ArrayList<String>(oldProductIds));
+					}
 
-				bundle = billingService.getBuyIntentExtraParams(apiVersion, contextPackageName, productId,
-						purchaseType, purchasePayload, extraParamsBundle);
+					bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
+							contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
+				}
 			}
 			else
 			{
-				bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION,
-						contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
+				if( extraParamsBundle == null) // API v3
+				{
+					bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION,
+							contextPackageName,
+							productId,
+							purchaseType,
+							purchasePayload);
+
+				}
+				else // API v7+
+				{
+					bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
+							contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
+				}
 			}
 
 			if (bundle != null)
