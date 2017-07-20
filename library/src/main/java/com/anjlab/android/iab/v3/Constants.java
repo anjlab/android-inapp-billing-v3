@@ -19,7 +19,6 @@ public class Constants
 {
 	public static final int GOOGLE_API_VERSION = 3;
 	public static final int GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION = 5;
-	public static final int GOOGLE_API_EXTRA_PARAMS_SUPPORTED_VERSION = 6;
 	public static final int GOOGLE_API_VR_SUPPORTED_VERSION = 7;
 
 	public static final String PRODUCT_TYPE_MANAGED = "inapp";

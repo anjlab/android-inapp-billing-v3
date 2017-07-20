@@ -413,6 +413,12 @@ public class BillingProcessor extends BillingBase
 		return isSubsUpdateSupported;
 	}
 
+	/**
+	 * Check API v7 support for subscriptions
+	 * @param extraParams
+	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
+	 * subscriptions, {@code false} otherwise.
+	 */
 	public boolean isSubscriptionWithExtraParamsSupported(Bundle extraParams)
 	{
 		if(isSubscriptionExtraParamsSupported)
@@ -435,6 +441,12 @@ public class BillingProcessor extends BillingBase
 		return isSubscriptionExtraParamsSupported;
 	}
 
+	/**
+	 * Check API v7 support for one-time purchases
+	 * @param extraParams
+	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
+	 * one-time purchases, {@code false} otherwise.
+	 */
 	public boolean isOneTimePurchaseWithExtraParamsSupported(Bundle extraParams)
 	{
 		if(isOneTimePurchaseExtraParamsSupported)
@@ -539,7 +551,7 @@ public class BillingProcessor extends BillingBase
 	 * is not supported.
 	 */
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-													 String productId, String developerPayload, Bundle extraParams)
+									  String productId, String developerPayload, Bundle extraParams)
 	{
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
@@ -589,7 +601,7 @@ public class BillingProcessor extends BillingBase
 			Bundle bundle;
 			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 			{
-				if(extraParamsBundle == null) // API v3
+				if(extraParamsBundle == null) // API v5
 				{
 					bundle = billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION,
 							contextPackageName,
@@ -617,7 +629,7 @@ public class BillingProcessor extends BillingBase
 			}
 			else
 			{
-				if( extraParamsBundle == null) // API v3
+				if(extraParamsBundle == null) // API v3
 				{
 					bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION,
 							contextPackageName,
