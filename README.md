@@ -269,7 +269,7 @@ P.S. This kind of protection works only for transactions dated between 5th Decem
  
 ## Proguard
 
-The necessary proguard rules are already added in the library. No further configurations are necessary.
+The necessary proguard rules are already added in the library. No further configurations are needed.
 
 ## License
 
