@@ -266,6 +266,10 @@ Later one can easily check transaction validity using method:
 P.S. This kind of protection works only for transactions dated between 5th December 2012 and
 21st July 2015. Before December 2012 `orderId` wasn't contain `merchantId` and in the end of July this
  year Google suddenly changed `orderId` format.
+ 
+## Proguard
+
+The necessary proguard rules are already added in the library. No further configurations are necessary.
 
 ## License
 
