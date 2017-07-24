@@ -269,7 +269,14 @@ P.S. This kind of protection works only for transactions dated between 5th Decem
  
 ## Proguard
 
-The necessary proguard rules are already added in the library. No further configurations are needed.
+As per the IABv3 [documentation](https://developer.android.com/google/play/billing/billing_best_practices.html#validating-purchase-device),
+the following line must be added to your proguard configuration file:
+
+```
+-keep class com.android.vending.billing.**
+```
+
+
 
 ## License
 
