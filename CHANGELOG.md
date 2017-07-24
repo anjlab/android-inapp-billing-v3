@@ -1,3 +1,9 @@
+## 1.0.43 (7/24/2017)
+
+#### Features
+
+* [#287](https://github.com/anjlab/android-inapp-billing-v3/pull/287):  Support for getBuyIntentExtraParams() - [@ratm](https://github.com/ratm).
+
 ## 1.0.42 (7/7/2017)
 
 #### Bug Fixes
