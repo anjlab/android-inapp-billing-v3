@@ -19,6 +19,7 @@ public class Constants
 {
 	public static final int GOOGLE_API_VERSION = 3;
 	public static final int GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION = 5;
+	public static final int GOOGLE_API_VR_SUPPORTED_VERSION = 7;
 
 	public static final String PRODUCT_TYPE_MANAGED = "inapp";
 	public static final String PRODUCT_TYPE_SUBSCRIPTION = "subs";
@@ -86,4 +87,7 @@ public class Constants
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
 	public static final int BILLING_ERROR_SKUDETAILS_FAILED = 112;
 	public static final int BILLING_ERROR_BIND_PLAY_STORE_FAILED = 113;
+
+	public static final String EXTRA_PARAMS_KEY_VR = "vr";
+	public static final String EXTRA_PARAMS_KEY_SKU_TO_REPLACE = "skusToReplace";
 }
