@@ -4,7 +4,7 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 group 'com.anjlab.android.iab.v3'
-version '1.0.42'
+version '1.0.43'
 
 android {
     compileSdkVersion 23
@@ -39,7 +39,7 @@ dependencies {
 configurations.archives.extendsFrom configurations.default
 
 signing {
-    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    required { gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives
 }
 
