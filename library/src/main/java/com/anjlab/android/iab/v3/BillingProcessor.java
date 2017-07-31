@@ -50,7 +50,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public interface IBillingHandler
 	{
-		void onProductPurchased(String productId, TransactionDetails details);
+		void onProductPurchased(String productId, @Nullable TransactionDetails details);
 
 		void onPurchaseHistoryRestored();
 
@@ -736,6 +736,7 @@ public class BillingProcessor extends BillingBase
 		return merchantId.compareTo(developerMerchantId) == 0;
 	}
 
+	@Nullable
 	private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache)
 	{
 		PurchaseInfo details = cache.getDetails(productId);
@@ -866,11 +867,13 @@ public class BillingProcessor extends BillingBase
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
+	@Nullable
 	public TransactionDetails getPurchaseTransactionDetails(String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedProducts);
 	}
 
+	@Nullable
 	public TransactionDetails getSubscriptionTransactionDetails(String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
