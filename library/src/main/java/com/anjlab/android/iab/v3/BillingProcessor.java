@@ -297,10 +297,14 @@ public class BillingProcessor extends BillingBase
 		return false;
 	}
 
+	/**
+	 * Attempt to fetch purchases from the server and update our cache if successful
+	 * @return {@code true} if retrieval occurs, {@code false} otherwise
+	 * todo check if loading should return true if response code isn't successful
+	 */
 	public boolean loadOwnedPurchasesFromGoogle()
 	{
-		return isInitialized() &&
-			   loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
+		return loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
 			   loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
 	}
 
@@ -611,6 +615,7 @@ public class BillingProcessor extends BillingBase
 							purchaseType,
 							purchasePayload);
 				}
+				//todo check if null check should be removed or if else should be removed
 				else // API v7+ supported
 				{
 					if (extraParamsBundle == null)
