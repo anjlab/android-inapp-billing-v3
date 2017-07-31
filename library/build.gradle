@@ -70,9 +70,11 @@ uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-//        repository(url: sonatypeRepo) {
-//            authentication(userName: sonatypeUsername, password: sonatypePassword)
-//        }
+        if (project.hasProperty('sonatypeRepo')) {
+            repository(url: sonatypeRepo) {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+        }
 
         pom.project {
             name 'Android In-App Billing v3 Library'
