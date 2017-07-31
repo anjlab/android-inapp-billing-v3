@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">In-app Billing v3 Sample</string>
-    <string name="wait">wait...</string>
+    <string name="wait">wait…</string>
     <string name="title">Sample Activity #%d</string>
 
 </resources>
