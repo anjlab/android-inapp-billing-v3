@@ -15,6 +15,7 @@ android {
         versionName project.version
         minSdkVersion 8
         targetSdkVersion 23
+        consumerProguardFiles 'progress-proguard.txt'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
