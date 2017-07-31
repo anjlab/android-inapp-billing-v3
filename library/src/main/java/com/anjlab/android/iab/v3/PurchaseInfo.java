@@ -48,7 +48,7 @@ public class PurchaseInfo implements Parcelable
     }
 
     /**
-     * @deprecated dont call it directly, use {@see purchaseData}} instead.
+     * @deprecated don't call it directly, use {@see purchaseData} instead.
      */
     @Deprecated
     public PurchaseData parseResponseData()

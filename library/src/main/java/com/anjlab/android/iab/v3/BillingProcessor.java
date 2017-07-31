@@ -27,6 +27,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -53,7 +54,7 @@ public class BillingProcessor extends BillingBase
 
 		void onPurchaseHistoryRestored();
 
-		void onBillingError(int errorCode, Throwable error);
+		void onBillingError(int errorCode, @Nullable Throwable error);
 
 		void onBillingInitialized();
 	}
@@ -328,7 +329,7 @@ public class BillingProcessor extends BillingBase
 	 *
 	 * @param activity the activity calling this method
 	 * @param productId the product id to purchase
-	 * @param extraParamsBundle A bundle object containing extra parameters to pass to
+	 * @param extraParams A bundle object containing extra parameters to pass to
 	 *                          getBuyIntentExtraParams()
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
@@ -352,7 +353,7 @@ public class BillingProcessor extends BillingBase
 	 *
 	 * @param activity the activity calling this method
 	 * @param productId the product id to purchase
-	 * @param extraParamsBundle A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
+	 * @param extraParams A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
