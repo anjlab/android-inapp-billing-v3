@@ -614,14 +614,8 @@ public class BillingProcessor extends BillingBase
 							purchaseType,
 							purchasePayload);
 				}
-				//todo check if null check should be removed or if else should be removed
 				else // API v7+ supported
 				{
-					if (extraParamsBundle == null)
-					{
-						extraParamsBundle = new Bundle();
-					}
-
 					if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
 					{
 						extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE,
