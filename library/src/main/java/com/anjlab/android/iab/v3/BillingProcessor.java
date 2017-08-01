@@ -286,8 +286,8 @@ public class BillingProcessor extends BillingBase
 						}
 					}
 				}
+				return true;
 			}
-			return true;
 		}
 		catch (Exception e)
 		{
@@ -299,8 +299,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Attempt to fetch purchases from the server and update our cache if successful
-	 * @return {@code true} if retrieval occurs, {@code false} otherwise
-	 * todo check if loading should return true if response code isn't successful
+	 * @return {@code true} if all retrievals are successful, {@code false} otherwise
 	 */
 	public boolean loadOwnedPurchasesFromGoogle()
 	{
