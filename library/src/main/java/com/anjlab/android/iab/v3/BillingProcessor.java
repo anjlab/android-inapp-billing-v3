@@ -713,7 +713,7 @@ public class BillingProcessor extends BillingBase
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //new format [merchantId].[orderId] applied or not?
+		if (details.purchaseInfo.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //newest format applied
 		{
 			return true;
 		}
@@ -721,7 +721,7 @@ public class BillingProcessor extends BillingBase
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.orderId == null || details.orderId.trim().length() == 0)
+		if (details.purchaseInfo.purchaseData.orderId == null || details.purchaseInfo.purchaseData.orderId.trim().length() == 0)
 		{
 			return false;
 		}
@@ -741,14 +741,7 @@ public class BillingProcessor extends BillingBase
 		PurchaseInfo details = cache.getDetails(productId);
 		if (details != null && !TextUtils.isEmpty(details.responseData))
 		{
-			try
-			{
-				return new TransactionDetails(details);
-			}
-			catch (JSONException e)
-			{
-				Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId, e);
-			}
+			return new TransactionDetails(details);
 		}
 		return null;
 	}
