@@ -18,8 +18,6 @@ package com.anjlab.android.iab.v3;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import org.json.JSONException;
-
 import java.util.Date;
 import java.util.Locale;
 
