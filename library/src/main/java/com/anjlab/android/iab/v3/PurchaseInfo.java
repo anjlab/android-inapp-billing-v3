@@ -117,7 +117,10 @@ public class PurchaseInfo implements Parcelable
     @Override
     public boolean equals(Object o)
     {
-        if (o == null || !(o instanceof PurchaseInfo)) return false;
+        if (o == null || !(o instanceof PurchaseInfo))
+        {
+            return false;
+        }
         PurchaseInfo other = (PurchaseInfo) o;
         return responseData.equals(other.responseData)
                 && signature.equals(other.signature)
