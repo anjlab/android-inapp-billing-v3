@@ -27,6 +27,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -50,7 +51,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public interface IBillingHandler
 	{
-		void onProductPurchased(String productId, @Nullable TransactionDetails details);
+		void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details);
 
 		void onPurchaseHistoryRestored();
 
