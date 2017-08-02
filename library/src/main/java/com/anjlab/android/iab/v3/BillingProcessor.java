@@ -713,25 +713,25 @@ public class BillingProcessor extends BillingBase
 		{
 			return true;
 		}
-		if (details.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //new format [merchantId].[orderId] applied or not?
+		if (details.purchaseInfo.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //new format [merchantId].[orderId] applied or not?
 		{
 			return true;
 		}
-		if (details.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
+		if (details.purchaseInfo.purchaseData.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
 		{
 			return true;
 		}
-		if (details.orderId == null || details.orderId.trim().length() == 0)
+		if (details.purchaseInfo.purchaseData.orderId == null || details.orderId.trim().length() == 0)
 		{
 			return false;
 		}
-		int index = details.orderId.indexOf('.');
+		int index = details.purchaseInfo.purchaseData.orderId.indexOf('.');
 		if (index <= 0)
 		{
 			return false; //protect on missing merchant id
 		}
 		//extract merchant id
-		String merchantId = details.orderId.substring(0, index);
+		String merchantId = details.purchaseInfo.purchaseData.orderId.substring(0, index);
 		return merchantId.compareTo(developerMerchantId) == 0;
 	}
 

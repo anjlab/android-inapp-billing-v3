@@ -44,7 +44,7 @@ public class PurchaseInfo implements Parcelable
     {
         this.responseData = responseData;
         this.signature = signature;
-        this.purchaseData = parseResponseData();
+        this.purchaseData = parseResponseDataImpl();
     }
 
     /**
@@ -52,6 +52,11 @@ public class PurchaseInfo implements Parcelable
      */
     @Deprecated
     public PurchaseData parseResponseData()
+    {
+        return parseResponseDataImpl();
+    }
+
+    PurchaseData parseResponseDataImpl()
     {
         try
         {
@@ -92,7 +97,7 @@ public class PurchaseInfo implements Parcelable
     {
         this.responseData = in.readString();
         this.signature = in.readString();
-        this.purchaseData = parseResponseData();
+        this.purchaseData = parseResponseDataImpl();
     }
 
     public static final Parcelable.Creator<PurchaseInfo> CREATOR =
@@ -108,4 +113,15 @@ public class PurchaseInfo implements Parcelable
                     return new PurchaseInfo[size];
                 }
             };
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (o == null || !(o instanceof PurchaseInfo)) return false;
+        PurchaseInfo other = (PurchaseInfo) o;
+        return responseData.equals(other.responseData)
+                && signature.equals(other.signature)
+                && purchaseData.purchaseToken.equals(other.purchaseData.purchaseToken)
+                && purchaseData.purchaseTime.equals(other.purchaseData.purchaseTime);
+    }
 }
