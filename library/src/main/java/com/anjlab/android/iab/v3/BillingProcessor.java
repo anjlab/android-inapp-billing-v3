@@ -38,6 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -60,8 +61,17 @@ public class BillingProcessor extends BillingBase
 		void onBillingInitialized();
 	}
 
-	private static final Date DATE_MERCHANT_LIMIT_1 = new Date(1354694400000L); //5th December 2012
-	private static final Date DATE_MERCHANT_LIMIT_2 = new Date(1437375600000L); //21st July 2015
+	private static final Date DATE_MERCHANT_LIMIT_1; //5th December 2012
+	private static final Date DATE_MERCHANT_LIMIT_2; //21st July 2015
+
+	static 
+    {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(2012, Calendar.DECEMBER, 5);
+		DATE_MERCHANT_LIMIT_1 = calendar.getTime();
+		calendar.set(2015, Calendar.JULY, 21);
+		DATE_MERCHANT_LIMIT_2 = calendar.getTime();
+	}
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 32459;
 	private static final String LOG_TAG = "iabv3";
