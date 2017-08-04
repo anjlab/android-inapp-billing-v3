@@ -18,6 +18,8 @@ package com.anjlab.android.iab.v3.sample2;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -58,12 +60,12 @@ public class MainActivity extends Activity {
 
         bp = new BillingProcessor(this, LICENSE_KEY, MERCHANT_ID, new BillingProcessor.IBillingHandler() {
             @Override
-            public void onProductPurchased(String productId, TransactionDetails details) {
+            public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
 				showToast("onProductPurchased: " + productId);
                 updateTextViews();
             }
             @Override
-            public void onBillingError(int errorCode, Throwable error) {
+            public void onBillingError(int errorCode, @Nullable Throwable error) {
                 showToast("onBillingError: " + Integer.toString(errorCode));
             }
             @Override

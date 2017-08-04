@@ -27,6 +27,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -36,6 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -49,17 +52,26 @@ public class BillingProcessor extends BillingBase
 	 */
 	public interface IBillingHandler
 	{
-		void onProductPurchased(String productId, TransactionDetails details);
+		void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details);
 
 		void onPurchaseHistoryRestored();
 
-		void onBillingError(int errorCode, Throwable error);
+		void onBillingError(int errorCode, @Nullable Throwable error);
 
 		void onBillingInitialized();
 	}
 
-	private static final Date DATE_MERCHANT_LIMIT_1 = new Date(2012, 12, 5); //5th December 2012
-	private static final Date DATE_MERCHANT_LIMIT_2 = new Date(2015, 7, 20); //21st July 2015
+	private static final Date DATE_MERCHANT_LIMIT_1; //5th December 2012
+	private static final Date DATE_MERCHANT_LIMIT_2; //21st July 2015
+
+	static 
+    {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(2012, Calendar.DECEMBER, 5);
+		DATE_MERCHANT_LIMIT_1 = calendar.getTime();
+		calendar.set(2015, Calendar.JULY, 21);
+		DATE_MERCHANT_LIMIT_2 = calendar.getTime();
+	}
 
 	private static final int PURCHASE_FLOW_REQUEST_CODE = 32459;
 	private static final String LOG_TAG = "iabv3";
@@ -285,8 +297,8 @@ public class BillingProcessor extends BillingBase
 						}
 					}
 				}
+				return true;
 			}
-			return true;
 		}
 		catch (Exception e)
 		{
@@ -296,10 +308,13 @@ public class BillingProcessor extends BillingBase
 		return false;
 	}
 
+	/**
+	 * Attempt to fetch purchases from the server and update our cache if successful
+	 * @return {@code true} if all retrievals are successful, {@code false} otherwise
+	 */
 	public boolean loadOwnedPurchasesFromGoogle()
 	{
-		return isInitialized() &&
-			   loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
+		return loadPurchasesByType(Constants.PRODUCT_TYPE_MANAGED, cachedProducts) &&
 			   loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
 	}
 
@@ -328,7 +343,7 @@ public class BillingProcessor extends BillingBase
 	 *
 	 * @param activity the activity calling this method
 	 * @param productId the product id to purchase
-	 * @param extraParamsBundle A bundle object containing extra parameters to pass to
+	 * @param extraParams A bundle object containing extra parameters to pass to
 	 *                          getBuyIntentExtraParams()
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
@@ -352,7 +367,7 @@ public class BillingProcessor extends BillingBase
 	 *
 	 * @param activity the activity calling this method
 	 * @param productId the product id to purchase
-	 * @param extraParamsBundle A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
+	 * @param extraParams A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
@@ -612,11 +627,6 @@ public class BillingProcessor extends BillingBase
 				}
 				else // API v7+ supported
 				{
-					if (extraParamsBundle == null)
-					{
-						extraParamsBundle = new Bundle();
-					}
-
 					if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
 					{
 						extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE,
@@ -713,41 +723,35 @@ public class BillingProcessor extends BillingBase
 		{
 			return true;
 		}
-		if (details.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //new format [merchantId].[orderId] applied or not?
+		if (details.purchaseInfo.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //newest format applied
 		{
 			return true;
 		}
-		if (details.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
+		if (details.purchaseInfo.purchaseData.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
 		{
 			return true;
 		}
-		if (details.orderId == null || details.orderId.trim().length() == 0)
+		if (details.purchaseInfo.purchaseData.orderId == null || details.purchaseInfo.purchaseData.orderId.trim().length() == 0)
 		{
 			return false;
 		}
-		int index = details.orderId.indexOf('.');
+		int index = details.purchaseInfo.purchaseData.orderId.indexOf('.');
 		if (index <= 0)
 		{
 			return false; //protect on missing merchant id
 		}
 		//extract merchant id
-		String merchantId = details.orderId.substring(0, index);
+		String merchantId = details.purchaseInfo.purchaseData.orderId.substring(0, index);
 		return merchantId.compareTo(developerMerchantId) == 0;
 	}
 
+	@Nullable
 	private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache)
 	{
 		PurchaseInfo details = cache.getDetails(productId);
 		if (details != null && !TextUtils.isEmpty(details.responseData))
 		{
-			try
-			{
-				return new TransactionDetails(details);
-			}
-			catch (JSONException e)
-			{
-				Log.e(LOG_TAG, "Failed to load saved purchase details for " + productId, e);
-			}
+			return new TransactionDetails(details);
 		}
 		return null;
 	}
@@ -865,11 +869,13 @@ public class BillingProcessor extends BillingBase
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
+	@Nullable
 	public TransactionDetails getPurchaseTransactionDetails(String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedProducts);
 	}
 
+	@Nullable
 	public TransactionDetails getSubscriptionTransactionDetails(String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);

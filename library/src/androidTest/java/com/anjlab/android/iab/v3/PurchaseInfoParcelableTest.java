@@ -36,7 +36,7 @@ public class PurchaseInfoParcelableTest
     @Test
     public void testResponseDataParcelable() throws Exception
     {
-        PurchaseData responseData = purchaseInfo.parseResponseData();
+        PurchaseData responseData = purchaseInfo.parseResponseDataImpl();
 
         Parcel parcel = Parcel.obtain();
         responseData.writeToParcel(parcel, 0);
