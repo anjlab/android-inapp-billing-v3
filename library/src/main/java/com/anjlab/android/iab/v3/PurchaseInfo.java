@@ -62,15 +62,15 @@ public class PurchaseInfo implements Parcelable
         {
             JSONObject json = new JSONObject(responseData);
             PurchaseData data = new PurchaseData();
-            data.orderId = json.optString("orderId");
-            data.packageName = json.optString("packageName");
-            data.productId = json.optString("productId");
-            long purchaseTimeMillis = json.optLong("purchaseTime", 0);
+            data.orderId = json.optString(Constants.RESPONSE_ORDER_ID);
+            data.packageName = json.optString(Constants.RESPONSE_PACKAGE_NAME);
+            data.productId = json.optString(Constants.RESPONSE_PRODUCT_ID);
+            long purchaseTimeMillis = json.optLong(Constants.RESPONSE_PURCHASE_TIME, 0);
             data.purchaseTime = purchaseTimeMillis != 0 ? new Date(purchaseTimeMillis) : null;
-            data.purchaseState = PurchaseState.values()[json.optInt("purchaseState", 1)];
-            data.developerPayload = json.optString("developerPayload");
-            data.purchaseToken = json.getString("purchaseToken");
-            data.autoRenewing = json.optBoolean("autoRenewing");
+            data.purchaseState = PurchaseState.values()[json.optInt(Constants.RESPONSE_PURCHASE_STATE, 1)];
+            data.developerPayload = json.optString(Constants.RESPONSE_DEVELOPER_PAYLOAD);
+            data.purchaseToken = json.getString(Constants.RESPONSE_PURCHASE_TOKEN);
+            data.autoRenewing = json.optBoolean(Constants.RESPONSE_AUTO_RENEWING);
             return data;
         }
         catch (JSONException e)

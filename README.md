@@ -245,16 +245,7 @@ Also notice, that you will need to call periodically `bp.loadOwnedPurchasesFromG
 
 ## Promo Codes Support
 
-You can use promo codes along with this library, they are supported with one extra notice. According to [this issue](https://github.com/googlesamples/android-play-billing/issues/7)
-there is currently a bug in Google Play Services, and it does not respect _Developer Payload_ token made by this library, causing a security validation fault (`BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD` error code).
-While Google engineers are working on fixing this (lets hope so, you can also leave a feedback on this issue to make them work faster).
-
-Still, there are couple of workarounds you can use:
-
-1. Handle `BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD` error code in your `onBillingError` implementation. You can check out [#156](https://github.com/anjlab/android-inapp-billing-v3/issues/156) for a suggested workaround. This does not look nice, but it works.
-2. Avoid using promo codes in a purchase dialog, prefer entering these codes in Google Play's App _Redeem promo code_ menu.
-One way to do this is to distribute your promo codes in form of a redeem link (`https://play.google.com/redeem?code=YOURPROMOCODE`) instead of just a `YOURPROMOCODE` values.
-You can find a sample on how to bundle it inside your app [here](https://gist.github.com/Thomas-Vos/6d44b4920dbdc8482a2467d95f66c5df).
+You can use promo codes along with this library.
 
 ## Protection Against Fake "Markets"
 

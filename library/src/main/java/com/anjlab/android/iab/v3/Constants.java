@@ -63,14 +63,19 @@ public class Constants
 	public static final String INAPP_DATA_SIGNATURE_LIST = "INAPP_DATA_SIGNATURE_LIST";
 	public static final String RESPONSE_ORDER_ID = "orderId";
 	public static final String RESPONSE_PRODUCT_ID = "productId";
+	public static final String RESPONSE_PACKAGE_NAME = "packageName";
+	public static final String RESPONSE_PURCHASE_TIME = "purchaseTime";
+	public static final String RESPONSE_PURCHASE_STATE = "purchaseState";
+	public static final String RESPONSE_PURCHASE_TOKEN = "purchaseToken";
+	public static final String RESPONSE_DEVELOPER_PAYLOAD = "developerPayload";
 	public static final String RESPONSE_TYPE = "type";
 	public static final String RESPONSE_TITLE = "title";
 	public static final String RESPONSE_DESCRIPTION = "description";
 	public static final String RESPONSE_PRICE = "price";
 	public static final String RESPONSE_PRICE_CURRENCY = "price_currency_code";
 	public static final String RESPONSE_PRICE_MICROS = "price_amount_micros";
-	public static final String RESPONSE_PAYLOAD = "developerPayload";
 	public static final String RESPONSE_SUBSCRIPTION_PERIOD = "subscriptionPeriod";
+	public static final String RESPONSE_AUTO_RENEWING = "autoRenewing";
 	public static final String RESPONSE_FREE_TRIAL_PERIOD = "freeTrialPeriod";
 	public static final String RESPONSE_INTRODUCTORY_PRICE = "introductoryPrice";
 	public static final String RESPONSE_INTRODUCTORY_PRICE_MICROS = "introductoryPriceAmountMicros";
@@ -82,6 +87,7 @@ public class Constants
 	public static final int BILLING_ERROR_INVALID_SIGNATURE = 102;
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
 	public static final int BILLING_ERROR_INVALID_MERCHANT_ID = 104;
+	@Deprecated
 	public static final int BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD = 105;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
