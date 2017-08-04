@@ -127,8 +127,8 @@ public class PurchaseInfo implements Parcelable
         }
         PurchaseInfo other = (PurchaseInfo) o;
         return responseData.equals(other.responseData)
-                && signature.equals(other.signature)
-                && purchaseData.purchaseToken.equals(other.purchaseData.purchaseToken)
-                && purchaseData.purchaseTime.equals(other.purchaseData.purchaseTime);
+               && signature.equals(other.signature)
+               && purchaseData.purchaseToken.equals(other.purchaseData.purchaseToken)
+               && purchaseData.purchaseTime.equals(other.purchaseData.purchaseTime);
     }
 }

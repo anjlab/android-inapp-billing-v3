@@ -64,8 +64,8 @@ public class BillingProcessor extends BillingBase
 	private static final Date DATE_MERCHANT_LIMIT_1; //5th December 2012
 	private static final Date DATE_MERCHANT_LIMIT_2; //21st July 2015
 
-	static 
-    {
+	static
+	{
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(2012, Calendar.DECEMBER, 5);
 		DATE_MERCHANT_LIMIT_1 = calendar.getTime();
@@ -310,6 +310,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Attempt to fetch purchases from the server and update our cache if successful
+	 *
 	 * @return {@code true} if all retrievals are successful, {@code false} otherwise
 	 */
 	public boolean loadOwnedPurchasesFromGoogle()
@@ -352,7 +353,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean purchase(Activity activity, String productId, String developerPayload, Bundle extraParams)
 	{
-		if(!isOneTimePurchaseWithExtraParamsSupported(extraParams))
+		if (!isOneTimePurchaseWithExtraParamsSupported(extraParams))
 		{
 			return purchase(activity, productId, developerPayload);
 		}
@@ -365,24 +366,22 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Subscribe to a product
 	 *
-	 * @param activity the activity calling this method
-	 * @param productId the product id to purchase
+	 * @param activity    the activity calling this method
+	 * @param productId   the product id to purchase
 	 * @param extraParams A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
-	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
-	 * params documentation on developer.android.com</a>
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
 	 * Will return {@code true} otherwise.
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
+	 * params documentation on developer.android.com</a>
 	 */
 	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParams)
 	{
-		if (!isSubscriptionWithExtraParamsSupported(extraParams))
-		{
-			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
-		}
-		else
-		{
-			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParams);
-		}
+		return purchase(activity,
+						null,
+						productId,
+						Constants.PRODUCT_TYPE_SUBSCRIPTION,
+						developerPayload,
+						isSubscriptionWithExtraParamsSupported(extraParams) ? extraParams : null);
 	}
 
 	public boolean isOneTimePurchaseSupported()
@@ -430,13 +429,14 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Check API v7 support for subscriptions
+	 *
 	 * @param extraParams
 	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
 	 * subscriptions, {@code false} otherwise.
 	 */
 	public boolean isSubscriptionWithExtraParamsSupported(Bundle extraParams)
 	{
-		if(isSubscriptionExtraParamsSupported)
+		if (isSubscriptionExtraParamsSupported)
 		{
 			return true;
 		}
@@ -445,8 +445,8 @@ public class BillingProcessor extends BillingBase
 		{
 			int response =
 					billingService.isBillingSupportedExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
-							contextPackageName,
-							Constants.PRODUCT_TYPE_SUBSCRIPTION, extraParams);
+																 contextPackageName,
+																 Constants.PRODUCT_TYPE_SUBSCRIPTION, extraParams);
 			isSubscriptionExtraParamsSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
 		}
 		catch (RemoteException e)
@@ -458,13 +458,14 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Check API v7 support for one-time purchases
+	 *
 	 * @param extraParams
 	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
 	 * one-time purchases, {@code false} otherwise.
 	 */
 	public boolean isOneTimePurchaseWithExtraParamsSupported(Bundle extraParams)
 	{
-		if(isOneTimePurchaseExtraParamsSupported)
+		if (isOneTimePurchaseExtraParamsSupported)
 		{
 			return true;
 		}
@@ -473,8 +474,8 @@ public class BillingProcessor extends BillingBase
 		{
 			int response =
 					billingService.isBillingSupportedExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
-							contextPackageName,
-							Constants.PRODUCT_TYPE_MANAGED, extraParams);
+																 contextPackageName,
+																 Constants.PRODUCT_TYPE_MANAGED, extraParams);
 			isOneTimePurchaseExtraParamsSupported = response == Constants.BILLING_RESPONSE_RESULT_OK;
 		}
 		catch (RemoteException e)
@@ -501,9 +502,9 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
-	 * @param activity     the activity calling this method
-	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId    the new subscription id
+	 * @param activity         the activity calling this method
+	 * @param oldProductId     passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId        the new subscription id
 	 * @param developerPayload the developer payload
 	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
 	 * is not supported.
@@ -536,9 +537,9 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
-	 * @param activity      the activity calling this method
-	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId     the new subscription id
+	 * @param activity         the activity calling this method
+	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId        the new subscription id
 	 * @param developerPayload the developer payload
 	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
@@ -554,16 +555,15 @@ public class BillingProcessor extends BillingBase
 	}
 
 	/**
-	 *
-	 * @param activity      the activity calling this method
-	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId     the new subscription id
+	 * @param activity         the activity calling this method
+	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId        the new subscription id
 	 * @param developerPayload the developer payload
-	 * @param extraParams  A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
-	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
-	 * params documentation on developer.android.com</a>
+	 * @param extraParams      A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
 	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
+	 * params documentation on developer.android.com</a>
 	 */
 	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
 									  String productId, String developerPayload, Bundle extraParams)
@@ -574,12 +574,17 @@ public class BillingProcessor extends BillingBase
 		}
 
 		// if API v7 is not supported, let's fallback to the previous method
-		if( !isSubscriptionWithExtraParamsSupported(extraParams))
+		if (!isSubscriptionWithExtraParamsSupported(extraParams))
 		{
 			return updateSubscription(activity, oldProductIds, productId, developerPayload);
 		}
 
-		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload, extraParams);
+		return purchase(activity,
+						oldProductIds,
+						productId,
+						Constants.PRODUCT_TYPE_SUBSCRIPTION,
+						developerPayload,
+						extraParams);
 	}
 
 	private boolean purchase(Activity activity, String productId, String purchaseType,
@@ -616,42 +621,49 @@ public class BillingProcessor extends BillingBase
 			Bundle bundle;
 			if (oldProductIds != null && purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 			{
-				if(extraParamsBundle == null) // API v5
+				if (extraParamsBundle == null) // API v5
 				{
 					bundle = billingService.getBuyIntentToReplaceSkus(Constants.GOOGLE_API_SUBSCRIPTION_CHANGE_VERSION,
-							contextPackageName,
-							oldProductIds,
-							productId,
-							purchaseType,
-							purchasePayload);
+																	  contextPackageName,
+																	  oldProductIds,
+																	  productId,
+																	  purchaseType,
+																	  purchasePayload);
 				}
 				else // API v7+ supported
 				{
 					if (!extraParamsBundle.containsKey(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE))
 					{
 						extraParamsBundle.putStringArrayList(Constants.EXTRA_PARAMS_KEY_SKU_TO_REPLACE,
-								new ArrayList<String>(oldProductIds));
+															 new ArrayList<>(oldProductIds));
 					}
 
 					bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
-							contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
+																	contextPackageName,
+																	productId,
+																	purchaseType,
+																	purchasePayload,
+																	extraParamsBundle);
 				}
 			}
 			else
 			{
-				if(extraParamsBundle == null) // API v3
+				if (extraParamsBundle == null) // API v3
 				{
 					bundle = billingService.getBuyIntent(Constants.GOOGLE_API_VERSION,
-							contextPackageName,
-							productId,
-							purchaseType,
-							purchasePayload);
-
+														 contextPackageName,
+														 productId,
+														 purchaseType,
+														 purchasePayload);
 				}
 				else // API v7+
 				{
 					bundle = billingService.getBuyIntentExtraParams(Constants.GOOGLE_API_VR_SUPPORTED_VERSION,
-							contextPackageName, productId, purchaseType, purchasePayload, extraParamsBundle);
+																	contextPackageName,
+																	productId,
+																	purchaseType,
+																	purchasePayload,
+																	extraParamsBundle);
 				}
 			}
 
@@ -731,7 +743,8 @@ public class BillingProcessor extends BillingBase
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.orderId == null || details.purchaseInfo.purchaseData.orderId.trim().length() == 0)
+		if (details.purchaseInfo.purchaseData.orderId == null ||
+			details.purchaseInfo.purchaseData.orderId.trim().length() == 0)
 		{
 			return false;
 		}
