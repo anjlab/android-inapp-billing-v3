@@ -35,6 +35,7 @@ android {
 dependencies {
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support.test:rules:0.5'
+    compile 'com.android.support:support-annotations:25.3.1'
 }
 
 configurations.archives.extendsFrom configurations.default
@@ -69,8 +70,10 @@ uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: sonatypeRepo) {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
+        if (project.hasProperty('sonatypeRepo')) {
+            repository(url: sonatypeRepo) {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
         }
 
         pom.project {

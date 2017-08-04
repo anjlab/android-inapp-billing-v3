@@ -24,12 +24,9 @@ public class TransactionDetailsParcelableTest
 
         TransactionDetails result = TransactionDetails.CREATOR.createFromParcel(parcel);
 
-        assertEquals(details.productId, result.productId);
-        assertEquals(details.orderId, result.orderId);
-        assertEquals(details.purchaseToken, result.purchaseToken);
-        assertEquals(details.purchaseTime, result.purchaseTime);
+        assertEquals(details.purchaseInfo, result.purchaseInfo);
 
-        // Only check that purchase info is not null, we check it's parcel implementationin it's own tests
+        // Only check that purchase info is not null, we check its parcel implementation in its own tests
         assertNotNull(result.purchaseInfo);
     }
 }
