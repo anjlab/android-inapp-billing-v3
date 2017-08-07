@@ -4,7 +4,7 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 group 'com.anjlab.android.iab.v3'
-version '1.0.43'
+version '1.0.44'
 
 android {
     compileSdkVersion 23
