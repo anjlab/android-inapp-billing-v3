@@ -2,7 +2,7 @@
 
 ### Upgrading to >= 1.0.44
 
-The bellow workaround for the promo codes should no longer be valid. Promo codes should work just fine right out of the box
+The workaround below for the promo codes should no longer be valid. Promo codes should work just fine right out of the box
 
 ### Upgrading to >= 1.0.37
 
