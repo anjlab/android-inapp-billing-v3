@@ -34,7 +34,6 @@ import android.util.Log;
 
 import com.android.vending.billing.IInAppBillingService;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -894,24 +893,20 @@ public class BillingProcessor extends BillingBase
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
 	}
 
-	private String getDeveloperPayloadFromPurchaseData(JSONObject purchase)
+	private String detectPurchaseTypeFromPurchaseResponseData(JSONObject purchase)
 	{
-		String value = null;
-		try
+		String purchasePayload = getPurchasePayload();
+		// regular flow, based on developer payload
+		if (!TextUtils.isEmpty(purchasePayload) && purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 		{
-			value = purchase.has(Constants.RESPONSE_PAYLOAD)
-					? purchase.getString(Constants.RESPONSE_PAYLOAD) : null;
+			return Constants.PRODUCT_TYPE_SUBSCRIPTION;
 		}
-		catch (JSONException e)
+		// backup check for the promo codes (no payload available)
+		if (purchase != null && purchase.has(Constants.RESPONSE_AUTO_RENEWING))
 		{
-			Log.e(LOG_TAG, "Failed to extract developer payload value!");
+			return Constants.PRODUCT_TYPE_SUBSCRIPTION;
 		}
-		return value != null ? value : "";
-	}
-
-	private boolean validateDeveloperPayload(String expectedValue, String actualValue)
-	{
-		return expectedValue.equals(actualValue);
+		return Constants.PRODUCT_TYPE_MANAGED;
 	}
 
 	public boolean handleActivityResult(int requestCode, int resultCode, Intent data)
@@ -927,10 +922,8 @@ public class BillingProcessor extends BillingBase
 		}
 		int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
 		Log.d(LOG_TAG, String.format("resultCode = %d, responseCode = %d", resultCode, responseCode));
-		String purchasePayload = getPurchasePayload();
 		if (resultCode == Activity.RESULT_OK &&
-			responseCode == Constants.BILLING_RESPONSE_RESULT_OK &&
-			!TextUtils.isEmpty(purchasePayload))
+			responseCode == Constants.BILLING_RESPONSE_RESULT_OK)
 		{
 			String purchaseData = data.getStringExtra(Constants.INAPP_PURCHASE_DATA);
 			String dataSignature = data.getStringExtra(Constants.RESPONSE_INAPP_SIGNATURE);
@@ -938,43 +931,31 @@ public class BillingProcessor extends BillingBase
 			{
 				JSONObject purchase = new JSONObject(purchaseData);
 				String productId = purchase.getString(Constants.RESPONSE_PRODUCT_ID);
-				String developerPayload = getDeveloperPayloadFromPurchaseData(purchase);
-				boolean purchasedSubscription =
-						purchasePayload.startsWith(Constants.PRODUCT_TYPE_SUBSCRIPTION);
-				if (validateDeveloperPayload(purchasePayload, developerPayload))
+                if (verifyPurchaseSignature(productId, purchaseData, dataSignature))
 				{
-					if (verifyPurchaseSignature(productId, purchaseData, dataSignature))
+					String purchaseType = detectPurchaseTypeFromPurchaseResponseData(purchase);
+					BillingCache cache = purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)
+							? cachedSubscriptions : cachedProducts;
+					cache.put(productId, purchaseData, dataSignature);
+					if (eventHandler != null)
 					{
-						BillingCache cache =
-								purchasedSubscription ? cachedSubscriptions : cachedProducts;
-						cache.put(productId, purchaseData, dataSignature);
-						if (eventHandler != null)
-						{
-							eventHandler.onProductPurchased(productId,
-															new TransactionDetails(new PurchaseInfo(
-																	purchaseData,
-																	dataSignature)));
-						}
-					}
-					else
-					{
-						Log.e(LOG_TAG, "Public key signature doesn't match!");
-						reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
+						eventHandler.onProductPurchased(
+								productId,
+								new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature)));
 					}
 				}
-				else
-				{
-					Log.e(LOG_TAG, String.format("Payload mismatch: %s != %s",
-												 purchasePayload,
-												 developerPayload));
-					reportBillingError(Constants.BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD, null);
-				}
+                else
+                {
+                    Log.e(LOG_TAG, "Public key signature doesn't match!");
+                    reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
+                }
 			}
 			catch (Exception e)
 			{
 				Log.e(LOG_TAG, "Error in handleActivityResult", e);
 				reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 			}
+			savePurchasePayload(null);
 		}
 		else
 		{
@@ -983,8 +964,7 @@ public class BillingProcessor extends BillingBase
 		return true;
 	}
 
-	private boolean verifyPurchaseSignature(String productId, String purchaseData,
-											String dataSignature)
+	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature)
 	{
 		try
 		{
