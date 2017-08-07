@@ -1,3 +1,11 @@
+## 1.0.44 (8/7/2017)
+
+#### Features
+
+* [#295](https://github.com/anjlab/android-inapp-billing-v3/pull/295):  Address a bug with a developer payload check for the promo codes - [@serggl](https://github.com/serggl).
+* [#293](https://github.com/anjlab/android-inapp-billing-v3/pull/293):  Nullability and javadocs - [@AllanWang](https://github.com/AllanWang).
+* [#289](https://github.com/anjlab/android-inapp-billing-v3/pull/289):  Add proguard rule - [@AllanWang](https://github.com/AllanWang).
+
 ## 1.0.43 (7/24/2017)
 
 #### Features
