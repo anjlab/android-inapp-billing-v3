@@ -308,7 +308,7 @@ public class BillingProcessor extends BillingBase
 	}
 
 	/**
-	 * Attempt to fetch purchases from the server and update our cache if successful
+	 * Attempt to fetch purchases synchronously from the server and update our cache if successful
 	 *
 	 * @return {@code true} if all retrievals are successful, {@code false} otherwise
 	 */

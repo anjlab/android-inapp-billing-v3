@@ -183,6 +183,9 @@ bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
 bp.loadOwnedPurchasesFromGoogle();
 ```
 
+Note that this will fetch the purchases synchronously, and may block the thread.
+Avoid calling this on the UI thread if possible.
+
 ## Getting Listing Details of Your Products
 
 To query listing price and a description of your product / subscription listed in Google Play use these methods:
