@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 
 public class AsyncBilling {
 
-    public static void loadPurchasesFromGoogleAsync(BillingProcessor billingProcessor, IAsyncResponse<Boolean> response) {
+    public static void loadOwnedPurchasesFromGoogleAsync(BillingProcessor billingProcessor, IAsyncResponse<Boolean> response) {
         doAsync(billingProcessor, new IAsyncTask<Boolean>() {
             @Override
             public Boolean doInBackground(@NonNull BillingProcessor billingProcessor) {
@@ -49,7 +49,9 @@ public class AsyncBilling {
         @Override
         protected T doInBackground(Void... voids) {
             BillingProcessor bp = bpRef.get();
-            if (bp == null || !bp.isInitialized()) return null;
+            if (bp == null || !bp.isInitialized()) {
+                return null;
+            }
             return bgTask.doInBackground(bp);
         }
 
@@ -63,7 +65,13 @@ public class AsyncBilling {
             //todo check if we should verify that the billing processor is still valid
             //even though the response may not depend on the billing processor, it may indicate that
             //the bounded activity is finished
-            uiResponse.onResponse(t);
+            BillingProcessor bp = bpRef.get();
+            if (t == null && (bp == null || !bp.isInitialized())) {
+                //we skipped the task as the processor isn't ready
+                uiResponse.onCancelled();
+            } else {
+                uiResponse.onResponse(t);
+            }
         }
     }
 
