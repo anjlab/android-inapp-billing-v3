@@ -245,7 +245,7 @@ Also notice, that you will need to call periodically `bp.loadOwnedPurchasesFromG
 
 ## Promo Codes Support
 
-You can use promo codes along with this library.
+You can use promo codes along with this library. Promo codes can be entered in the purchase dialog or in the Google Play app. The URL https://play.google.com/redeem?code=YOUR_PROMO_CODE will launch the Google Play app with the promo code already entered. This could come in handy if you want to give users the option to enter a promo code within your app.
 
 ## Protection Against Fake "Markets"
 
