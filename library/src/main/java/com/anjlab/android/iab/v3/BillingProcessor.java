@@ -194,6 +194,10 @@ public class BillingProcessor extends BillingBase
 		bindPlayServices();
 	}
 
+	public void setListener(IBillingHandler handler){
+		eventHandler = handler;
+	}
+
 	private static Intent getBindServiceIntent()
 	{
 		Intent intent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
