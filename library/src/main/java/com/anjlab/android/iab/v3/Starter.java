@@ -12,32 +12,50 @@ import android.support.v4.app.Fragment;
 
 public interface Starter {
 
+    boolean hasStarter();
+
     void startIntentSenderForResult(IntentSender intent, int requestCode) throws IntentSender.SendIntentException;
 
-    class ActivityStarter implements Starter {
-
+    class ActivityStarter implements Starter
+    {
         private final Activity activity;
 
-        public ActivityStarter(Activity activity) {
+        public ActivityStarter(Activity activity)
+        {
             this.activity = activity;
         }
 
         @Override
-        public void startIntentSenderForResult(IntentSender intent, int requestCode) throws IntentSender.SendIntentException {
+        public boolean hasStarter()
+        {
+            return activity != null;
+        }
+
+        @Override
+        public void startIntentSenderForResult(IntentSender intent, int requestCode) throws IntentSender.SendIntentException
+        {
             activity.startIntentSenderForResult(intent, requestCode, new Intent(), 0, 0, 0);
         }
     }
 
-    class FragmentStarter implements Starter {
-
+    class FragmentStarter implements Starter
+    {
         private final Fragment fragment;
 
-        public FragmentStarter(Fragment fragment) {
+        public FragmentStarter(Fragment fragment)
+        {
             this.fragment = fragment;
         }
 
         @Override
-        public void startIntentSenderForResult(IntentSender intent, int requestCode) throws IntentSender.SendIntentException {
+        public boolean hasStarter()
+        {
+            return fragment != null;
+        }
+
+        @Override
+        public void startIntentSenderForResult(IntentSender intent, int requestCode) throws IntentSender.SendIntentException
+        {
             fragment.startIntentSenderForResult(intent, requestCode, new Intent(), 0, 0, 0, new Bundle());
         }
     }
