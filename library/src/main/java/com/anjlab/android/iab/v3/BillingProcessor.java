@@ -29,6 +29,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -320,22 +321,42 @@ public class BillingProcessor extends BillingBase
 
 	public boolean purchase(Activity activity, String productId)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
+		return purchase(new Starter.ActivityStarter(activity), null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
+	}
+
+	public boolean purchase(Fragment fragment, String productId)
+	{
+		return purchase(new Starter.FragmentStarter(fragment), null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
 	}
 
 	public boolean subscribe(Activity activity, String productId)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
+		return purchase(new Starter.ActivityStarter(activity), null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
+	}
+
+	public boolean subscribe(Fragment fragment, String productId)
+	{
+		return purchase(new Starter.FragmentStarter(fragment), null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
 	public boolean purchase(Activity activity, String productId, String developerPayload)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
+		return purchase(new Starter.ActivityStarter(activity), productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
+	}
+
+	public boolean purchase(Fragment fragment, String productId, String developerPayload)
+	{
+		return purchase(new Starter.FragmentStarter(fragment), productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
 	}
 
 	public boolean subscribe(Activity activity, String productId, String developerPayload)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(new Starter.ActivityStarter(activity), productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+	}
+
+	public boolean subscribe(Fragment fragment, String productId, String developerPayload)
+	{
+		return purchase(new Starter.FragmentStarter(fragment), productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
 	/***
@@ -358,7 +379,31 @@ public class BillingProcessor extends BillingBase
 		}
 		else
 		{
-			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
+			return purchase(new Starter.ActivityStarter(activity), null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
+		}
+	}
+
+	/***
+	 * Purchase a product
+	 *
+	 * @param fragment the fragment calling this method
+	 * @param productId the product id to purchase
+	 * @param extraParams A bundle object containing extra parameters to pass to
+	 *                          getBuyIntentExtraParams()
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
+	 * params documentation on developer.android.com</a>
+	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
+	 * or if an exception occurs. Will return {@code true} otherwise.
+	 */
+	public boolean purchase(Fragment fragment, String productId, String developerPayload, Bundle extraParams)
+	{
+		if (!isOneTimePurchaseWithExtraParamsSupported(extraParams))
+		{
+			return purchase(fragment, productId, developerPayload);
+		}
+		else
+		{
+			return purchase(new Starter.FragmentStarter(fragment), null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
 		}
 	}
 
@@ -375,12 +420,33 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParams)
 	{
-		return purchase(activity,
+		return purchase(new Starter.ActivityStarter(activity),
 						null,
 						productId,
 						Constants.PRODUCT_TYPE_SUBSCRIPTION,
 						developerPayload,
 						isSubscriptionWithExtraParamsSupported(extraParams) ? extraParams : null);
+	}
+
+	/**
+	 * Subscribe to a product
+	 *
+	 * @param fragment    the fragment calling this method
+	 * @param productId   the product id to purchase
+	 * @param extraParams A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
+	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
+	 * Will return {@code true} otherwise.
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
+	 * params documentation on developer.android.com</a>
+	 */
+	public boolean subscribe(Fragment fragment, String productId, String developerPayload, Bundle extraParams)
+	{
+		return purchase(new Starter.FragmentStarter(fragment),
+				null,
+				productId,
+				Constants.PRODUCT_TYPE_SUBSCRIPTION,
+				developerPayload,
+				isSubscriptionWithExtraParamsSupported(extraParams) ? extraParams : null);
 	}
 
 	public boolean isOneTimePurchaseSupported()
@@ -501,6 +567,20 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
+	 * @param fragment     the fragment calling this method
+	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Fragment, String)}
+	 * @param productId    the new subscription id
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Fragment fragment, String oldProductId, String productId)
+	{
+		return updateSubscription(fragment, oldProductId, productId, null);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
 	 * @param activity         the activity calling this method
 	 * @param oldProductId     passing null or empty string will act the same as {@link #subscribe(Activity, String)}
 	 * @param productId        the new subscription id
@@ -521,6 +601,26 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
+	 * @param fragment         the fragment calling this method
+	 * @param oldProductId     passing null or empty string will act the same as {@link #subscribe(Fragment, String)}
+	 * @param productId        the new subscription id
+	 * @param developerPayload the developer payload
+	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Fragment fragment, String oldProductId, String productId, String developerPayload)
+	{
+		List<String> oldProductIds = null;
+		if (!TextUtils.isEmpty(oldProductId))
+		{
+			oldProductIds = Collections.singletonList(oldProductId);
+		}
+		return updateSubscription(fragment, oldProductIds, productId, developerPayload);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
 	 * @param activity      the activity calling this method
 	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
 	 * @param productId     the new subscription id
@@ -531,6 +631,21 @@ public class BillingProcessor extends BillingBase
 									  String productId)
 	{
 		return updateSubscription(activity, oldProductIds, productId, null);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param fragment      the fragment calling this method
+	 * @param oldProductIds passing null will act the same as {@link #subscribe(Fragment, String)}
+	 * @param productId     the new subscription id
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Fragment fragment, List<String> oldProductIds,
+									  String productId)
+	{
+		return updateSubscription(fragment, oldProductIds, productId, null);
 	}
 
 	/**
@@ -550,7 +665,27 @@ public class BillingProcessor extends BillingBase
 		{
 			return false;
 		}
-		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(new Starter.ActivityStarter(activity), oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+	}
+
+	/**
+	 * Change subscription i.e. upgrade or downgrade
+	 *
+	 * @param fragment         the fragment calling this method
+	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Fragment, String)}
+	 * @param productId        the new subscription id
+	 * @param developerPayload the developer payload
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+	 */
+	public boolean updateSubscription(Fragment fragment, List<String> oldProductIds,
+									  String productId, String developerPayload)
+	{
+		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+		{
+			return false;
+		}
+		return purchase(new Starter.FragmentStarter(fragment), oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
 	/**
@@ -578,7 +713,7 @@ public class BillingProcessor extends BillingBase
 			return updateSubscription(activity, oldProductIds, productId, developerPayload);
 		}
 
-		return purchase(activity,
+		return purchase(new Starter.ActivityStarter(activity),
 						oldProductIds,
 						productId,
 						Constants.PRODUCT_TYPE_SUBSCRIPTION,
@@ -586,19 +721,52 @@ public class BillingProcessor extends BillingBase
 						extraParams);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType,
+	/**
+	 * @param fragment         the fragment calling this method
+	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Fragment, String)}
+	 * @param productId        the new subscription id
+	 * @param developerPayload the developer payload
+	 * @param extraParams      A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
+	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
+	 * is not supported.
+	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
+	 * params documentation on developer.android.com</a>
+	 */
+	public boolean updateSubscription(Fragment fragment, List<String> oldProductIds,
+									  String productId, String developerPayload, Bundle extraParams)
+	{
+		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+		{
+			return false;
+		}
+
+		// if API v7 is not supported, let's fallback to the previous method
+		if (!isSubscriptionWithExtraParamsSupported(extraParams))
+		{
+			return updateSubscription(fragment, oldProductIds, productId, developerPayload);
+		}
+
+		return purchase(new Starter.FragmentStarter(fragment),
+				oldProductIds,
+				productId,
+				Constants.PRODUCT_TYPE_SUBSCRIPTION,
+				developerPayload,
+				extraParams);
+	}
+
+	private boolean purchase(Starter starter, String productId, String purchaseType,
 							 String developerPayload)
 	{
-		return purchase(activity, null, productId, purchaseType, developerPayload);
+		return purchase(starter, null, productId, purchaseType, developerPayload);
 	}
 
-	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
+	private boolean purchase(Starter starter, List<String> oldProductIds, String productId,
 							 String purchaseType, String developerPayload)
 	{
-		return purchase(activity, oldProductIds, productId, purchaseType, developerPayload, null);
+		return purchase(starter, oldProductIds, productId, purchaseType, developerPayload, null);
 	}
 
-	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
+	private boolean purchase(Starter starter, List<String> oldProductIds, String productId,
 							 String purchaseType, String developerPayload, Bundle extraParamsBundle)
 	{
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
@@ -672,11 +840,9 @@ public class BillingProcessor extends BillingBase
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK)
 				{
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
-					if (activity != null && pendingIntent != null)
+					if (starter.hasStarter() && pendingIntent != null)
 					{
-						activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
-															PURCHASE_FLOW_REQUEST_CODE,
-															new Intent(), 0, 0, 0);
+						starter.startIntentSenderForResult(pendingIntent.getIntentSender(), PURCHASE_FLOW_REQUEST_CODE);
 					}
 					else
 					{
