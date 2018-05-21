@@ -15,6 +15,7 @@
 
 package com.anjlab.android.iab.v3;
 
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -55,8 +56,8 @@ class Security
      * @param signedData      the signed JSON string (signed, not encrypted)
      * @param signature       the signature for the data, signed with the private key
      */
-    public static boolean verifyPurchase(String productId, String base64PublicKey,
-                                         String signedData, String signature)
+    public static boolean verifyPurchase(@NonNull String productId, @NonNull String base64PublicKey,
+                                         @NonNull String signedData, @NonNull String signature)
     {
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
             TextUtils.isEmpty(signature))
@@ -87,7 +88,8 @@ class Security
      * @param encodedPublicKey Base64-encoded public key
      * @throws IllegalArgumentException if encodedPublicKey is invalid
      */
-    public static PublicKey generatePublicKey(String encodedPublicKey)
+    @NonNull
+    public static PublicKey generatePublicKey(@NonNull String encodedPublicKey)
     {
         try
         {
@@ -120,7 +122,7 @@ class Security
      * @param signature  server signature
      * @return true if the data and signature match
      */
-    public static boolean verify(PublicKey publicKey, String signedData, String signature)
+    public static boolean verify(@NonNull PublicKey publicKey, @NonNull String signedData, @NonNull String signature)
     {
         Signature sig;
         try

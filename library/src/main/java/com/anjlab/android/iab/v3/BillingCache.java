@@ -16,6 +16,8 @@
 package com.anjlab.android.iab.v3;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ class BillingCache extends BillingBase
 	private String cacheKey;
 	private String version;
 
-	BillingCache(Context context, String key)
+	BillingCache(@NonNull Context context, @NonNull String key)
 	{
 		super(context);
 		data = new HashMap<>();
@@ -42,11 +44,13 @@ class BillingCache extends BillingBase
 		load();
 	}
 
+	@NonNull
 	private String getPreferencesCacheKey()
 	{
 		return getPreferencesBaseKey() + cacheKey;
 	}
 
+	@NonNull
 	private String getPreferencesVersionKey()
 	{
 		return getPreferencesCacheKey() + VERSION_KEY;
@@ -54,6 +58,7 @@ class BillingCache extends BillingBase
 
 	private void load()
 	{
+		//noinspection ConstantConditions
 		String[] entries = loadString(getPreferencesCacheKey(), "").split(Pattern.quote(ENTRY_DELIMITER));
 		for (String entry : entries)
 		{
@@ -87,19 +92,20 @@ class BillingCache extends BillingBase
 		saveString(getPreferencesVersionKey(), version);
 	}
 
-	boolean includesProduct(String productId)
+	boolean includesProduct(@NonNull String productId)
 	{
 		reloadDataIfNeeded();
 		return data.containsKey(productId);
 	}
 
-	PurchaseInfo getDetails(String productId)
+	@Nullable
+	PurchaseInfo getDetails(@NonNull String productId)
 	{
 		reloadDataIfNeeded();
 		return data.containsKey(productId) ? data.get(productId) : null;
 	}
 
-	void put(String productId, String details, String signature)
+	void put(@NonNull String productId, @NonNull String details, @Nullable String signature)
 	{
 		reloadDataIfNeeded();
 		if (!data.containsKey(productId))
@@ -109,7 +115,7 @@ class BillingCache extends BillingBase
 		}
 	}
 
-	void remove(String productId)
+	void remove(@NonNull String productId)
 	{
 		reloadDataIfNeeded();
 		if (data.containsKey(productId))
@@ -126,9 +132,11 @@ class BillingCache extends BillingBase
 		flush();
 	}
 
+	@NonNull
 	private String getCurrentVersion()
 	{
-		return loadString(getPreferencesVersionKey(), "0");
+        //noinspection ConstantConditions
+        return loadString(getPreferencesVersionKey(), "0");
 	}
 
 	private void reloadDataIfNeeded()
@@ -140,6 +148,7 @@ class BillingCache extends BillingBase
 		}
 	}
 
+	@NonNull
 	List<String> getContents()
 	{
 		return new ArrayList<>(data.keySet());
