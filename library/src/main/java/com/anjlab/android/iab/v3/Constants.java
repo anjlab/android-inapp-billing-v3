@@ -93,6 +93,7 @@ public class Constants
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;
 	public static final int BILLING_ERROR_SKUDETAILS_FAILED = 112;
 	public static final int BILLING_ERROR_BIND_PLAY_STORE_FAILED = 113;
+	public static final int BILLING_ERROR_SERVICE_DISCONNECTED = 114;
 
 	public static final String EXTRA_PARAMS_KEY_VR = "vr";
 	public static final String EXTRA_PARAMS_KEY_SKU_TO_REPLACE = "skusToReplace";

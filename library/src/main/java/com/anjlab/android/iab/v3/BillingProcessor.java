@@ -821,36 +821,11 @@ public class BillingProcessor extends BillingBase
 		{
 			try
 			{
-				Bundle products = new Bundle();
-				products.putStringArrayList(Constants.PRODUCTS_LIST, productIdList);
-				Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION,
-																 contextPackageName,
-																 purchaseType,
-																 products);
-				int response = skuDetails.getInt(Constants.RESPONSE_CODE);
-
-				if (response == Constants.BILLING_RESPONSE_RESULT_OK)
-				{
-					ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
-					List<String> detailsList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
-					if (detailsList != null)
-					{
-						for (String responseLine : detailsList)
-						{
-							JSONObject object = new JSONObject(responseLine);
-							SkuDetails product = new SkuDetails(object);
-							productDetails.add(product);
-						}
-					}
-					return productDetails;
-				}
-				else
-				{
-					reportBillingError(response, null);
-					Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d",
-												 productIdList.size(),
-												 response));
-				}
+				return getSkuDetailsOrThrow(productIdList, purchaseType);
+			}
+			catch (BillingError e)
+			{
+				reportBillingError(e.getResponseCode(), null);
 			}
 			catch (Exception e)
 			{
@@ -859,6 +834,52 @@ public class BillingProcessor extends BillingBase
 			}
 		}
 		return null;
+	}
+
+	@NonNull
+	private List<SkuDetails> getSkuDetailsOrThrow(@NonNull ArrayList<String> productIdList, String purchaseType) throws Exception
+	{
+		if (billingService == null)
+		{
+			throw new BillingError(Constants.BILLING_ERROR_SERVICE_DISCONNECTED);
+		}
+		if (productIdList.size() > 0)
+		{
+			Bundle products = new Bundle();
+			products.putStringArrayList(Constants.PRODUCTS_LIST, productIdList);
+			Bundle skuDetails = billingService.getSkuDetails(Constants.GOOGLE_API_VERSION,
+					contextPackageName,
+					purchaseType,
+					products);
+			int response = skuDetails.getInt(Constants.RESPONSE_CODE);
+
+			if (response == Constants.BILLING_RESPONSE_RESULT_OK)
+			{
+				ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
+				List<String> detailsList = skuDetails.getStringArrayList(Constants.DETAILS_LIST);
+				if (detailsList != null)
+				{
+					for (String responseLine : detailsList)
+					{
+						JSONObject object = new JSONObject(responseLine);
+						SkuDetails product = new SkuDetails(object);
+						productDetails.add(product);
+					}
+				}
+				return productDetails;
+			}
+			else
+			{
+				Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d",
+						productIdList.size(),
+						response));
+				throw new BillingError(response);
+			}
+		}
+		else
+		{
+			return new ArrayList<SkuDetails>();
+		}
 	}
 
 	public SkuDetails getPurchaseListingDetails(String productId)
@@ -879,6 +900,18 @@ public class BillingProcessor extends BillingBase
 	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList)
 	{
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+	}
+
+    @NonNull
+    public List<SkuDetails> getPurchaseListingDetailsOrThrow(@NonNull ArrayList<String> productIdList) throws Exception
+	{
+		return getSkuDetailsOrThrow(productIdList, Constants.PRODUCT_TYPE_MANAGED);
+	}
+
+    @NonNull
+    public List<SkuDetails> getSubscriptionListingDetailsOrThrow(@NonNull ArrayList<String> productIdList) throws Exception
+	{
+		return getSkuDetailsOrThrow(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
 	@Nullable
