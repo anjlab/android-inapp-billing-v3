@@ -385,6 +385,11 @@ public class BillingProcessor extends BillingBase
 
 	public boolean isOneTimePurchaseSupported()
 	{
+		if (!isInitialized())
+		{
+			throw new IllegalStateException("BillingProcessor is not initialized");
+		}
+
 		if (isOneTimePurchasesSupported)
 		{
 			return true;
@@ -405,6 +410,11 @@ public class BillingProcessor extends BillingBase
 
 	public boolean isSubscriptionUpdateSupported()
 	{
+		if (!isInitialized())
+		{
+			throw new IllegalStateException("BillingProcessor is not initialized");
+		}
+
 		// Avoid calling the service again if this value is true
 		if (isSubsUpdateSupported)
 		{
