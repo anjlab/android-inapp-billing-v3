@@ -385,6 +385,11 @@ public class BillingProcessor extends BillingBase
 
 	public boolean isOneTimePurchaseSupported()
 	{
+		if(!isInitialized())
+		{
+			Log.e(LOG_TAG, "Make sure BillingProcessor was initialized before calling isOneTimePurchaseSupported()");
+			return false;
+		}
 		if (isOneTimePurchasesSupported)
 		{
 			return true;
