@@ -1,8 +1,7 @@
 apply plugin: 'com.android.application'
 
 dependencies {
-    implementation project(':library')
-    implementation 'com.android.support:support-annotations:26.0.1'
+    compile project(':library')
 //    compile fileTree(dir: 'libs', include: '*.jar')
 }
 
