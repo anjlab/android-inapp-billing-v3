@@ -492,26 +492,36 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Checks does API support version 6 required to request purchase history
-	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED} or {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
+	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED}
+	 *                or {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
 	 * @return {@code true} if feature supported {@code false} otherwise
 	 */
-	public boolean isRequestBillingHistorySupported(String type) throws BillingCommunicationException {
-		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)) {
+	public boolean isRequestBillingHistorySupported(String type) throws BillingCommunicationException
+	{
+		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+		{
 			throw new RuntimeException("Unsupported type " + type);
 		}
 
 		IInAppBillingService billing = billingService;
 
-		if (billing != null) {
+		if (billing != null)
+		{
 
-			try {
-				int response = billing.isBillingSupported(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION, contextPackageName, type);
+			try
+			{
+				int response = billing.isBillingSupported(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION,
+						contextPackageName, type);
 				return response == Constants.BILLING_RESPONSE_RESULT_OK;
-			} catch (RemoteException e) {
+			}
+			catch (RemoteException e)
+			{
 				throw new BillingCommunicationException(e);
 			}
 
-		} else {
+		}
+		else
+		{
 			throw new BillingCommunicationException("Billing service isn't connected");
 		}
 	}
@@ -1052,43 +1062,53 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Returns the most recent purchase made by the user for each SKU, even if that purchase is expired, canceled, or consumed.
 	 *
-	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED} or {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
+	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED} or
+	 * {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
 	 * @param extraParams a Bundle with extra params that would be appended into http request
 	 *      query string. Not used at this moment. Reserved for future functionality.
 	 *
 	 * @return @NotNull list of billing history records
 	 * @throws BillingCommunicationException if billing isn't connected or there was an error during request execution
 	 */
-	public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams) throws BillingCommunicationException {
+	public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams) throws BillingCommunicationException
+	{
 
-		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)) {
+		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+		{
 			throw new RuntimeException("Unsupported type " + type);
 		}
 
 		IInAppBillingService billing = billingService;
 
-		if (billing != null) {
+		if (billing != null)
+		{
 
-			try {
+			try
+			{
 
 				List<BillingHistoryRecord> result = new ArrayList<>();
 				int resultCode;
 				String continuationToken = null;
 
-				do {
+				do
+					{
 
-					Bundle resultBundle = billing.getPurchaseHistory(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION, contextPackageName, type, continuationToken, extraParams);
+					Bundle resultBundle = billing.getPurchaseHistory(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION,
+							contextPackageName, type, continuationToken, extraParams);
 					resultCode = resultBundle.getInt(Constants.RESPONSE_CODE);
 
-					if (resultCode == Constants.BILLING_RESPONSE_RESULT_OK) {
+					if (resultCode == Constants.BILLING_RESPONSE_RESULT_OK)
+					{
 
 						List<String> purchaseData = resultBundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
 
 						List<String> signatures = resultBundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
 
-						if (purchaseData != null && signatures != null) {
+						if (purchaseData != null && signatures != null)
+						{
 
-							for (int i = 0, max = purchaseData.size(); i < max; i++) {
+							for (int i = 0, max = purchaseData.size(); i < max; i++)
+							{
 								String data = purchaseData.get(i);
 								String signature = signatures.get(i);
 
@@ -1104,11 +1124,14 @@ public class BillingProcessor extends BillingBase
 
 				return result;
 
-			} catch (RemoteException | JSONException e) {
+			} catch (RemoteException | JSONException e)
+			{
 				throw new BillingCommunicationException(e);
 			}
 
-		} else {
+		}
+		else
+		{
 			throw new BillingCommunicationException("Billing service isn't connected");
 		}
 	}

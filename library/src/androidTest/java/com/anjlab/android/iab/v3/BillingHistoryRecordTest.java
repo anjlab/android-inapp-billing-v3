@@ -9,17 +9,20 @@ import org.junit.Before;
 import org.junit.Test;
 import static junit.framework.Assert.assertEquals;
 
-public class BillingHistoryRecordTest {
+public class BillingHistoryRecordTest
+{
 
     private String historyResponseJson;
 
     @Before
-    public void setup() {
+    public void setup()
+    {
         historyResponseJson = ResourcesUtil.loadFile("purchase_history_response.json");
     }
 
     @Test
-    public void testCreatesFromJsonCorrectly() throws JSONException {
+    public void testCreatesFromJsonCorrectly() throws JSONException
+    {
         BillingHistoryRecord record = new BillingHistoryRecord(historyResponseJson, "signature");
 
         assertEquals("sample-product-id", record.productId);
@@ -30,7 +33,8 @@ public class BillingHistoryRecordTest {
     }
 
     @Test
-    public void testParcelizesCorrectly() throws JSONException {
+    public void testParcelizesCorrectly() throws JSONException
+    {
         BillingHistoryRecord record = new BillingHistoryRecord(historyResponseJson, "signature");
 
         Parcel parcel = Parcel.obtain();
