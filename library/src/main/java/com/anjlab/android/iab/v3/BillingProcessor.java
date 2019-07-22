@@ -491,7 +491,7 @@ public class BillingProcessor extends BillingBase
 	}
 
 	/**
-	 * Checks does API support version 6 required to request purchase history
+	 * Checks if API supports version 6 which required to request purchase history
 	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED}
 	 *                or {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
 	 * @return {@code true} if feature supported {@code false} otherwise
