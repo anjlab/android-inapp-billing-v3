@@ -238,6 +238,25 @@ public final Date purchaseTime;
 public final PurchaseInfo purchaseInfo;
 ```
 
+## Getting Purchase History
+You can request most recent purchases using `getPurchaseHistory` method. Pass required type as "inapp" for one-time purchases and "subs" for subscriptions
+or use `Constants.PRODUCT_TYPE_MANAGED` and `Constants.PRODUCT_TYPE_SUBSCRIPTION` respectively.
+```java
+public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams)
+```
+As a result you will get a `List` of `BillingHistoryRecord` objects with following fields:
+```java
+public final String productId;
+public final String purchaseToken;
+public final long purchaseTime;
+public final String developerPayload;
+public final String signature;
+```
+Please keep in mind that this API requires `billing API` of version 6 or higher, so you should check if it is supported beforehand:
+```java
+public boolean isRequestBillingHistorySupported(String type)
+```
+
 ## Handle Canceled Subscriptions
 
 Call `bp.getSubscriptionTransactionDetails(...)` and check the `purchaseInfo.purchaseData.autoRenewing` flag.
