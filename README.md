@@ -215,6 +215,22 @@ where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for p
 
 As a result you will get a `List<SkuDetails>` which contains objects described above.
 
+If you want to handle connection errors (user doesn't have internet) use these methods:
+
+```java
+try {
+    bp.getPurchaseListingDetailsOrThrow(arrayListOfProductIds);
+} catch (Exception e) {
+    // Your code here
+}
+try {
+    bp.getPurchaseListingDetailsOrThrow(arrayListOfProductIds);
+} catch (Excepetion e) {
+    // Your code here
+}
+```
+
+
 ## Getting Purchase Transaction Details
 As a part or 1.0.9 changes, `TransactionDetails` object is passed to `onProductPurchased` method of a handler class.
 However, you can always retrieve it later calling these methods:
