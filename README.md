@@ -224,7 +224,7 @@ try {
     // Your code here
 }
 try {
-    bp.getPurchaseListingDetailsOrThrow(arrayListOfProductIds);
+    bp.getSubscriptionListingDetailsOrThrow(arrayListOfProductIds);
 } catch (Excepetion e) {
     // Your code here
 }
