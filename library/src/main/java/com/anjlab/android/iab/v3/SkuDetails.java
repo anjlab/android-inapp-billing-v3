@@ -68,6 +68,8 @@ public class SkuDetails implements Parcelable
 
     public final String introductoryPriceText;
 
+    public final String responseData;
+
     public SkuDetails(JSONObject source) throws JSONException
     {
         String responseType = source.optString(Constants.RESPONSE_TYPE);
@@ -92,6 +94,7 @@ public class SkuDetails implements Parcelable
         introductoryPricePeriod = source.optString(Constants.RESPONSE_INTRODUCTORY_PRICE_PERIOD);
         haveIntroductoryPeriod = !TextUtils.isEmpty(introductoryPricePeriod);
         introductoryPriceCycles = source.optInt(Constants.RESPONSE_INTRODUCTORY_PRICE_CYCLES);
+        responseData = source.toString();
     }
 
     @Override
@@ -161,6 +164,7 @@ public class SkuDetails implements Parcelable
         dest.writeString(this.introductoryPricePeriod);
         dest.writeByte(this.haveIntroductoryPeriod ? (byte) 1 : (byte) 0);
         dest.writeInt(this.introductoryPriceCycles);
+        dest.writeString(this.responseData);
     }
 
     protected SkuDetails(Parcel in)
@@ -182,6 +186,7 @@ public class SkuDetails implements Parcelable
         this.introductoryPricePeriod = in.readString();
         this.haveIntroductoryPeriod = in.readByte() != 0;
         this.introductoryPriceCycles = in.readInt();
+        this.responseData = in.readString();
     }
 
     public static final Parcelable.Creator<SkuDetails> CREATOR =
