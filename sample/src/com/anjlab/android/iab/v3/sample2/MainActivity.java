@@ -29,6 +29,8 @@ import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.SkuDetails;
 import com.anjlab.android.iab.v3.TransactionDetails;
 
+import java.util.ArrayList;
+
 public class MainActivity extends Activity {
 	// SAMPLE APP CONSTANTS
 	private static final String ACTIVITY_NUMBER = "activity_num";
@@ -133,8 +135,13 @@ public class MainActivity extends Activity {
                     showToast("Successfully consumed");
                 break;
             case R.id.productDetailsButton:
-				SkuDetails sku = bp.getPurchaseListingDetails(PRODUCT_ID);
-                showToast(sku != null ? sku.toString() : "Failed to load SKU details");
+                ArrayList<String> products = new ArrayList<>();
+                products.add(PRODUCT_ID);
+                try {
+                    showToast(bp.getPurchaseListingDetailsOrThrow(products).get(0).toString());
+                } catch (Exception e) {
+                    showToast("Failed to load SKU details: " + e);
+                }
                 break;
             case R.id.subscribeButton:
                 bp.subscribe(this,SUBSCRIPTION_ID);
