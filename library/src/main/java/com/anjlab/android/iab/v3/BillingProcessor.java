@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 AnjLab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  */
 package com.anjlab.android.iab.v3;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -44,6 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class BillingProcessor extends BillingBase
 {
 	/**
@@ -93,6 +95,8 @@ public class BillingProcessor extends BillingBase
 	private boolean isSubscriptionExtraParamsSupported;
 	private boolean isOneTimePurchaseExtraParamsSupported;
 
+	// We only store an application context, so an Activity leak is not possible
+	@SuppressLint("StaticFieldLeak")
 	private class HistoryInitializationTask extends AsyncTask<Void, Void, Boolean>
 	{
 		@Override
@@ -144,7 +148,8 @@ public class BillingProcessor extends BillingBase
 	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
 	 * this factory, then you must call {@link #initialize()} afterwards.
 	 */
-	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, IBillingHandler handler)
+	@NonNull
+	public static BillingProcessor newBillingProcessor(@NonNull Context context, @NonNull String licenseKey, @NonNull IBillingHandler handler)
 	{
 		return newBillingProcessor(context, licenseKey, null, handler);
 	}
@@ -153,24 +158,25 @@ public class BillingProcessor extends BillingBase
 	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
 	 * this factory, then you must call {@link #initialize()} afterwards.
 	 */
-	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, String merchantId,
-													   IBillingHandler handler)
+	@NonNull
+	public static BillingProcessor newBillingProcessor(@NonNull Context context, @NonNull String licenseKey, @Nullable String merchantId,
+													   @NonNull IBillingHandler handler)
 	{
 		return new BillingProcessor(context, licenseKey, merchantId, handler, false);
 	}
 
-	public BillingProcessor(Context context, String licenseKey, IBillingHandler handler)
+	public BillingProcessor(@NonNull Context context, @NonNull String licenseKey, @NonNull IBillingHandler handler)
 	{
 		this(context, licenseKey, null, handler);
 	}
 
-	public BillingProcessor(Context context, String licenseKey, String merchantId,
-							IBillingHandler handler)
+	public BillingProcessor(@NonNull Context context, @NonNull String licenseKey, @Nullable String merchantId,
+							@NonNull IBillingHandler handler)
 	{
 		this(context, licenseKey, merchantId, handler, true);
 	}
 
-	private BillingProcessor(Context context, String licenseKey, String merchantId, IBillingHandler handler,
+	private BillingProcessor(@NonNull Context context, @NonNull String licenseKey, @Nullable String merchantId, @NonNull IBillingHandler handler,
 							 boolean bindImmediately)
 	{
 		super(context.getApplicationContext());
@@ -195,6 +201,7 @@ public class BillingProcessor extends BillingBase
 		bindPlayServices();
 	}
 
+	@NonNull
 	private static Intent getBindServiceIntent()
 	{
 		Intent intent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
@@ -215,7 +222,7 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	public static boolean isIabServiceAvailable(Context context)
+	public static boolean isIabServiceAvailable(@NonNull Context context)
 	{
 		final PackageManager packageManager = context.getPackageManager();
 		List<ResolveInfo> list = packageManager.queryIntentServices(getBindServiceIntent(), 0);
@@ -243,27 +250,29 @@ public class BillingProcessor extends BillingBase
 		return billingService != null;
 	}
 
-	public boolean isPurchased(String productId)
+	public boolean isPurchased(@NonNull String productId)
 	{
 		return cachedProducts.includesProduct(productId);
 	}
 
-	public boolean isSubscribed(String productId)
+	public boolean isSubscribed(@NonNull String productId)
 	{
 		return cachedSubscriptions.includesProduct(productId);
 	}
 
+	@NonNull
 	public List<String> listOwnedProducts()
 	{
 		return cachedProducts.getContents();
 	}
 
+	@NonNull
 	public List<String> listOwnedSubscriptions()
 	{
 		return cachedSubscriptions.getContents();
 	}
 
-	private boolean loadPurchasesByType(String type, BillingCache cacheStorage)
+	private boolean loadPurchasesByType(@NonNull String type, @NonNull BillingCache cacheStorage)
 	{
 		if (!isInitialized())
 		{
@@ -319,22 +328,22 @@ public class BillingProcessor extends BillingBase
 			   loadPurchasesByType(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions);
 	}
 
-	public boolean purchase(Activity activity, String productId)
+	public boolean purchase(@NonNull Activity activity, @NonNull String productId)
 	{
 		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
 	}
 
-	public boolean subscribe(Activity activity, String productId)
+	public boolean subscribe(@NonNull Activity activity, @NonNull String productId)
 	{
 		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	public boolean purchase(Activity activity, String productId, String developerPayload)
+	public boolean purchase(@NonNull Activity activity, @NonNull String productId, @NonNull String developerPayload)
 	{
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
 	}
 
-	public boolean subscribe(Activity activity, String productId, String developerPayload)
+	public boolean subscribe(@NonNull Activity activity, @NonNull String productId, @NonNull String developerPayload)
 	{
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
@@ -351,7 +360,7 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
 	 * or if an exception occurs. Will return {@code true} otherwise.
 	 */
-	public boolean purchase(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean purchase(@NonNull Activity activity, @NonNull String productId, @NonNull String developerPayload, @NonNull Bundle extraParams)
 	{
 		if (!isOneTimePurchaseWithExtraParamsSupported(extraParams))
 		{
@@ -374,7 +383,7 @@ public class BillingProcessor extends BillingBase
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
 	 */
-	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean subscribe(@NonNull Activity activity, @NonNull String productId, @NonNull String developerPayload, @NonNull Bundle extraParams)
 	{
 		return purchase(activity,
 						null,
@@ -409,6 +418,7 @@ public class BillingProcessor extends BillingBase
 		return isOneTimePurchasesSupported;
 	}
 
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	public boolean isSubscriptionUpdateSupported()
 	{
 		// Avoid calling the service again if this value is true
@@ -439,7 +449,7 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
 	 * subscriptions, {@code false} otherwise.
 	 */
-	public boolean isSubscriptionWithExtraParamsSupported(Bundle extraParams)
+	public boolean isSubscriptionWithExtraParamsSupported(@NonNull Bundle extraParams)
 	{
 		if (isSubscriptionExtraParamsSupported)
 		{
@@ -468,7 +478,7 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
 	 * one-time purchases, {@code false} otherwise.
 	 */
-	public boolean isOneTimePurchaseWithExtraParamsSupported(Bundle extraParams)
+	public boolean isOneTimePurchaseWithExtraParamsSupported(@NonNull Bundle extraParams)
 	{
 		if (isOneTimePurchaseExtraParamsSupported)
 		{
@@ -535,7 +545,7 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscription(Activity activity, String oldProductId, String productId)
+	public boolean updateSubscription(@NonNull Activity activity, @NonNull String oldProductId, @NonNull String productId)
 	{
 		return updateSubscription(activity, oldProductId, productId, null);
 	}
@@ -550,7 +560,7 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscription(Activity activity, String oldProductId, String productId, String developerPayload)
+	public boolean updateSubscription(@NonNull Activity activity, @Nullable String oldProductId, @NonNull String productId, @Nullable String developerPayload)
 	{
 		List<String> oldProductIds = null;
 		if (!TextUtils.isEmpty(oldProductId))
@@ -569,8 +579,8 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-									  String productId)
+	public boolean updateSubscription(@NonNull Activity activity, @Nullable List<String> oldProductIds,
+									  @NonNull String productId)
 	{
 		return updateSubscription(activity, oldProductIds, productId, null);
 	}
@@ -585,9 +595,10 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-									  String productId, String developerPayload)
+	public boolean updateSubscription(@NonNull Activity activity, @Nullable List<String> oldProductIds,
+									  @NonNull String productId, @Nullable String developerPayload)
 	{
+		//noinspection SimplifiableIfStatement
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
@@ -606,8 +617,8 @@ public class BillingProcessor extends BillingBase
 	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
 	 * params documentation on developer.android.com</a>
 	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-									  String productId, String developerPayload, Bundle extraParams)
+	public boolean updateSubscription(@NonNull Activity activity, @Nullable List<String> oldProductIds,
+									  @NonNull String productId, @Nullable String developerPayload, @NonNull Bundle extraParams)
 	{
 		if (oldProductIds != null && !isSubscriptionUpdateSupported())
 		{
@@ -628,20 +639,20 @@ public class BillingProcessor extends BillingBase
 						extraParams);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType,
-							 String developerPayload)
+	private boolean purchase(@NonNull Activity activity, @NonNull String productId, @NonNull String purchaseType,
+							 @NonNull String developerPayload)
 	{
 		return purchase(activity, null, productId, purchaseType, developerPayload);
 	}
 
-	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
-							 String purchaseType, String developerPayload)
+	private boolean purchase(@NonNull Activity activity, @Nullable List<String> oldProductIds, @NonNull String productId,
+							 @NonNull String purchaseType, @Nullable String developerPayload)
 	{
 		return purchase(activity, oldProductIds, productId, purchaseType, developerPayload, null);
 	}
 
-	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
-							 String purchaseType, String developerPayload, Bundle extraParamsBundle)
+	private boolean purchase(@NonNull Activity activity, @Nullable List<String> oldProductIds, @NonNull String productId,
+							 @NonNull String purchaseType, @Nullable String developerPayload, @Nullable Bundle extraParamsBundle)
 	{
 		if (!isInitialized() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 		{
@@ -714,15 +725,11 @@ public class BillingProcessor extends BillingBase
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK)
 				{
 					PendingIntent pendingIntent = bundle.getParcelable(Constants.BUY_INTENT);
-					if (activity != null && pendingIntent != null)
+					if (pendingIntent != null)
 					{
 						activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
 															PURCHASE_FLOW_REQUEST_CODE,
 															new Intent(), 0, 0, 0);
-					}
-					else
-					{
-						reportBillingError(Constants.BILLING_ERROR_LOST_CONTEXT, null);
 					}
 				}
 				else if (response == Constants.BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED)
@@ -732,7 +739,7 @@ public class BillingProcessor extends BillingBase
 						loadOwnedPurchasesFromGoogle();
 					}
 					TransactionDetails details = getPurchaseTransactionDetails(productId);
-					if (!checkMerchant(details))
+					if (!checkMerchant(details)) // TODO will throw NPE if details is null
 					{
 						Log.i(LOG_TAG, "Invalid or tampered merchant id!");
 						reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
@@ -740,7 +747,7 @@ public class BillingProcessor extends BillingBase
 					}
 					if (eventHandler != null)
 					{
-						if (details == null)
+						if (details == null) // TODO can't be null, because an NPE would have been thrown above in that case
 						{
 							details = getSubscriptionTransactionDetails(productId);
 						}
@@ -770,7 +777,7 @@ public class BillingProcessor extends BillingBase
 	 * @param details TransactionDetails
 	 * @return boolean
 	 */
-	private boolean checkMerchant(TransactionDetails details)
+	private boolean checkMerchant(@NonNull TransactionDetails details)
 	{
 		if (developerMerchantId == null) //omit merchant id checking
 		{
@@ -800,7 +807,7 @@ public class BillingProcessor extends BillingBase
 	}
 
 	@Nullable
-	private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache)
+	private TransactionDetails getPurchaseTransactionDetails(@NonNull String productId, @NonNull BillingCache cache)
 	{
 		PurchaseInfo details = cache.getDetails(productId);
 		if (details != null && !TextUtils.isEmpty(details.responseData))
@@ -810,7 +817,7 @@ public class BillingProcessor extends BillingBase
 		return null;
 	}
 
-	public boolean consumePurchase(String productId)
+	public boolean consumePurchase(@NonNull String productId)
 	{
 		if (!isInitialized())
 		{
@@ -845,7 +852,8 @@ public class BillingProcessor extends BillingBase
 		return false;
 	}
 
-	private SkuDetails getSkuDetails(String productId, String purchaseType)
+	@Nullable
+	private SkuDetails getSkuDetails(@NonNull String productId, @NonNull String purchaseType)
 	{
 		ArrayList<String> productIdList = new ArrayList<String>();
 		productIdList.add(productId);
@@ -857,7 +865,8 @@ public class BillingProcessor extends BillingBase
 		return null;
 	}
 
-	private List<SkuDetails> getSkuDetails(ArrayList<String> productIdList, String purchaseType)
+	@Nullable
+	private List<SkuDetails> getSkuDetails(@Nullable ArrayList<String> productIdList, @NonNull String purchaseType)
 	{
 		if (billingService != null && productIdList != null && productIdList.size() > 0)
 		{
@@ -903,39 +912,44 @@ public class BillingProcessor extends BillingBase
 		return null;
 	}
 
-	public SkuDetails getPurchaseListingDetails(String productId)
+	@Nullable
+	public SkuDetails getPurchaseListingDetails(@NonNull String productId)
 	{
 		return getSkuDetails(productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public SkuDetails getSubscriptionListingDetails(String productId)
+	@Nullable
+	public SkuDetails getSubscriptionListingDetails(@NonNull String productId)
 	{
 		return getSkuDetails(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	public List<SkuDetails> getPurchaseListingDetails(ArrayList<String> productIdList)
+	@Nullable
+	public List<SkuDetails> getPurchaseListingDetails(@NonNull ArrayList<String> productIdList)
 	{
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	public List<SkuDetails> getSubscriptionListingDetails(ArrayList<String> productIdList)
+	@Nullable
+	public List<SkuDetails> getSubscriptionListingDetails(@NonNull ArrayList<String> productIdList)
 	{
 		return getSkuDetails(productIdList, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
 	@Nullable
-	public TransactionDetails getPurchaseTransactionDetails(String productId)
+	public TransactionDetails getPurchaseTransactionDetails(@NonNull String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedProducts);
 	}
 
 	@Nullable
-	public TransactionDetails getSubscriptionTransactionDetails(String productId)
+	public TransactionDetails getSubscriptionTransactionDetails(@NonNull String productId)
 	{
 		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
 	}
 
-	private String detectPurchaseTypeFromPurchaseResponseData(JSONObject purchase)
+	@NonNull
+	private String detectPurchaseTypeFromPurchaseResponseData(@Nullable JSONObject purchase)
 	{
 		String purchasePayload = getPurchasePayload();
 		// regular flow, based on developer payload
@@ -951,7 +965,7 @@ public class BillingProcessor extends BillingBase
 		return Constants.PRODUCT_TYPE_MANAGED;
 	}
 
-	public boolean handleActivityResult(int requestCode, int resultCode, Intent data)
+	public boolean handleActivityResult(int requestCode, int resultCode, @Nullable Intent data)
 	{
 		if (requestCode != PURCHASE_FLOW_REQUEST_CODE)
 		{
@@ -1006,7 +1020,7 @@ public class BillingProcessor extends BillingBase
 		return true;
 	}
 
-	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature)
+	private boolean verifyPurchaseSignature(@NonNull String productId, @NonNull String purchaseData, @NonNull String dataSignature)
 	{
 		try
 		{
@@ -1023,7 +1037,7 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	public boolean isValidTransactionDetails(TransactionDetails transactionDetails)
+	public boolean isValidTransactionDetails(@NonNull TransactionDetails transactionDetails)
 	{
 		return verifyPurchaseSignature(transactionDetails.purchaseInfo.purchaseData.productId,
 									   transactionDetails.purchaseInfo.responseData,
@@ -1041,17 +1055,18 @@ public class BillingProcessor extends BillingBase
 		saveBoolean(getPreferencesBaseKey() + RESTORE_KEY, true);
 	}
 
-	private void savePurchasePayload(String value)
+	private void savePurchasePayload(@Nullable String value)
 	{
 		saveString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, value);
 	}
 
+	@Nullable
 	private String getPurchasePayload()
 	{
 		return loadString(getPreferencesBaseKey() + PURCHASE_PAYLOAD_CACHE_KEY, null);
 	}
 
-	private void reportBillingError(int errorCode, Throwable error)
+	private void reportBillingError(int errorCode, @Nullable Throwable error)
 	{
 		if (eventHandler != null)
 		{

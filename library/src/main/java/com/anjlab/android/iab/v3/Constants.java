@@ -15,6 +15,7 @@
  */
 package com.anjlab.android.iab.v3;
 
+@SuppressWarnings("unused")
 public class Constants
 {
 	public static final int GOOGLE_API_VERSION = 3;

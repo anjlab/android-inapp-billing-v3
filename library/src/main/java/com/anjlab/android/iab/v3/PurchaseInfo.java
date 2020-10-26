@@ -18,6 +18,8 @@ package com.anjlab.android.iab.v3;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -40,7 +42,7 @@ public class PurchaseInfo implements Parcelable
     public final String signature;
     public final PurchaseData purchaseData;
 
-    public PurchaseInfo(String responseData, String signature)
+    public PurchaseInfo(@NonNull String responseData, @Nullable String signature)
     {
         this.responseData = responseData;
         this.signature = signature;
@@ -50,6 +52,7 @@ public class PurchaseInfo implements Parcelable
     /**
      * @deprecated don't call it directly, use {@see purchaseData} instead.
      */
+    @Nullable
     @Deprecated
     public PurchaseData parseResponseData()
     {

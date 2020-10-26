@@ -18,32 +18,37 @@ package com.anjlab.android.iab.v3;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 class BillingBase
 {
-	private Context context;
+	private final Context context;
 
-	BillingBase(Context context)
+	BillingBase(@NonNull Context context)
 	{
 		this.context = context;
 	}
 
+	@NonNull
 	Context getContext()
 	{
 		return context;
 	}
 
+	@NonNull
 	String getPreferencesBaseKey()
 	{
 		return getContext().getPackageName() + "_preferences";
 	}
 
+	@Nullable
 	private SharedPreferences getPreferences()
 	{
 		return PreferenceManager.getDefaultSharedPreferences(getContext());
 	}
 
-	boolean saveString(String key, String value)
+	boolean saveString(@NonNull String key, @Nullable String value)
 	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
@@ -56,7 +61,8 @@ class BillingBase
 		return false;
 	}
 
-	String loadString(String key, String defValue)
+	@Nullable
+	String loadString(@NonNull String key, @Nullable String defValue)
 	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
@@ -66,7 +72,7 @@ class BillingBase
 		return defValue;
 	}
 
-	boolean saveBoolean(String key, Boolean value)
+	boolean saveBoolean(@NonNull String key, @NonNull Boolean value)
 	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
@@ -79,7 +85,7 @@ class BillingBase
 		return false;
 	}
 
-	boolean loadBoolean(String key, boolean defValue)
+	boolean loadBoolean(@NonNull String key, boolean defValue)
 	{
 		SharedPreferences sp = getPreferences();
 		if (sp != null)
