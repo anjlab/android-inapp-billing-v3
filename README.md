@@ -24,7 +24,7 @@ repositories {
   mavenCentral()
 }
 dependencies {
-  implementation 'com.anjlab.android.iab.v3:library:1.0.44'
+  compile 'com.anjlab.android.iab.v3:library:1.0.44'
 }
 ```
 
@@ -46,7 +46,6 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     setContentView(R.layout.activity_main);
 
     bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
-    bp.initialize();
     // or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
     // See below on why this is a useful alternative
   }
