@@ -68,6 +68,7 @@ public class SkuDetailsParcelableTest
         assertEquals(skuDetails.introductoryPriceLong, result.introductoryPriceLong);
         assertEquals(skuDetails.haveIntroductoryPeriod, result.haveIntroductoryPeriod);
         assertEquals(skuDetails.introductoryPriceText, result.introductoryPriceText);
+        assertEquals(skuDetails.responseData, result.responseData);
 
         assertEquals(skuDetails.haveIntroductoryPeriod, isIntroPrice);
         assertEquals(skuDetails.haveTrialPeriod, isTrial);

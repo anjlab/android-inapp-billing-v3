@@ -35,6 +35,7 @@ import android.util.Log;
 
 import com.android.vending.billing.IInAppBillingService;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -394,6 +395,11 @@ public class BillingProcessor extends BillingBase
 
 	public boolean isOneTimePurchaseSupported()
 	{
+		if(!isInitialized())
+		{
+			Log.e(LOG_TAG, "Make sure BillingProcessor was initialized before calling isOneTimePurchaseSupported()");
+			return false;
+		}
 		if (isOneTimePurchasesSupported)
 		{
 			return true;
@@ -492,6 +498,42 @@ public class BillingProcessor extends BillingBase
 			e.printStackTrace();
 		}
 		return isOneTimePurchaseExtraParamsSupported;
+	}
+
+	/**
+	 * Checks if API supports version 6 which required to request purchase history
+	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED}
+	 *                or {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
+	 * @return {@code true} if feature supported {@code false} otherwise
+	 */
+	public boolean isRequestBillingHistorySupported(String type) throws BillingCommunicationException
+	{
+		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+		{
+			throw new RuntimeException("Unsupported type " + type);
+		}
+
+		IInAppBillingService billing = billingService;
+
+		if (billing != null)
+		{
+
+			try
+			{
+				int response = billing.isBillingSupported(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION,
+						contextPackageName, type);
+				return response == Constants.BILLING_RESPONSE_RESULT_OK;
+			}
+			catch (RemoteException e)
+			{
+				throw new BillingCommunicationException(e);
+			}
+
+		}
+		else
+		{
+			throw new BillingCommunicationException("Billing service isn't connected");
+		}
 	}
 
 	/**
@@ -784,11 +826,11 @@ public class BillingProcessor extends BillingBase
 		try
 		{
 			TransactionDetails transaction = getPurchaseTransactionDetails(productId, cachedProducts);
-			if (transaction != null && !TextUtils.isEmpty(transaction.purchaseToken))
+			if (transaction != null && !TextUtils.isEmpty(transaction.purchaseInfo.purchaseData.purchaseToken))
 			{
 				int response = billingService.consumePurchase(Constants.GOOGLE_API_VERSION,
 															  contextPackageName,
-															  transaction.purchaseToken);
+															  transaction.purchaseInfo.purchaseData.purchaseToken);
 				if (response == Constants.BILLING_RESPONSE_RESULT_OK)
 				{
 					cachedProducts.remove(productId);
@@ -997,7 +1039,7 @@ public class BillingProcessor extends BillingBase
 
 	public boolean isValidTransactionDetails(@NonNull TransactionDetails transactionDetails)
 	{
-		return verifyPurchaseSignature(transactionDetails.productId,
+		return verifyPurchaseSignature(transactionDetails.purchaseInfo.purchaseData.productId,
 									   transactionDetails.purchaseInfo.responseData,
 									   transactionDetails.purchaseInfo.signature) &&
 			   checkMerchant(transactionDetails);
@@ -1029,6 +1071,83 @@ public class BillingProcessor extends BillingBase
 		if (eventHandler != null)
 		{
 			eventHandler.onBillingError(errorCode, error);
+		}
+	}
+
+	/**
+	 * Returns the most recent purchase made by the user for each SKU, even if that purchase is expired, canceled, or consumed.
+	 *
+	 * @param type product type, accepts either {@value Constants#PRODUCT_TYPE_MANAGED} or
+	 * {@value Constants#PRODUCT_TYPE_SUBSCRIPTION}
+	 * @param extraParams a Bundle with extra params that would be appended into http request
+	 *      query string. Not used at this moment. Reserved for future functionality.
+	 *
+	 * @return @NotNull list of billing history records
+	 * @throws BillingCommunicationException if billing isn't connected or there was an error during request execution
+	 */
+	public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams) throws BillingCommunicationException
+	{
+
+		if (!type.equals(Constants.PRODUCT_TYPE_MANAGED) && !type.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
+		{
+			throw new RuntimeException("Unsupported type " + type);
+		}
+
+		IInAppBillingService billing = billingService;
+
+		if (billing != null)
+		{
+
+			try
+			{
+
+				List<BillingHistoryRecord> result = new ArrayList<>();
+				int resultCode;
+				String continuationToken = null;
+
+				do
+					{
+
+					Bundle resultBundle = billing.getPurchaseHistory(Constants.GOOGLE_API_REQUEST_PURCHASE_HISTORY_VERSION,
+							contextPackageName, type, continuationToken, extraParams);
+					resultCode = resultBundle.getInt(Constants.RESPONSE_CODE);
+
+					if (resultCode == Constants.BILLING_RESPONSE_RESULT_OK)
+					{
+
+						List<String> purchaseData = resultBundle.getStringArrayList(Constants.INAPP_PURCHASE_DATA_LIST);
+
+						List<String> signatures = resultBundle.getStringArrayList(Constants.INAPP_DATA_SIGNATURE_LIST);
+
+						if (purchaseData != null && signatures != null)
+						{
+
+							for (int i = 0, max = purchaseData.size(); i < max; i++)
+							{
+								String data = purchaseData.get(i);
+								String signature = signatures.get(i);
+
+								BillingHistoryRecord record = new BillingHistoryRecord(data, signature);
+								result.add(record);
+							}
+
+							continuationToken = resultBundle.getString(Constants.INAPP_CONTINUATION_TOKEN);
+						}
+					}
+
+				} while (continuationToken != null && resultCode == Constants.BILLING_RESPONSE_RESULT_OK);
+
+				return result;
+
+			} catch (RemoteException | JSONException e)
+			{
+				throw new BillingCommunicationException(e);
+			}
+
+		}
+		else
+		{
+			throw new BillingCommunicationException("Billing service isn't connected");
 		}
 	}
 }

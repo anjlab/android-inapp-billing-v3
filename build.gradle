@@ -3,9 +3,14 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.android.tools.build:gradle:3.3.2'
         classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
     }
 }
@@ -15,6 +20,11 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
 
     sourceSets {

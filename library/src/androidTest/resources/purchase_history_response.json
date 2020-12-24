@@ -1,0 +1,6 @@
+{
+  "productId":"sample-product-id",
+  "purchaseToken":"sample-purchase-token",
+  "purchaseTime":1563441231403,
+  "developerPayload":"sample-developer-payload"
+}

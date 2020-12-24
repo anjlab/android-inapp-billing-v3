@@ -4,6 +4,14 @@ This is a simple, straight-forward implementation of the Android v3 In-app billi
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
+## Maintainers Wanted
+
+This project is looking for maintainers. 
+
+For now only pull requests of external contributors are being reviewed, accepted and welcomed. No more bug fixes or new features will be implemented by the Anjlab team. 
+
+If you are interesting in giving this project some :heart:, please chime in!
+
 ## Getting Started
 
 * You project should build against Android 2.2 SDK at least.
@@ -16,7 +24,7 @@ repositories {
   mavenCentral()
 }
 dependencies {
-  compile 'com.anjlab.android.iab.v3:library:1.0.44'
+  implementation 'com.anjlab.android.iab.v3:library:1.0.44'
 }
 ```
 
@@ -38,6 +46,7 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     setContentView(R.layout.activity_main);
 
     bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
+    bp.initialize();
     // or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
     // See below on why this is a useful alternative
   }
@@ -235,6 +244,25 @@ public final Date purchaseTime;
 // containing the raw json string from google play and the signature to
 // verify the purchase on your own server
 public final PurchaseInfo purchaseInfo;
+```
+
+## Getting Purchase History
+You can request most recent purchases using `getPurchaseHistory` method. Pass required type as "inapp" for one-time purchases and "subs" for subscriptions
+or use `Constants.PRODUCT_TYPE_MANAGED` and `Constants.PRODUCT_TYPE_SUBSCRIPTION` respectively.
+```java
+public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams)
+```
+As a result you will get a `List` of `BillingHistoryRecord` objects with following fields:
+```java
+public final String productId;
+public final String purchaseToken;
+public final long purchaseTime;
+public final String developerPayload;
+public final String signature;
+```
+Please keep in mind that this API requires `billing API` of version 6 or higher, so you should check if it is supported beforehand:
+```java
+public boolean isRequestBillingHistorySupported(String type)
 ```
 
 ## Handle Canceled Subscriptions
