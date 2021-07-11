@@ -150,6 +150,7 @@ bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PL
 bp.connect(this); //Connection required based on google Version 4 for inapp lib
 bp.initialize(); // binds
 ```
+In addition to the above, the current in-app billing requires the initialization and connection to the play services, this form the most significant part of the implementation of this library.
 
 ## Testing In-app Billing
 
