@@ -4,6 +4,14 @@ This is a simple, straight-forward implementation of the Android v3 In-app billi
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
+## Maintainers Wanted
+
+This project is looking for maintainers. 
+
+For now only pull requests of external contributors are being reviewed, accepted and welcomed. No more bug fixes or new features will be implemented by the Anjlab team. 
+
+If you are interesting in giving this project some :heart:, please chime in!
+
 ## Getting Started
 
 * You project should build against Android 2.2 SDK at least.
