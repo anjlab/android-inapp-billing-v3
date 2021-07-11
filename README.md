@@ -45,8 +45,8 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    bp = new BillingProcessor(this,LICENSE_KEY,MERCHANT_ID,this);
-        bp.connect(this); //Connection required based on google Version 3 for inapp lib
+    	bp = new BillingProcessor(this,LICENSE_KEY,MERCHANT_ID,this);
+        bp.connect(this); //Connection required based on google Version 4 for inapp lib
         bp.initialize(); //Bind to playstore with history check
     // or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
     // See below on why this is a useful alternative
@@ -147,6 +147,7 @@ public void onDestroy() {
 The basic `new BillingProcessor(...)` actually binds to Play Services inside the constructor. This can, very rarely, lead to a race condition where Play Services are bound and `onBillingInitialized()` is called before the constructor finishes, and can lead to NPEs. To avoid this, we have the following:
 ```java
 bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this); // doesn't bind
+bp.connect(this); //Connection required based on google Version 4 for inapp lib
 bp.initialize(); // binds
 ```
 
