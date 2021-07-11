@@ -18,18 +18,19 @@ package com.anjlab.android.iab.v3.sample2;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.SkuDetails;
 import com.anjlab.android.iab.v3.TransactionDetails;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity  implements BillingProcessor.IBillingHandler{
 	// SAMPLE APP CONSTANTS
 	private static final String ACTIVITY_NUMBER = "activity_num";
 	private static final String LOG_TAG = "iabv3";
@@ -58,38 +59,17 @@ public class MainActivity extends Activity {
             showToast("In-app billing service is unavailable, please upgrade Android Market/Play to version >= 3.9.16");
         }
 
-        bp = new BillingProcessor(this, LICENSE_KEY, MERCHANT_ID, new BillingProcessor.IBillingHandler() {
-            @Override
-            public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
-				showToast("onProductPurchased: " + productId);
-                updateTextViews();
-            }
-            @Override
-            public void onBillingError(int errorCode, @Nullable Throwable error) {
-                showToast("onBillingError: " + Integer.toString(errorCode));
-            }
-            @Override
-            public void onBillingInitialized() {
-				showToast("onBillingInitialized");
-                readyToPurchase = true;
-                updateTextViews();
-            }
-            @Override
-            public void onPurchaseHistoryRestored() {
-                showToast("onPurchaseHistoryRestored");
-                for(String sku : bp.listOwnedProducts())
-                    Log.d(LOG_TAG, "Owned Managed Product: " + sku);
-                for(String sku : bp.listOwnedSubscriptions())
-                    Log.d(LOG_TAG, "Owned Subscription: " + sku);
-                updateTextViews();
-            }
-        });
+        //bp = BillingProcessor.getInstance();
+
+        bp = new BillingProcessor(this,LICENSE_KEY,MERCHANT_ID,this);
+        bp.connect(this); //Connection required based on google Version 3 for inapp lib
+        bp.initialize(); //Bind to playstore with history check
+
     }
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-
 		updateTextViews();
 	}
 
@@ -157,4 +137,31 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
+        showToast("onProductPurchased: " + productId);
+        updateTextViews();
+    }
+
+    @Override
+    public void onPurchaseHistoryRestored() {
+        showToast("onPurchaseHistoryRestored");
+        for(String sku : bp.listOwnedProducts())
+            Log.d(LOG_TAG, "Owned Managed Product: " + sku);
+        for(String sku : bp.listOwnedSubscriptions())
+            Log.d(LOG_TAG, "Owned Subscription: " + sku);
+        updateTextViews();
+    }
+
+    @Override
+    public void onBillingError(int errorCode, @Nullable Throwable error) {
+        showToast("onBillingError: " + Integer.toString(errorCode));
+    }
+
+    @Override
+    public void onBillingInitialized() {
+        showToast("onBillingInitialized");
+        readyToPurchase = true;
+        updateTextViews();
+    }
 }
