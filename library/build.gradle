@@ -81,9 +81,7 @@ uploadArchives {
         pom.project {
             name 'Android In-App Billing v4 Library'
             packaging 'aar'
-            description 'A lightweight implementation of the current Android In-app Billing Version 4, This will ' +
-                    'successfully removing the warning on all developer dashboards about Google warning that all apps must use ' +
-                    'version 3 or higher before November 1, 2021'
+            description 'A lightweight implementation of the current Android In-app Billing Version 4.'
             url 'https://github.com/anjlab/android-inapp-billing-v3'
 
             scm {
