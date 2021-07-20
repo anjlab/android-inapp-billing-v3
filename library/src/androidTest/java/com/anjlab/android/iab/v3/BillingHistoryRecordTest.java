@@ -7,6 +7,7 @@ import com.anjlab.android.iab.v3.util.ResourcesUtil;
 import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
+
 import static junit.framework.Assert.assertEquals;
 
 public class BillingHistoryRecordTest

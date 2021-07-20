@@ -1,6 +1,6 @@
-# Android In-App Billing v3 Library [![Build Status](https://travis-ci.org/anjlab/android-inapp-billing-v3.svg?branch=master)](https://travis-ci.org/anjlab/android-inapp-billing-v3)  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library)
+# Android In-App Billing v4 Library [![Build Status](https://travis-ci.org/anjlab/android-inapp-billing-v3.svg?branch=master)](https://travis-ci.org/anjlab/android-inapp-billing-v3)  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library)
 
-This is a simple, straight-forward implementation of the Android v3 In-app billing API.
+This is a simple, straight-forward implementation of the Android v4 In-app billing API.
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
@@ -45,8 +45,9 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    bp = new BillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
-    bp.initialize();
+    	bp = new BillingProcessor(this,LICENSE_KEY,MERCHANT_ID,this);
+        bp.connect(this); //Connection required based on google Version 4 for inapp lib
+        bp.initialize(); //Bind to playstore with history check
     // or bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this);
     // See below on why this is a useful alternative
   }
@@ -88,6 +89,7 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 ```
 
 * override Activity's onActivityResult method:
+
 ```java
 @Override
 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -96,6 +98,9 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
   }  
 }
 ```
+The data obtained from the onActivityResult are the purchase JsonData and the purchase Signature.
+For those interested in further payment checks, you can save the order purchaseToken (unique for all order) to you server and retrieve the token 
+to validate the order before offering value to app users. This token can be obtained from data and saved to your server.
 
 * Call `purchase` method for a BillingProcessor instance to initiate purchase or `subscribe` to initiate a subscription:
 
@@ -142,8 +147,10 @@ public void onDestroy() {
 The basic `new BillingProcessor(...)` actually binds to Play Services inside the constructor. This can, very rarely, lead to a race condition where Play Services are bound and `onBillingInitialized()` is called before the constructor finishes, and can lead to NPEs. To avoid this, we have the following:
 ```java
 bp = BillingProcessor.newBillingProcessor(this, "YOUR LICENSE KEY FROM GOOGLE PLAY CONSOLE HERE", this); // doesn't bind
+bp.connect(this); //Connection required based on google Version 4 for inapp lib
 bp.initialize(); // binds
 ```
+In addition to the above, the current in-app billing requires the initialization and connection to the play services, this form the most significant part of the implementation of this library.
 
 ## Testing In-app Billing
 
