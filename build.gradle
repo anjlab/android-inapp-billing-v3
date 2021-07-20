@@ -32,7 +32,6 @@ allprojects {
             java {
                 srcDir 'src'
                 exclude 'com/anjlab/android/iab/v3/Security.java'
-                //exclude 'com/android/vending/billing/IInAppBillingService.aidl'
                 exclude 'com/android/billingclient/api'
             }
         }
