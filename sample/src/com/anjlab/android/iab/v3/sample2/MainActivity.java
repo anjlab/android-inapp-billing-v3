@@ -87,7 +87,6 @@ public class MainActivity extends Activity {
                 updateTextViews();
             }
         });
-        bp.connect();
     }
 
 	@Override
@@ -134,13 +133,13 @@ public class MainActivity extends Activity {
                 bp.consumePurchase(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
                 {
                     @Override
-                    public void onQueryPurchasesSuccess()
+                    public void onPurchasesSuccess()
                     {
                         showToast("Successfully consumed");
                     }
 
                     @Override
-                    public void onQueryPurchasesError()
+                    public void onPurchasesError()
                     {
                         showToast("Not consumed");
                     }
@@ -148,8 +147,22 @@ public class MainActivity extends Activity {
                 updateTextViews();
                 break;
             case R.id.productDetailsButton:
-				SkuDetails sku = bp.getPurchaseListingDetails(PRODUCT_ID);
-                showToast(sku != null ? sku.toString() : "Failed to load SKU details");
+				bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
+                    @Override
+                    public void onSkuDetailsResponse(@Nullable List<SkuDetails> products) {
+                        if (products != null && !products.isEmpty()) {
+                            showToast(products.get(0).toString());
+                        } else {
+                            showToast("Failed to load SKU details");
+                        }
+                    }
+
+                    @Override
+                    public void onSkuDetailsError(String error) {
+                        showToast(error);
+                    }
+                });
+
                 break;
             case R.id.subscribeButton:
                 bp.subscribe(this,SUBSCRIPTION_ID);
@@ -157,14 +170,14 @@ public class MainActivity extends Activity {
             case R.id.updateSubscriptionsButton:
                 bp.loadOwnedPurchasesFromGoogleAsync(new BillingProcessor.IPurchasesResponseListener() {
                     @Override
-                    public void onQueryPurchasesSuccess()
+                    public void onPurchasesSuccess()
                     {
                         showToast("Subscriptions updated.");
                         updateTextViews();
                     }
 
                     @Override
-                    public void onQueryPurchasesError()
+                    public void onPurchasesError()
                     {
                         showToast("Subscriptions update eroor.");
                         updateTextViews();
