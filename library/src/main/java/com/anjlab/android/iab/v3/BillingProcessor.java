@@ -27,6 +27,8 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -56,7 +58,6 @@ import java.util.UUID;
 
 public class BillingProcessor extends BillingBase
 {
-	private Context context;
 
 	/**
 	 * Callback methods where billing events are reported.
@@ -127,6 +128,7 @@ public class BillingProcessor extends BillingBase
 	private boolean isSubsUpdateSupported;
 	private boolean isSubscriptionExtraParamsSupported;
 	private boolean isOneTimePurchaseExtraParamsSupported;
+	private boolean isHistoryTaskExecuted = false;
 
 	private Handler handler = new Handler(Looper.getMainLooper());
 
@@ -146,6 +148,9 @@ public class BillingProcessor extends BillingBase
 		@Override
 		protected void onPostExecute(Boolean restored)
 		{
+
+			isHistoryTaskExecuted = true;
+
 			if (restored)
 			{
 				setPurchaseHistoryRestored();
@@ -208,12 +213,6 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-
-	public Handler getHandler()
-	{
-		return handler;
-	}
-
 	private static Intent getBindServiceIntent()
 	{
 		Intent intent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
@@ -258,7 +257,9 @@ public class BillingProcessor extends BillingBase
 						Log.d("GooglePlayConnection; ", "IsConnected");
 
 						//Initialize history of purchases if any exist.
-						new HistoryInitializationTask().execute();
+						if (!isHistoryTaskExecuted) {
+							new HistoryInitializationTask().execute();
+						}
 					}
 					else
 						{
@@ -509,7 +510,7 @@ public class BillingProcessor extends BillingBase
 					@Override
 					public void onPurchasesError()
 					{
-						BillingProcessor.this.reportPurchasesSuccess(listener);
+						BillingProcessor.this.reportPurchasesError(listener);
 					}
 				});
 			}
@@ -522,7 +523,7 @@ public class BillingProcessor extends BillingBase
 					@Override
 					public void onPurchasesSuccess()
 					{
-						BillingProcessor.this.reportPurchasesSuccess(listener);
+						BillingProcessor.this.reportPurchasesError(listener);
 					}
 
 					@Override
@@ -604,6 +605,16 @@ public class BillingProcessor extends BillingBase
 	 * todo: work on Onetimepurchase and handle all pending orders
 	 *  currently all pending orders are refunded after 3days if not acknowledged
 	 *  */
+
+	/**
+	 * @deprecated always returns true.
+	 */
+	@Deprecated
+	public boolean isOneTimePurchaseSupported()
+	{
+		isOneTimePurchasesSupported = true;
+		return isOneTimePurchasesSupported;
+	}
 
 	public boolean isSubscriptionUpdateSupported()
 	{
@@ -1137,6 +1148,9 @@ public class BillingProcessor extends BillingBase
 	@Deprecated
 	private List<SkuDetails> getSkuDetails(final ArrayList<String> productIdList, String purchaseType)
 	{
+
+		Log.e(LOG_TAG, "getSkuDetails method is no longer supported, use getSkuDetailsAsync method");
+
 		if (billingService != null && productIdList != null && productIdList.size() > 0)
 		{
 			try
@@ -1187,7 +1201,7 @@ public class BillingProcessor extends BillingBase
 					}
 				});
 
-				return productDetails;
+				return Collections.emptyList();
 
 			}
 			catch (Exception e)
@@ -1196,7 +1210,7 @@ public class BillingProcessor extends BillingBase
 				reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 			}
 		}
-		return null;
+		return Collections.emptyList();
 	}
 
 	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType, final ISkuDetailsResponseListener listener)
