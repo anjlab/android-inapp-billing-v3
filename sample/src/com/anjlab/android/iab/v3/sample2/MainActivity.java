@@ -130,7 +130,7 @@ public class MainActivity extends Activity {
                 bp.purchase(this,PRODUCT_ID);
                 break;
             case R.id.consumeButton:
-                bp.consumePurchase(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
+                bp.consumePurchaseAsync(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
                 {
                     @Override
                     public void onPurchasesSuccess()
