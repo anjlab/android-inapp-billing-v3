@@ -15,46 +15,29 @@
  */
 package com.anjlab.android.iab.v3;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import android.os.RemoteException;
-import android.text.TextUtils;
-import android.util.Log;
-
-
-import com.android.billingclient.api.AcknowledgePurchaseParams;
-import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
-import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingClientStateListener;
-import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.BillingResult;
-import com.android.billingclient.api.ConsumeParams;
-import com.android.billingclient.api.ConsumeResponseListener;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
-import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.*;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class BillingProcessor extends BillingBase
 {
@@ -104,7 +87,6 @@ public class BillingProcessor extends BillingBase
 		DATE_MERCHANT_LIMIT_2 = calendar.getTime();
 	}
 
-	private static final int PURCHASE_FLOW_REQUEST_CODE = 32459;
 	private static final String LOG_TAG = "iabv3";
 	private static final String SETTINGS_VERSION = ".v2_6";
 	private static final String RESTORE_KEY = ".products.restored" + SETTINGS_VERSION;
@@ -118,16 +100,12 @@ public class BillingProcessor extends BillingBase
 	private long reconnectMilliseconds = RECONNECT_TIMER_START_MILLISECONDS;
 
 	private BillingClient billingService;
-	private String contextPackageName;
 	private String signatureBase64;
 	private BillingCache cachedProducts;
 	private BillingCache cachedSubscriptions;
 	private IBillingHandler eventHandler;
 	private String developerMerchantId;
-	private boolean isOneTimePurchasesSupported;
 	private boolean isSubsUpdateSupported;
-	private boolean isSubscriptionExtraParamsSupported;
-	private boolean isOneTimePurchaseExtraParamsSupported;
 	private boolean isHistoryTaskExecuted = false;
 
 	private Handler handler = new Handler(Looper.getMainLooper());
@@ -202,7 +180,6 @@ public class BillingProcessor extends BillingBase
 		super(context.getApplicationContext());
 		signatureBase64 = licenseKey;
 		eventHandler = handler;
-		contextPackageName = getContext().getPackageName();
 		cachedProducts = new BillingCache(getContext(), MANAGED_PRODUCTS_CACHE_KEY);
 		cachedSubscriptions = new BillingCache(getContext(), SUBSCRIPTIONS_CACHE_KEY);
 		developerMerchantId = merchantId;
@@ -229,11 +206,41 @@ public class BillingProcessor extends BillingBase
 
 	private void init(Context context)
 	{
-		billingService = BillingClient.newBuilder(context)
-				.enablePendingPurchases()
-				.setListener(purchasesUpdatedListener)
-				.build();
+		PurchasesUpdatedListener listener = new PurchasesUpdatedListener()
+		{
+			@Override
+			public void onPurchasesUpdated(@NonNull BillingResult billingResult,
+										   @Nullable List<Purchase> purchases)
+			{
+				int responseCode = billingResult.getResponseCode();
 
+				if (responseCode == BillingClient.BillingResponseCode.OK)
+				{
+					if (purchases != null)
+					{
+						for (final Purchase purchase : purchases)
+						{
+							handlePurchase(purchase);
+						}
+					}
+				}
+				else if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED)
+				{
+					String purchasePayload = getPurchasePayload();
+					if (TextUtils.isEmpty(purchasePayload)) {
+						loadOwnedPurchasesFromGoogleAsync(null);
+					} else {
+						handleItemAlreadyOwned(purchasePayload.split(":")[1]);
+						savePurchasePayload(null);
+					}
+				}
+			}
+		};
+
+		billingService = BillingClient.newBuilder(context)
+									  .enablePendingPurchases()
+									  .setListener(listener)
+									  .build();
 	}
 
 	/**
@@ -257,14 +264,17 @@ public class BillingProcessor extends BillingBase
 						Log.d("GooglePlayConnection; ", "IsConnected");
 
 						//Initialize history of purchases if any exist.
-						if (!isHistoryTaskExecuted) {
+						if (!isHistoryTaskExecuted)
+						{
 							new HistoryInitializationTask().execute();
 						}
 					}
 					else
-						{
+					{
 						retryBillingClientConnection();
-						reportBillingError(billingResult.getResponseCode(), new Throwable(billingResult.getDebugMessage()));
+						reportBillingError(
+								billingResult.getResponseCode(),
+								new Throwable(billingResult.getDebugMessage()));
 					}
 				}
 
@@ -299,7 +309,8 @@ public class BillingProcessor extends BillingBase
 			}
 		}, reconnectMilliseconds);
 
-		reconnectMilliseconds = Math.min(reconnectMilliseconds * 2, RECONNECT_TIMER_MAX_TIME_MILLISECONDS);
+		reconnectMilliseconds =
+				Math.min(reconnectMilliseconds * 2, RECONNECT_TIMER_MAX_TIME_MILLISECONDS);
 	}
 
 	/**
@@ -309,7 +320,6 @@ public class BillingProcessor extends BillingBase
 	{
 		return isInitialized() &&  billingService.isReady();
 	}
-
 
 	/**
 	 * This method should be called when you are done with BillingProcessor.
@@ -350,7 +360,8 @@ public class BillingProcessor extends BillingBase
 		return cachedSubscriptions.getContents();
 	}
 
-	private void loadPurchasesByTypeAsync(String type, final BillingCache cacheStorage, final IPurchasesResponseListener listener)
+	private void loadPurchasesByTypeAsync(String type, final BillingCache cacheStorage,
+										  final IPurchasesResponseListener listener)
 	{
 		if (!isConnected())
 		{
@@ -362,36 +373,35 @@ public class BillingProcessor extends BillingBase
 		billingService.queryPurchasesAsync(type, new PurchasesResponseListener()
 		{
 			@Override
-			public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list)
+			public void onQueryPurchasesResponse(@NonNull BillingResult billingResult,
+												 @NonNull List<Purchase> list)
 			{
-				if (billingResult.getResponseCode() == Constants.BILLING_RESPONSE_RESULT_OK)
+				if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
 				{
 					cacheStorage.clear();
-					for (int i = 0; i < list.size(); i++)
+					for (Purchase purchaseItem : list)
 					{
-						String jsonData = list.get(i).getOriginalJson();  //getting String ArrayList for purchases
-						String signatureList = list.get(i).getSignature(); //getting String ArrayList for signatures
-
+						String jsonData = purchaseItem.getOriginalJson();
 						if (!TextUtils.isEmpty(jsonData))
 						{
-							try {
-								/**
-								 *
-								 * This is a replacement for the bundling in the old version
-								 * here we query all users' purchases and save it locally
-								 * However, it is also recommended to save and verify all purchases on own server
-								 * */
-								JSONObject purchase = new JSONObject(jsonData);
-								String signature = signatureList != null && signatureList.length() >
-										i ? list.get(i).getSignature() : null;
-								cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID),
-										jsonData,
-										signature);
-
-
-							} catch (Exception e)
+							try
 							{
-								reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
+								/*
+								  This is a replacement for the bundling in the old version
+								  here we query all users' purchases and save it locally
+								  However, it is also recommended to save and verify all purchases
+								  on own server
+								  */
+								JSONObject purchase = new JSONObject(jsonData);
+								cacheStorage.put(
+										purchase.getString(Constants.RESPONSE_PRODUCT_ID),
+										jsonData,
+										purchaseItem.getSignature());
+							}
+							catch (Exception e)
+							{
+								reportBillingError(
+										Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
 								Log.e(LOG_TAG, "Error in loadPurchasesByType", e);
 								reportPurchasesError(listener);
 							}
@@ -416,46 +426,59 @@ public class BillingProcessor extends BillingBase
 	 */
 	public void loadOwnedPurchasesFromGoogleAsync(final IPurchasesResponseListener listener)
 	{
-		loadPurchasesByTypeAsync(Constants.PRODUCT_TYPE_MANAGED, cachedProducts, new IPurchasesResponseListener()
+		final IPurchasesResponseListener successListener = new IPurchasesResponseListener()
 		{
 			@Override
 			public void onPurchasesSuccess()
 			{
-				loadPurchasesByTypeAsync(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions, new IPurchasesResponseListener()
-				{
-					@Override
-					public void onPurchasesSuccess()
-					{
-						BillingProcessor.this.reportPurchasesSuccess(listener);
-					}
-
-					@Override
-					public void onPurchasesError()
-					{
-						BillingProcessor.this.reportPurchasesError(listener);
-					}
-				});
+				reportPurchasesSuccess(listener);
 			}
 
 			@Override
 			public void onPurchasesError()
 			{
-				loadPurchasesByTypeAsync(Constants.PRODUCT_TYPE_SUBSCRIPTION, cachedSubscriptions, new IPurchasesResponseListener()
+				reportPurchasesError(listener);
+			}
+		};
+
+		final IPurchasesResponseListener errorListener = new IPurchasesResponseListener()
+		{
+			@Override
+			public void onPurchasesSuccess()
+			{
+				reportPurchasesError(listener);
+			}
+
+			@Override
+			public void onPurchasesError()
+			{
+				reportPurchasesError(listener);
+			}
+		};
+
+		loadPurchasesByTypeAsync(
+				Constants.PRODUCT_TYPE_MANAGED,
+				cachedProducts,
+				new IPurchasesResponseListener()
 				{
 					@Override
 					public void onPurchasesSuccess()
 					{
-						BillingProcessor.this.reportPurchasesError(listener);
+						loadPurchasesByTypeAsync(
+								Constants.PRODUCT_TYPE_SUBSCRIPTION,
+								cachedSubscriptions,
+								successListener);
 					}
 
 					@Override
 					public void onPurchasesError()
 					{
-						BillingProcessor.this.reportPurchasesError(listener);
+						loadPurchasesByTypeAsync(
+								Constants.PRODUCT_TYPE_SUBSCRIPTION,
+								cachedSubscriptions,
+								errorListener);
 					}
 				});
-			}
-		});
 	}
 
 	public boolean purchase(Activity activity, String productId)
@@ -494,19 +517,13 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
-	/*
-	 * todo: work on Onetimepurchase and handle all pending orders
-	 *  currently all pending orders are refunded after 3days if not acknowledged
-	 *  */
-
 	/**
 	 * @deprecated always returns true.
 	 */
 	@Deprecated
 	public boolean isOneTimePurchaseSupported()
 	{
-		isOneTimePurchasesSupported = true;
-		return isOneTimePurchasesSupported;
+		return true;
 	}
 
 	public boolean isSubscriptionUpdateSupported()
@@ -522,13 +539,9 @@ public class BillingProcessor extends BillingBase
 			return false;
 		}
 
-		BillingResult featureSupported = billingService.isFeatureSupported(BillingClient.FeatureType.SUBSCRIPTIONS_UPDATE);
-		int response = featureSupported.getResponseCode();
-
-		if (response == BillingClient.BillingResponseCode.OK)
-		{
-			isSubsUpdateSupported = true;
-		}
+		BillingResult result =
+				billingService.isFeatureSupported(BillingClient.FeatureType.SUBSCRIPTIONS_UPDATE);
+		isSubsUpdateSupported = result.getResponseCode() == BillingClient.BillingResponseCode.OK;
 
 		return isSubsUpdateSupported;
 	}
@@ -557,49 +570,14 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
-	public boolean updateSubscription(Activity activity, String oldProductId, String productId, String developerPayload)
-	{
-		List<String> oldProductIds = null;
-		if (!TextUtils.isEmpty(oldProductId))
-		{
-			oldProductIds = Collections.singletonList(oldProductId);
-		}
-		return updateSubscription(activity, oldProductIds, productId, developerPayload);
-	}
-
-	/**
-	 * Change subscription i.e. upgrade or downgrade
-	 *
-	 * @param activity      the activity calling this method
-	 * @param oldProductIds passing null will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId     the new subscription id
-	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
-	 * is not supported.
-	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-									  String productId)
-	{
-		return updateSubscription(activity, oldProductIds, productId, null);
-	}
-
-	/**
-	 * Change subscription i.e. upgrade or downgrade
-	 *
-	 * @param activity         the activity calling this method
-	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId        the new subscription id
-	 * @param developerPayload the developer payload
-	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
-	 * is not supported.
-	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
+	public boolean updateSubscription(Activity activity, String oldProductId,
 									  String productId, String developerPayload)
 	{
-		if (oldProductIds != null && !isSubscriptionUpdateSupported())
+		if (oldProductId != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
 		}
-		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
 	private boolean purchase(Activity activity, String productId, String purchaseType,
@@ -608,7 +586,7 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, null, productId, purchaseType, developerPayload);
 	}
 
-	private boolean purchase(final Activity activity, final List<String> oldProductIds, final String productId,
+	private boolean purchase(final Activity activity, final String oldProductId, final String productId,
 							 String purchaseType, String developerPayload)
 	{
 		if (!isConnected() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
@@ -620,6 +598,12 @@ public class BillingProcessor extends BillingBase
 
 			return false;
 		}
+
+		if (TextUtils.isEmpty(productId)) {
+			reportBillingError(Constants.BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED, null);
+			return false;
+		}
+
 		try
 		{
 			String purchasePayload = purchaseType + ":" + productId;
@@ -633,155 +617,37 @@ public class BillingProcessor extends BillingBase
 			}
 			savePurchasePayload(purchasePayload);
 
-			SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
 			List<String> skuList = new ArrayList<>();
 			skuList.add(productId);
-			if (!skuList.isEmpty())
-			{
-				params.setSkusList(skuList).setType(purchaseType);
-				final String finalPurchasePayload = purchasePayload;
-				billingService.querySkuDetailsAsync(params.build(),
-						new com.android.billingclient.api.SkuDetailsResponseListener()
+			SkuDetailsParams params = SkuDetailsParams.newBuilder()
+													  .setSkusList(skuList)
+													  .setType(purchaseType)
+													  .build();
+
+			billingService.querySkuDetailsAsync(
+					params,
+					new com.android.billingclient.api.SkuDetailsResponseListener()
+					{
+						@Override
+						public void onSkuDetailsResponse(
+								@NonNull BillingResult billingResult,
+								@Nullable List<com.android.billingclient.api.SkuDetails> skuList)
 						{
-							@Override
-							public void onSkuDetailsResponse(BillingResult billingResult,
-															 List<com.android.billingclient.api.SkuDetails> skuDetailsList)
+
+							if (skuList != null && !skuList.isEmpty())
 							{
-
-								if (!skuDetailsList.isEmpty())
-								{
-									final com.android.billingclient.api.SkuDetails skuDetails
-											= skuDetailsList.get(skuDetailsList.size() - 1);
-
-									Handler handler = new Handler(Looper.getMainLooper());
-
-									handler.post(new Runnable()
-									{
-										@Override
-										public void run()
-										{
-											BillingFlowParams.Builder billingFlowParamsBuilder = BillingFlowParams.newBuilder();
-											billingFlowParamsBuilder.setSkuDetails(skuDetails);
-
-											if (oldProductIds != null && oldProductIds.size() > 0)
-											{
-												TransactionDetails oldProductDetails = getSubscriptionTransactionDetails(oldProductIds.get(0));
-
-												if (oldProductDetails != null)
-												{
-													billingFlowParamsBuilder.setSubscriptionUpdateParams(
-															BillingFlowParams.SubscriptionUpdateParams
-																	.newBuilder()
-																	.setOldSkuPurchaseToken(oldProductDetails.purchaseInfo.purchaseData.purchaseToken)
-																	.build());
-												}
-											}
-
-
-											BillingFlowParams billingFlowParams = billingFlowParamsBuilder.build();
-
-
-											int responseCode = billingService.launchBillingFlow(activity, billingFlowParams).getResponseCode();
-											String responseMessage = "Billing response; ";
-
-											if (responseCode == BillingClient.BillingResponseCode.OK) {
-												Log.d("ReadyToPurchase", "Launch Billing Flow Successful");
-											}
-
-											if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED)
-											{
-												if (!isPurchased(productId) && !isSubscribed(productId))
-												{
-													loadOwnedPurchasesFromGoogleAsync(new IPurchasesResponseListener()
-													{
-														@Override
-														public void onPurchasesSuccess()
-														{
-															TransactionDetails details = getPurchaseTransactionDetails(productId);
-															if (!checkMerchant(details))
-															{
-																Log.i(LOG_TAG, "Invalid or tampered merchant id!");
-																reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
-															}
-
-															if (eventHandler != null)
-															{
-																if (details == null)
-																{
-																	details = getSubscriptionTransactionDetails(productId);
-																}
-
-																eventHandler.onProductPurchased(productId, details);
-															}
-														}
-
-														@Override
-														public void onPurchasesError()
-														{
-															TransactionDetails details = getPurchaseTransactionDetails(productId);
-															if (!checkMerchant(details))
-															{
-																Log.i(LOG_TAG, "Invalid or tampered merchant id!");
-																reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
-															}
-
-															if (eventHandler != null)
-															{
-																if (details == null)
-																{
-																	details = getSubscriptionTransactionDetails(productId);
-																}
-
-																eventHandler.onProductPurchased(productId, details);
-															}
-														}
-													});
-
-												}
-												else
-												{
-													TransactionDetails details = getPurchaseTransactionDetails(productId);
-													if (!checkMerchant(details))
-													{
-														Log.i(LOG_TAG, "Invalid or tampered merchant id!");
-														reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
-													}
-
-													if (eventHandler != null)
-													{
-														if (details == null)
-														{
-															details = getSubscriptionTransactionDetails(productId);
-														}
-
-														eventHandler.onProductPurchased(productId, details);
-													}
-												}
-											}
-
-											if (responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-												//               showToast(responseMessage + "user cancel");
-												Log.i(LOG_TAG, "User Cancelled launch flow");
-											}
-											// Handle the result.
-										}
-									});
-
-								}
-								else
-								{
-									// This will occur if product id does not match with the product type
-									Log.d("onSkuResponse: ", "product id mismatch with Product type");
-									reportBillingError(Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
-								}
+								startPurchaseFlow(activity, skuList.get(0), oldProductId);
 							}
-						});
-			}
-			else
-			{
-				Log.d("onProductId: ", "product id not specified");
-				reportBillingError(Constants.BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED, null);
-			}
+							else
+							{
+								// This will occur if product id does not match with the product type
+								Log.d("onSkuResponse: ", "product id mismatch with Product type");
+								reportBillingError(
+										Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE,
+										null);
+							}
+						}
+					});
 
 			return true;
 		}
@@ -791,6 +657,91 @@ public class BillingProcessor extends BillingBase
 			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
 		return false;
+	}
+
+	private void startPurchaseFlow(final Activity activity,
+								   final com.android.billingclient.api.SkuDetails skuDetails,
+								   final String oldProductId)
+	{
+		final String productId = skuDetails.getSku();
+
+		handler.post(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				BillingFlowParams.Builder billingFlowParamsBuilder = BillingFlowParams.newBuilder();
+				billingFlowParamsBuilder.setSkuDetails(skuDetails);
+
+				if (!TextUtils.isEmpty(oldProductId))
+				{
+					TransactionDetails oldProductDetails = getSubscriptionTransactionDetails(oldProductId);
+
+					if (oldProductDetails != null)
+					{
+						String oldToken = oldProductDetails.purchaseInfo.purchaseData.purchaseToken;
+						billingFlowParamsBuilder.setSubscriptionUpdateParams(
+								BillingFlowParams.SubscriptionUpdateParams
+										.newBuilder()
+										.setOldSkuPurchaseToken(oldToken)
+										.build());
+					}
+				}
+
+				BillingFlowParams params = billingFlowParamsBuilder.build();
+
+				int responseCode = billingService.launchBillingFlow(activity, params).getResponseCode();
+
+				if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED)
+				{
+					handleItemAlreadyOwned(productId);
+				}
+			}
+		});
+	}
+
+	private void handleItemAlreadyOwned(final String productId) {
+		if (!isPurchased(productId) && !isSubscribed(productId))
+		{
+			loadOwnedPurchasesFromGoogleAsync(new IPurchasesResponseListener()
+			{
+				@Override
+				public void onPurchasesSuccess()
+				{
+					handleOwnedPurchaseTransaction(productId);
+				}
+
+				@Override
+				public void onPurchasesError()
+				{
+					handleOwnedPurchaseTransaction(productId);
+				}
+			});
+		}
+		else
+		{
+			handleOwnedPurchaseTransaction(productId);
+		}
+	}
+
+	private void handleOwnedPurchaseTransaction(String productId)
+	{
+		TransactionDetails details = getPurchaseTransactionDetails(productId);
+		if (!checkMerchant(details))
+		{
+			Log.i(LOG_TAG, "Invalid or tampered merchant id!");
+			reportBillingError(Constants.BILLING_ERROR_INVALID_MERCHANT_ID, null);
+		}
+
+		if (eventHandler != null)
+		{
+			if (details == null)
+			{
+				details = getSubscriptionTransactionDetails(productId);
+			}
+
+			eventHandler.onProductPurchased(productId, details);
+		}
 	}
 
 	/**
@@ -855,13 +806,14 @@ public class BillingProcessor extends BillingBase
 			{
 				ConsumeParams consumeParams =
 						ConsumeParams.newBuilder()
-								.setPurchaseToken(transaction.purchaseInfo.purchaseData.purchaseToken)
-								.build();
+									 .setPurchaseToken(transaction.purchaseInfo.purchaseData.purchaseToken)
+									 .build();
 
 				billingService.consumeAsync(consumeParams, new ConsumeResponseListener()
 				{
 					@Override
-					public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String purchaseToken)
+					public void onConsumeResponse(@NonNull BillingResult billingResult,
+												  @NonNull String purchaseToken)
 					{
 						if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
 						{
@@ -869,9 +821,12 @@ public class BillingProcessor extends BillingBase
 							Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
 
 							reportPurchasesSuccess(listener);
-						} else {
+						}
+						else
+						{
 							Log.d(LOG_TAG, "Failure consume " + productId + " purchase.");
-							reportBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, new Exception(billingResult.getDebugMessage()));
+							reportBillingError(Constants.BILLING_ERROR_CONSUME_FAILED,
+											   new Exception(billingResult.getDebugMessage()));
 							reportPurchasesError(listener);
 						}
 					}
@@ -886,9 +841,10 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	private void getSkuDetailsAsync(final String productId, String purchaseType, final ISkuDetailsResponseListener listener)
+	private void getSkuDetailsAsync(final String productId, String purchaseType,
+									final ISkuDetailsResponseListener listener)
 	{
-		ArrayList<String> productIdList = new ArrayList<String>();
+		ArrayList<String> productIdList = new ArrayList<>();
 		productIdList.add(productId);
 		getSkuDetailsAsync(productIdList, purchaseType, new ISkuDetailsResponseListener()
 		{
@@ -912,65 +868,67 @@ public class BillingProcessor extends BillingBase
 		});
 	}
 
-	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType, final ISkuDetailsResponseListener listener)
+	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType,
+									final ISkuDetailsResponseListener listener)
 	{
-		if (billingService != null && billingService.isReady() && productIdList != null && productIdList.size() > 0)
+		if (billingService != null && billingService.isReady() && productIdList != null &&
+			productIdList.size() > 0)
 		{
 			try
 			{
-				Bundle products = new Bundle();
-				products.putStringArrayList(Constants.PRODUCTS_LIST, productIdList);
 				SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
-						.setSkusList(productIdList)
-						.setType(purchaseType)
-						.build();
-				final ArrayList<SkuDetails> productDetails = new ArrayList<SkuDetails>();
+																	.setSkusList(productIdList)
+																	.setType(purchaseType)
+																	.build();
+				final ArrayList<SkuDetails> productDetails = new ArrayList<>();
 
-				billingService.querySkuDetailsAsync(skuDetailsParams, new com.android.billingclient.api.SkuDetailsResponseListener()
-				{
-					@Override
-					public void onSkuDetailsResponse(BillingResult billingResult, List<com.android.billingclient.api.SkuDetails> detailsList)
-					{
-						int response = billingResult.getResponseCode();
-						if (response == BillingClient.BillingResponseCode.OK)
+				billingService.querySkuDetailsAsync(
+						skuDetailsParams,
+						new com.android.billingclient.api.SkuDetailsResponseListener()
 						{
-							if (detailsList.size() > 0)
+							@Override
+							public void onSkuDetailsResponse(@NonNull BillingResult billingResult,
+															 @Nullable List<com.android.billingclient.api.SkuDetails> detailsList)
 							{
-								for (int i = 0; i < detailsList.size(); i++)
+								int response = billingResult.getResponseCode();
+								if (response == BillingClient.BillingResponseCode.OK)
 								{
-									String jsonData = detailsList.get(i).getOriginalJson();
-									JSONObject object = null;
+									if (detailsList != null && detailsList.size() > 0)
+									{
+										for (com.android.billingclient.api.SkuDetails skuDetails : detailsList)
+										{
+											try
+											{
+												JSONObject object =
+														new JSONObject(skuDetails.getOriginalJson());
+												productDetails.add(new SkuDetails(object));
+											}
+											catch (JSONException jsonException)
+											{
+												jsonException.printStackTrace();
+											}
+										}
+									}
 
-									try
-									{
-										object = new JSONObject(jsonData);
-										SkuDetails product = new SkuDetails(object);
-										productDetails.add(product);
-									}
-									catch (JSONException jsonException)
-									{
-										jsonException.printStackTrace();
-									}
+									reportSkuDetailsResponseCaller(productDetails, listener);
+								}
+								else
+								{
+									reportBillingError(response, null);
+									Log.e(LOG_TAG,
+										  String.format(
+												  "Failed to retrieve info for %d products, %d",
+												  productIdList.size(),
+												  response));
+
+									reportSkuDetailsErrorCaller(
+											String.format(
+													"Failed to retrieve info for %d products, %d",
+													productIdList.size(),
+													response), listener);
 								}
 							}
-
-							reportSkuDetailsResponseCaller(productDetails, listener);
-
-						}
-						else
-						{
-							reportBillingError(response, null);
-							Log.e(LOG_TAG, String.format("Failed to retrieve info for %d products, %d",
-									productIdList.size(),
-									response));
-
-							reportSkuDetailsErrorCaller(String.format("Failed to retrieve info for %d products, %d",
-									productIdList.size(),
-									response), listener);
-						}
-					}
-				});
-
+						});
 			}
 			catch (Exception e)
 			{
@@ -978,12 +936,13 @@ public class BillingProcessor extends BillingBase
 				reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 
 				reportSkuDetailsErrorCaller(e.getLocalizedMessage(), listener);
-
 			}
 		}
 		else
 		{
-			reportSkuDetailsErrorCaller("Failed to call getSkuDetails. Service may not be connected", listener);
+			reportSkuDetailsErrorCaller(
+					"Failed to call getSkuDetails. Service may not be connected",
+					listener);
 		}
 	}
 
@@ -1035,59 +994,41 @@ public class BillingProcessor extends BillingBase
 		return Constants.PRODUCT_TYPE_MANAGED;
 	}
 
-	public boolean handleActivityResult(int requestCode, int resultCode, Intent data)
+	private void verifyAndCachePurchase(Purchase purchase)
 	{
-		if (requestCode != PURCHASE_FLOW_REQUEST_CODE)
+		String purchaseData = purchase.getOriginalJson();
+		String dataSignature = purchase.getSignature();
+		try
 		{
-			return false;
-		}
-		if (data == null)
-		{
-			Log.e(LOG_TAG, "handleActivityResult: data is null!");
-			return false;
-		}
-		int responseCode = data.getIntExtra(Constants.RESPONSE_CODE, Constants.BILLING_RESPONSE_RESULT_OK);
-		Log.d(LOG_TAG, String.format("resultCode = %d, responseCode = %d", resultCode, responseCode));
-		if (resultCode == Activity.RESULT_OK &&
-			responseCode == Constants.BILLING_RESPONSE_RESULT_OK)
-		{
-			String purchaseData = data.getStringExtra(Constants.INAPP_PURCHASE_DATA);
-			String dataSignature = data.getStringExtra(Constants.RESPONSE_INAPP_SIGNATURE);
-			try
+			JSONObject purchaseJsonObject = new JSONObject(purchaseData);
+			String productId = purchaseJsonObject.getString(Constants.RESPONSE_PRODUCT_ID);
+			if (verifyPurchaseSignature(productId, purchaseData, dataSignature))
 			{
-				JSONObject purchase = new JSONObject(purchaseData);
-				String productId = purchase.getString(Constants.RESPONSE_PRODUCT_ID);
-                if (verifyPurchaseSignature(productId, purchaseData, dataSignature))
+				String purchaseType =
+						detectPurchaseTypeFromPurchaseResponseData(purchaseJsonObject);
+				BillingCache cache = purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)
+						? cachedSubscriptions : cachedProducts;
+				cache.put(productId, purchaseData, dataSignature);
+				if (eventHandler != null)
 				{
-					String purchaseType = detectPurchaseTypeFromPurchaseResponseData(purchase);
-					BillingCache cache = purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION)
-							? cachedSubscriptions : cachedProducts;
-					cache.put(productId, purchaseData, dataSignature);
-					if (eventHandler != null)
-					{
-						eventHandler.onProductPurchased(
-								productId,
-								new TransactionDetails(new PurchaseInfo(purchaseData, dataSignature, getPurchasePayload())));
-					}
+					PurchaseInfo purchaseInfo = new PurchaseInfo(purchaseData,
+																 dataSignature,
+																 getPurchasePayload());
+					eventHandler.onProductPurchased(productId, new TransactionDetails(purchaseInfo));
 				}
-                else
-                {
-                    Log.e(LOG_TAG, "Public key signature doesn't match!");
-                    reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
-                }
 			}
-			catch (Exception e)
+			else
 			{
-				Log.e(LOG_TAG, "Error in handleActivityResult", e);
-				reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
+				Log.e(LOG_TAG, "Public key signature doesn't match!");
+				reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
 			}
-			savePurchasePayload(null);
 		}
-		else
+		catch (Exception e)
 		{
-			reportBillingError(responseCode, null);
+			Log.e(LOG_TAG, "Error in handleActivityResult", e);
+			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
-		return true;
+		savePurchasePayload(null);
 	}
 
 	private boolean verifyPurchaseSignature(String productId, String purchaseData, String dataSignature)
@@ -1188,7 +1129,8 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	private void reportSkuDetailsResponseCaller(@Nullable final List<SkuDetails> products, final ISkuDetailsResponseListener listener)
+	private void reportSkuDetailsResponseCaller(@Nullable final List<SkuDetails> products,
+												final ISkuDetailsResponseListener listener)
 	{
 		if (listener != null && handler != null)
 		{
@@ -1204,62 +1146,47 @@ public class BillingProcessor extends BillingBase
 	}
 
 
-	private void handlePurchase(Purchase purchase)
+	private void handlePurchase(final Purchase purchase)
 	{
 		// Verify the purchase.
 		// Ensure entitlement was not already granted for this purchaseToken.
 		// Grant entitlement to the user.
 
 		//Acknowledging purchase
-		AcknowledgePurchaseResponseListener acknowledgePurchaseResponseListener = new AcknowledgePurchaseResponseListener()
-		{
-			@Override
-			public void onAcknowledgePurchaseResponse(@NonNull BillingResult billingResult)
-			{
-
-			}
-		};
-
 		if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED)
 		{
-			if (!purchase.isAcknowledged())
+			if (purchase.isAcknowledged())
+			{
+				verifyAndCachePurchase(purchase);
+			}
+			else
 			{
 				AcknowledgePurchaseParams acknowledgePurchaseParams =
 						AcknowledgePurchaseParams.newBuilder()
-								.setPurchaseToken(purchase.getPurchaseToken())
-								.build();
+												 .setPurchaseToken(purchase.getPurchaseToken())
+												 .build();
 
-				Intent intent = new Intent();
-				intent.putExtra(Constants.RESPONSE_CODE, BillingClient.BillingResponseCode.OK);
-				intent.putExtra(Constants.INAPP_PURCHASE_DATA, purchase.getOriginalJson());
-				intent.putExtra(Constants.RESPONSE_INAPP_SIGNATURE, purchase.getSignature());
-
-				handleActivityResult(PURCHASE_FLOW_REQUEST_CODE, Activity.RESULT_OK, intent);
-
-				billingService.acknowledgePurchase(acknowledgePurchaseParams, acknowledgePurchaseResponseListener);
+				billingService.acknowledgePurchase(
+						acknowledgePurchaseParams,
+						new AcknowledgePurchaseResponseListener()
+						{
+							@Override
+							public void onAcknowledgePurchaseResponse(
+									@NonNull BillingResult billingResult)
+							{
+								if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
+								{
+									verifyAndCachePurchase(purchase);
+								}
+								else
+								{
+									reportBillingError(
+											Constants.BILLING_ERROR_FAILED_TO_ACKNOWLEDGE_PURCHASE,
+											null);
+								}
+							}
+						});
 			}
 		}
 	}
-
-	private final PurchasesUpdatedListener purchasesUpdatedListener = new
-			PurchasesUpdatedListener()
-			{
-				@Override
-				public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> purchases)
-				{
-					if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
-					{
-						if (purchases != null)
-						{
-							for (final Purchase purchase : purchases)
-							{
-								handlePurchase(purchase);
-							}
-						}
-					} else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED)
-					{
-						loadOwnedPurchasesFromGoogleAsync(null);
-					}
-				}
-			};
 }

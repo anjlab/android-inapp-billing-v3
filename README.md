@@ -28,10 +28,6 @@ dependencies {
 }
 ```
 
-* Open the *AndroidManifest.xml* of your application and add this permission:
-```xml
-  <uses-permission android:name="com.android.vending.BILLING" />
-```
 * Create instance of BillingProcessor class and implement callback in your Activity source code. Constructor will take 3 parameters:
   - **Context**
   - **Your License Key from Google Developer console.** This will be used to verify purchase signatures. You can pass NULL if you would like to skip this check (*You can find your key in Google Play Console -> Your App Name -> Services & APIs*)
@@ -84,16 +80,6 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     * was loaded from Google Play
     */
   }
-}
-```
-
-* override Activity's onActivityResult method:
-```java
-@Override
-protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-  if (!bp.handleActivityResult(requestCode, resultCode, data)) {
-    super.onActivityResult(requestCode, resultCode, data);
-  }  
 }
 ```
 
