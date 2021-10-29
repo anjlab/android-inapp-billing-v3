@@ -481,16 +481,6 @@ public class BillingProcessor extends BillingBase
 				});
 	}
 
-	public boolean purchase(Activity activity, String productId)
-	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, null);
-	}
-
-	public boolean subscribe(Activity activity, String productId)
-	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
-	}
-
 	/***
 	 * Purchase a product
 	 *
@@ -499,22 +489,22 @@ public class BillingProcessor extends BillingBase
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
 	 * or if an exception occurs. Will return {@code true} otherwise.
 	 */
-	public boolean purchase(Activity activity, String productId, String developerPayload)
+	public boolean purchase(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED);
 	}
 
-	/**
-	 * Subscribe to a product
+	/***
+	 * Subscribe for a product
 	 *
-	 * @param activity    the activity calling this method
-	 * @param productId   the product id to purchase
-	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
-	 * Will return {@code true} otherwise.
+	 * @param activity the activity calling this method
+	 * @param productId the product id to subscribe
+	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
+	 * or if an exception occurs. Will return {@code true} otherwise.
 	 */
-	public boolean subscribe(Activity activity, String productId, String developerPayload)
+	public boolean subscribe(Activity activity, String productId)
 	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
 	/**
@@ -549,45 +539,28 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Change subscription i.e. upgrade or downgrade
 	 *
-	 * @param activity     the activity calling this method
-	 * @param oldProductId passing null or empty string will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId    the new subscription id
+	 * @param activity         the activity calling this method
+	 * @param oldProductId     passing null or empty string will act the same as {@link #subscribe(Activity, String)}
+	 * @param productId        the new subscription id
 	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
 	 * is not supported.
 	 */
 	public boolean updateSubscription(Activity activity, String oldProductId, String productId)
 	{
-		return updateSubscription(activity, oldProductId, productId, null);
-	}
-
-	/**
-	 * Change subscription i.e. upgrade or downgrade
-	 *
-	 * @param activity         the activity calling this method
-	 * @param oldProductId     passing null or empty string will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId        the new subscription id
-	 * @param developerPayload the developer payload
-	 * @return {@code false} if {@code oldProductId} is not {@code null} AND change subscription
-	 * is not supported.
-	 */
-	public boolean updateSubscription(Activity activity, String oldProductId,
-									  String productId, String developerPayload)
-	{
 		if (oldProductId != null && !isSubscriptionUpdateSupported())
 		{
 			return false;
 		}
-		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
+		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
 	}
 
-	private boolean purchase(Activity activity, String productId, String purchaseType,
-							 String developerPayload)
+	private boolean purchase(Activity activity, String productId, String purchaseType)
 	{
-		return purchase(activity, null, productId, purchaseType, developerPayload);
+		return purchase(activity, null, productId, purchaseType);
 	}
 
 	private boolean purchase(final Activity activity, final String oldProductId, final String productId,
-							 String purchaseType, String developerPayload)
+							 String purchaseType)
 	{
 		if (!isConnected() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 		{
@@ -610,10 +583,6 @@ public class BillingProcessor extends BillingBase
 			if (!purchaseType.equals(Constants.PRODUCT_TYPE_SUBSCRIPTION))
 			{
 				purchasePayload += ":" + UUID.randomUUID().toString();
-			}
-			if (developerPayload != null)
-			{
-				purchasePayload += ":" + developerPayload;
 			}
 			savePurchasePayload(purchasePayload);
 

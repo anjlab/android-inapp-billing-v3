@@ -15,10 +15,10 @@
  */
 package com.anjlab.android.iab.v3;
 
+import java.util.Date;
+
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.util.Date;
 
 public class PurchaseData implements Parcelable
 {
@@ -27,6 +27,10 @@ public class PurchaseData implements Parcelable
     public String productId;
     public Date purchaseTime;
     public PurchaseState purchaseState;
+    /**
+     * @deprecated Google does not support developer payloads anymore.
+     */
+    @Deprecated
     public String developerPayload;
     public String purchaseToken;
     public boolean autoRenewing;

@@ -16,14 +16,14 @@
 
 package com.anjlab.android.iab.v3;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
 
 /**
  * With this PurchaseInfo a developer is able verify
@@ -38,6 +38,10 @@ public class PurchaseInfo implements Parcelable
 
     public final String responseData;
     public final String signature;
+    /**
+     * @deprecated Google does not support developer payloads anymore.
+     */
+    @Deprecated
     public final String developerPayload;
     public final PurchaseData purchaseData;
 
