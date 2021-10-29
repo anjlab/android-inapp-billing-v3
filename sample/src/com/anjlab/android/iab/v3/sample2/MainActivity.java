@@ -18,16 +18,19 @@ package com.anjlab.android.iab.v3.sample2;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.SkuDetails;
 import com.anjlab.android.iab.v3.TransactionDetails;
+
+import java.util.List;
 
 public class MainActivity extends Activity {
 	// SAMPLE APP CONSTANTS
@@ -58,7 +61,7 @@ public class MainActivity extends Activity {
             showToast("In-app billing service is unavailable, please upgrade Android Market/Play to version >= 3.9.16");
         }
 
-        bp = new BillingProcessor(this, LICENSE_KEY, MERCHANT_ID, new BillingProcessor.IBillingHandler() {
+        bp = new BillingProcessor(this, LICENSE_KEY, new BillingProcessor.IBillingHandler() {
             @Override
             public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
 				showToast("onProductPurchased: " + productId);
@@ -127,27 +130,75 @@ public class MainActivity extends Activity {
                 bp.purchase(this,PRODUCT_ID);
                 break;
             case R.id.consumeButton:
-                Boolean consumed = bp.consumePurchase(PRODUCT_ID);
+                bp.consumePurchaseAsync(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
+                {
+                    @Override
+                    public void onPurchasesSuccess()
+                    {
+                        showToast("Successfully consumed");
+                    }
+
+                    @Override
+                    public void onPurchasesError()
+                    {
+                        showToast("Not consumed");
+                    }
+                });
                 updateTextViews();
-                if (consumed)
-                    showToast("Successfully consumed");
                 break;
             case R.id.productDetailsButton:
-				SkuDetails sku = bp.getPurchaseListingDetails(PRODUCT_ID);
-                showToast(sku != null ? sku.toString() : "Failed to load SKU details");
+				bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
+                    @Override
+                    public void onSkuDetailsResponse(@Nullable List<SkuDetails> products) {
+                        if (products != null && !products.isEmpty()) {
+                            showToast(products.get(0).toString());
+                        } else {
+                            showToast("Failed to load SKU details");
+                        }
+                    }
+
+                    @Override
+                    public void onSkuDetailsError(String error) {
+                        showToast(error);
+                    }
+                });
+
                 break;
             case R.id.subscribeButton:
                 bp.subscribe(this,SUBSCRIPTION_ID);
                 break;
             case R.id.updateSubscriptionsButton:
-                if (bp.loadOwnedPurchasesFromGoogle()) {
-                    showToast("Subscriptions updated.");
-                    updateTextViews();
-                }
+                bp.loadOwnedPurchasesFromGoogleAsync(new BillingProcessor.IPurchasesResponseListener() {
+                    @Override
+                    public void onPurchasesSuccess()
+                    {
+                        showToast("Subscriptions updated.");
+                        updateTextViews();
+                    }
+
+                    @Override
+                    public void onPurchasesError()
+                    {
+                        showToast("Subscriptions update eroor.");
+                        updateTextViews();
+                    }
+                });
+
                 break;
             case R.id.subsDetailsButton:
-				SkuDetails subs = bp.getSubscriptionListingDetails(SUBSCRIPTION_ID);
-				showToast(subs != null ? subs.toString() : "Failed to load subscription details");
+				 bp.getSubscriptionListingDetailsAsync(SUBSCRIPTION_ID, new BillingProcessor.ISkuDetailsResponseListener()
+                 {
+                    @Override
+                    public void onSkuDetailsResponse(@Nullable final List<SkuDetails> products) {
+                        showToast(products != null ? products.toString() : "Failed to load subscription details");
+                    }
+
+                    @Override
+                    public void onSkuDetailsError(String string) {
+                        showToast(string);
+                    }
+                });
+
 				break;
 			case R.id.launchMoreButton:
 				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));

@@ -38,12 +38,22 @@ public class PurchaseInfo implements Parcelable
 
     public final String responseData;
     public final String signature;
+    public final String developerPayload;
     public final PurchaseData purchaseData;
 
     public PurchaseInfo(String responseData, String signature)
     {
         this.responseData = responseData;
         this.signature = signature;
+        this.developerPayload = "";
+        this.purchaseData = parseResponseDataImpl();
+    }
+
+    public PurchaseInfo(String responseData, String signature, String developerPayload)
+    {
+        this.responseData = responseData;
+        this.signature = signature;
+        this.developerPayload = developerPayload;
         this.purchaseData = parseResponseDataImpl();
     }
 
@@ -68,7 +78,7 @@ public class PurchaseInfo implements Parcelable
             long purchaseTimeMillis = json.optLong(Constants.RESPONSE_PURCHASE_TIME, 0);
             data.purchaseTime = purchaseTimeMillis != 0 ? new Date(purchaseTimeMillis) : null;
             data.purchaseState = PurchaseState.values()[json.optInt(Constants.RESPONSE_PURCHASE_STATE, 1)];
-            data.developerPayload = json.optString(Constants.RESPONSE_DEVELOPER_PAYLOAD);
+            data.developerPayload = developerPayload;
             data.purchaseToken = json.getString(Constants.RESPONSE_PURCHASE_TOKEN);
             data.autoRenewing = json.optBoolean(Constants.RESPONSE_AUTO_RENEWING);
             return data;
@@ -90,6 +100,7 @@ public class PurchaseInfo implements Parcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeString(this.responseData);
+        dest.writeString(this.developerPayload);
         dest.writeString(this.signature);
     }
 
@@ -97,6 +108,7 @@ public class PurchaseInfo implements Parcelable
     {
         this.responseData = in.readString();
         this.signature = in.readString();
+        this.developerPayload = in.readString();
         this.purchaseData = parseResponseDataImpl();
     }
 
@@ -128,6 +140,7 @@ public class PurchaseInfo implements Parcelable
         PurchaseInfo other = (PurchaseInfo) o;
         return responseData.equals(other.responseData)
                && signature.equals(other.signature)
+               && developerPayload.equals(other.developerPayload)
                && purchaseData.purchaseToken.equals(other.purchaseData.purchaseToken)
                && purchaseData.purchaseTime.equals(other.purchaseData.purchaseTime);
     }

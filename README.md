@@ -110,19 +110,8 @@ bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", "DEV
 bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE", "DEVELOPER PAYLOAD HERE");
 ```
 _IMPORTANT: when you provide a payload, internally the library prepends a string to your payload. For subscriptions, it prepends `"subs:\<productId\>:"`, and for products, it prepends `"inapp:\<productId\>:\<UUID\>:"`. This is important to know if you do any validation on the payload returned from Google Play after a successful purchase._
+_IMPORTANT: in this version payload is not sent to Google Play, it saved locally and you can fetch it as always.
 
-_With a bundle of extra parameters:_
-
-```java
-Bundle extraParams = new Bundle()
-extraParams.putString("accountId", "MY_ACCOUNT_ID");
-bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", null /*or developer payload*/, extraParams);
-bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE", null /*or developer payload*/, extraParams);
-```
-
-Use these methods if you want to pass extra parameters, [as documented here](https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams), you can provide a Bundle object.
-
-_Please note that this feature is only available if the target device is support the version 7 of the In App billing API._
 
 * **That's it! A super small and fast in-app library ever!**
 
@@ -164,10 +153,10 @@ if(!isAvailable) {
 }
 ```
 Please notice that calling `BillingProcessor.isIabServiceAvailable()` (only checks Play Market app installed or not) is not enough because there might be a case when it returns true but still payment won't succeed.
-Therefore, it's better to call `isOneTimePurchaseSupported()` after initializing `BillingProcessor`:
+Therefore, it's better to call `bp.isConnected()` after initializing `BillingProcessor`:
 ```java
-boolean isOneTimePurchaseSupported = billingProcessor.isOneTimePurchaseSupported();
-if(isOneTimePurchaseSupported) {
+boolean isConnected = billingProcessor.isConnected();
+if(isConnected) {
   // launch payment flow
 }
 ```
@@ -183,13 +172,13 @@ if(isSubsUpdateSupported) {
 
 You can always consume made purchase and allow to buy same product multiple times. To do this you need:
 ```java
-bp.consumePurchase("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.consumePurchaseAsync("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", IPurchasesResponseListener);
 ```
 
 ## Restore Purchases & Subscriptions
 
 ```java
-bp.loadOwnedPurchasesFromGoogle();
+bp.loadOwnedPurchasesFromGoogleAsync(IPurchasesResponseListener);
 ```
 
 ## Getting Listing Details of Your Products
@@ -197,11 +186,11 @@ bp.loadOwnedPurchasesFromGoogle();
 To query listing price and a description of your product / subscription listed in Google Play use these methods:
 
 ```java
-bp.getPurchaseListingDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
-bp.getSubscriptionListingDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getPurchaseListingDetailsAsync("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", ISkuDetailsResponseListener);
+bp.getSubscriptionListingDetailsAsync("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE", ISkuDetailsResponseListener);
 ```
 
-As a result you will get a `SkuDetails` object with the following info included:
+As a result you will get a `List<SkuDetails>` with one SkuDetails object with the following info included:
 
 ```java
 public final String productId;
@@ -216,8 +205,8 @@ public final String priceText;
 To get info for multiple products / subscriptions on one query, just pass a list of product ids:
 
 ```java
-bp.getPurchaseListingDetails(arrayListOfProductIds);
-bp.getSubscriptionListingDetails(arrayListOfProductIds);
+bp.getPurchaseListingDetails(arrayListOfProductIds, ISkuDetailsResponseListener);
+bp.getSubscriptionListingDetails(arrayListOfProductIds, ISkuDetailsResponseListener);
 ```
 
 where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for products or subscriptions.
@@ -246,24 +235,6 @@ public final Date purchaseTime;
 public final PurchaseInfo purchaseInfo;
 ```
 
-## Getting Purchase History
-You can request most recent purchases using `getPurchaseHistory` method. Pass required type as "inapp" for one-time purchases and "subs" for subscriptions
-or use `Constants.PRODUCT_TYPE_MANAGED` and `Constants.PRODUCT_TYPE_SUBSCRIPTION` respectively.
-```java
-public List<BillingHistoryRecord> getPurchaseHistory(String type, Bundle extraParams)
-```
-As a result you will get a `List` of `BillingHistoryRecord` objects with following fields:
-```java
-public final String productId;
-public final String purchaseToken;
-public final long purchaseTime;
-public final String developerPayload;
-public final String signature;
-```
-Please keep in mind that this API requires `billing API` of version 6 or higher, so you should check if it is supported beforehand:
-```java
-public boolean isRequestBillingHistorySupported(String type)
-```
 
 ## Handle Canceled Subscriptions
 
