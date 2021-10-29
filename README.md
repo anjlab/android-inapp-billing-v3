@@ -111,18 +111,7 @@ bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE"
 ```
 _IMPORTANT: when you provide a payload, internally the library prepends a string to your payload. For subscriptions, it prepends `"subs:\<productId\>:"`, and for products, it prepends `"inapp:\<productId\>:\<UUID\>:"`. This is important to know if you do any validation on the payload returned from Google Play after a successful purchase._
 _IMPORTANT: in this version payload is not sent to Google Play, it saved locally and you can fetch it as always.
-_With a bundle of extra parameters:_
 
-```java
-Bundle extraParams = new Bundle()
-extraParams.putString("accountId", "MY_ACCOUNT_ID");
-bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", null /*or developer payload*/, extraParams);
-bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE", null /*or developer payload*/, extraParams);
-```
-
-Use these methods if you want to pass extra parameters, [as documented here](https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams), you can provide a Bundle object.
-
-_Please note that this feature is only available if the target device is support the version 7 of the In App billing API._
 
 * **That's it! A super small and fast in-app library ever!**
 

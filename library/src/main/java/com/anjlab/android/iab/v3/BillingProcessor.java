@@ -367,43 +367,38 @@ public class BillingProcessor extends BillingBase
 				if (billingResult.getResponseCode() == Constants.BILLING_RESPONSE_RESULT_OK)
 				{
 					cacheStorage.clear();
-
-					ArrayList<Purchase> purchaseList = new ArrayList<>(list);
-					if (purchaseList != null)
+					for (int i = 0; i < list.size(); i++)
 					{
-						for (int i = 0; i < purchaseList.size(); i++)
+						String jsonData = list.get(i).getOriginalJson();  //getting String ArrayList for purchases
+						String signatureList = list.get(i).getSignature(); //getting String ArrayList for signatures
+
+						if (!TextUtils.isEmpty(jsonData))
 						{
-							String jsonData = purchaseList.get(i).getOriginalJson();  //getting String ArrayList for purchases
-							String signatureList = purchaseList.get(i).getSignature(); //getting String ArrayList for signatures
+							try {
+								/**
+								 *
+								 * This is a replacement for the bundling in the old version
+								 * here we query all users' purchases and save it locally
+								 * However, it is also recommended to save and verify all purchases on own server
+								 * */
+								JSONObject purchase = new JSONObject(jsonData);
+								String signature = signatureList != null && signatureList.length() >
+										i ? list.get(i).getSignature() : null;
+								cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID),
+										jsonData,
+										signature);
 
-							if (!TextUtils.isEmpty(jsonData))
+
+							} catch (Exception e)
 							{
-								try {
-									/**
-									 *
-									 * This is a replacement for the bundling in the old version
-									 * here we query all users' purchases and save it locally
-									 * However, it is also recommended to save and verify all purchases on own server
-									 * */
-									JSONObject purchase = new JSONObject(jsonData);
-									String signature = signatureList != null && signatureList.length() >
-											i ? purchaseList.get(i).getSignature() : null;
-									cacheStorage.put(purchase.getString(Constants.RESPONSE_PRODUCT_ID),
-											jsonData,
-											signature);
-
-
-								} catch (Exception e)
-								{
-									reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
-									Log.e(LOG_TAG, "Error in loadPurchasesByType", e);
-									reportPurchasesError(listener);
-								}
+								reportBillingError(Constants.BILLING_ERROR_FAILED_LOAD_PURCHASES, e);
+								Log.e(LOG_TAG, "Error in loadPurchasesByType", e);
+								reportPurchasesError(listener);
 							}
 						}
-
-						reportPurchasesSuccess(listener);
 					}
+
+					reportPurchasesSuccess(listener);
 				}
 				else
 				{
@@ -473,38 +468,17 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null);
 	}
 
-	public boolean purchase(Activity activity, String productId, String developerPayload)
-	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
-	}
-
-	public boolean subscribe(Activity activity, String productId, String developerPayload)
-	{
-		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
-	}
-
 	/***
 	 * Purchase a product
 	 *
 	 * @param activity the activity calling this method
 	 * @param productId the product id to purchase
-	 * @param extraParams A bundle object containing extra parameters to pass to
-	 *                          getBuyIntentExtraParams()
-	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
-	 * params documentation on developer.android.com</a>
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty
 	 * or if an exception occurs. Will return {@code true} otherwise.
 	 */
-	public boolean purchase(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean purchase(Activity activity, String productId, String developerPayload)
 	{
-		if (!isOneTimePurchaseWithExtraParamsSupported(extraParams))
-		{
-			return purchase(activity, productId, developerPayload);
-		}
-		else
-		{
-			return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload, extraParams);
-		}
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_MANAGED, developerPayload);
 	}
 
 	/**
@@ -512,20 +486,12 @@ public class BillingProcessor extends BillingBase
 	 *
 	 * @param activity    the activity calling this method
 	 * @param productId   the product id to purchase
-	 * @param extraParams A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
 	 * @return {@code false} if the billing system is not initialized, {@code productId} is empty or if an exception occurs.
 	 * Will return {@code true} otherwise.
-	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
-	 * params documentation on developer.android.com</a>
 	 */
-	public boolean subscribe(Activity activity, String productId, String developerPayload, Bundle extraParams)
+	public boolean subscribe(Activity activity, String productId, String developerPayload)
 	{
-		return purchase(activity,
-						null,
-						productId,
-						Constants.PRODUCT_TYPE_SUBSCRIPTION,
-						developerPayload,
-						isSubscriptionWithExtraParamsSupported(extraParams) ? extraParams : null);
+		return purchase(activity, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
 	/*
@@ -565,68 +531,6 @@ public class BillingProcessor extends BillingBase
 		}
 
 		return isSubsUpdateSupported;
-	}
-
-	/**
-	 * Check API v7 support for subscriptions
-	 *
-	 * @param extraParams
-	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
-	 * subscriptions, {@code false} otherwise.
-	 */
-	public boolean isSubscriptionWithExtraParamsSupported(Bundle extraParams)
-	{
-		if (isSubscriptionExtraParamsSupported)
-		{
-			return true;
-		}
-
-		if(!isConnected())
-		{
-			return false;
-		}
-
-		BillingResult billingResult = billingService.isFeatureSupported(BillingClient.FeatureType.SUBSCRIPTIONS_ON_VR);
-
-		int response = billingResult.getResponseCode();
-
-		if (response == BillingClient.BillingResponseCode.OK)
-		{
-			isSubscriptionExtraParamsSupported = true;
-		}
-
-		return isSubscriptionExtraParamsSupported;
-	}
-
-	/**
-	 * Check API v7 support for one-time purchases
-	 *
-	 * @param extraParams
-	 * @return {@code true} if the current API supports calling getBuyIntentExtraParams() for
-	 * one-time purchases, {@code false} otherwise.
-	 */
-	public boolean isOneTimePurchaseWithExtraParamsSupported(Bundle extraParams)
-	{
-		if (isOneTimePurchaseExtraParamsSupported)
-		{
-			return true;
-		}
-
-		if(!isConnected())
-		{
-			return false;
-		}
-
-		//For VR supported versions
-		BillingResult billingResult = billingService.isFeatureSupported(BillingClient.FeatureType.IN_APP_ITEMS_ON_VR);
-
-		int response = billingResult.getResponseCode();
-		if (response == BillingClient.BillingResponseCode.OK)
-		{
-			isOneTimePurchaseExtraParamsSupported = true;
-		}
-
-		return isOneTimePurchaseExtraParamsSupported;
 	}
 
 	/**
@@ -698,53 +602,14 @@ public class BillingProcessor extends BillingBase
 		return purchase(activity, oldProductIds, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, developerPayload);
 	}
 
-	/**
-	 * @param activity         the activity calling this method
-	 * @param oldProductIds    passing null will act the same as {@link #subscribe(Activity, String)}
-	 * @param productId        the new subscription id
-	 * @param developerPayload the developer payload
-	 * @param extraParams      A bundle object containing extra parameters to pass to getBuyIntentExtraParams()
-	 * @return {@code false} if {@code oldProductIds} is not {@code null} AND change subscription
-	 * is not supported.
-	 * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#getBuyIntentExtraParams">extra
-	 * params documentation on developer.android.com</a>
-	 */
-	public boolean updateSubscription(Activity activity, List<String> oldProductIds,
-									  String productId, String developerPayload, Bundle extraParams)
-	{
-		if (oldProductIds != null && !isSubscriptionUpdateSupported())
-		{
-			return false;
-		}
-
-		// if API v7 is not supported, let's fallback to the previous method
-		if (!isSubscriptionWithExtraParamsSupported(extraParams))
-		{
-			return updateSubscription(activity, oldProductIds, productId, developerPayload);
-		}
-
-		return purchase(activity,
-						oldProductIds,
-						productId,
-						Constants.PRODUCT_TYPE_SUBSCRIPTION,
-						developerPayload,
-						extraParams);
-	}
-
 	private boolean purchase(Activity activity, String productId, String purchaseType,
 							 String developerPayload)
 	{
 		return purchase(activity, null, productId, purchaseType, developerPayload);
 	}
 
-	private boolean purchase(Activity activity, List<String> oldProductIds, String productId,
-							 String purchaseType, String developerPayload)
-	{
-		return purchase(activity, oldProductIds, productId, purchaseType, developerPayload, null);
-	}
-
 	private boolean purchase(final Activity activity, final List<String> oldProductIds, final String productId,
-							 String purchaseType, String developerPayload, Bundle extraParamsBundle)
+							 String purchaseType, String developerPayload)
 	{
 		if (!isConnected() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 		{
@@ -787,12 +652,6 @@ public class BillingProcessor extends BillingBase
 								{
 									final com.android.billingclient.api.SkuDetails skuDetails
 											= skuDetailsList.get(skuDetailsList.size() - 1);
-										skuDetails.getPrice();
-										skuDetails.getTitle();
-										skuDetails.getDescription();
-										skuDetails.getSku();
-										skuDetails.getIntroductoryPrice();
-										skuDetails.getFreeTrialPeriod();
 
 									Handler handler = new Handler(Looper.getMainLooper());
 
@@ -913,6 +772,7 @@ public class BillingProcessor extends BillingBase
 								{
 									// This will occur if product id does not match with the product type
 									Log.d("onSkuResponse: ", "product id mismatch with Product type");
+									reportBillingError(Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
 								}
 							}
 						});
@@ -920,6 +780,7 @@ public class BillingProcessor extends BillingBase
 			else
 			{
 				Log.d("onProductId: ", "product id not specified");
+				reportBillingError(Constants.BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED, null);
 			}
 
 			return true;
@@ -987,53 +848,30 @@ public class BillingProcessor extends BillingBase
 			reportPurchasesError(listener);
 		}
 
-		final ConsumeResponseListener consumeListener = new ConsumeResponseListener()
-		{
-			@Override
-			public void onConsumeResponse(BillingResult billingResult, String purchaseToken)
-			{
-				if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
-				{
-					cachedProducts.remove(productId);
-					Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
-
-					reportPurchasesSuccess(listener);
-				} else {
-					Log.d(LOG_TAG, "Failure consume " + productId + " purchase.");
-					reportBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, new Exception(billingResult.getDebugMessage()));
-					reportPurchasesError(listener);
-				}
-			}
-		};
-
-
 		try
 		{
 			TransactionDetails transaction = getPurchaseTransactionDetails(productId, cachedProducts);
 			if (transaction != null && !TextUtils.isEmpty(transaction.purchaseInfo.purchaseData.purchaseToken))
 			{
-				billingService.queryPurchasesAsync(productId, new PurchasesResponseListener()
+				ConsumeParams consumeParams =
+						ConsumeParams.newBuilder()
+								.setPurchaseToken(transaction.purchaseInfo.purchaseData.purchaseToken)
+								.build();
+
+				billingService.consumeAsync(consumeParams, new ConsumeResponseListener()
 				{
 					@Override
-					public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list)
+					public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String purchaseToken)
 					{
-						int response = billingResult.getResponseCode();
-
-						if (response == Constants.BILLING_RESPONSE_RESULT_OK && !list.isEmpty())
+						if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
 						{
+							cachedProducts.remove(productId);
+							Log.d(LOG_TAG, "Successfully consumed " + productId + " purchase.");
 
-							Purchase purchase = list.get(0);
-							ConsumeParams consumeParams =
-									ConsumeParams.newBuilder()
-											.setPurchaseToken(purchase.getPurchaseToken())
-											.build();
-
-							billingService.consumeAsync(consumeParams, consumeListener);
-						}
-						else
-						{
-							Log.e(LOG_TAG, String.format("Failed to consume %s: %d", productId, response));
-							reportBillingError(response, null);
+							reportPurchasesSuccess(listener);
+						} else {
+							Log.d(LOG_TAG, "Failure consume " + productId + " purchase.");
+							reportBillingError(Constants.BILLING_ERROR_CONSUME_FAILED, new Exception(billingResult.getDebugMessage()));
 							reportPurchasesError(listener);
 						}
 					}
