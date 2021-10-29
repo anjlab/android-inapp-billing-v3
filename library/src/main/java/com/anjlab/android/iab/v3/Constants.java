@@ -26,7 +26,6 @@ public class Constants
 	public static final String RESPONSE_PURCHASE_TIME = "purchaseTime";
 	public static final String RESPONSE_PURCHASE_STATE = "purchaseState";
 	public static final String RESPONSE_PURCHASE_TOKEN = "purchaseToken";
-	public static final String RESPONSE_DEVELOPER_PAYLOAD = "developerPayload";
 	public static final String RESPONSE_TYPE = "type";
 	public static final String RESPONSE_TITLE = "title";
 	public static final String RESPONSE_DESCRIPTION = "description";
@@ -44,10 +43,11 @@ public class Constants
 	public static final int BILLING_ERROR_FAILED_LOAD_PURCHASES = 100;
 	public static final int BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE = 101;
 	public static final int BILLING_ERROR_INVALID_SIGNATURE = 102;
-	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
 	public static final int BILLING_ERROR_INVALID_MERCHANT_ID = 104;
 	public static final int BILLING_ERROR_FAILED_TO_ACKNOWLEDGE_PURCHASE = 115;
+
 	@Deprecated
+	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
 	public static final int BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD = 105;
 	public static final int BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED = 106;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;

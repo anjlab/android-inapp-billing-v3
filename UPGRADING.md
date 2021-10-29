@@ -19,6 +19,8 @@ This library was upgraded accordingly (thanks to @Equin and @showdpro), but this
     - TransactionDetails (orderId) -> PurchaseInfo (purchaseInfo.purchaseData.orderId)
     - TransactionDetails (purchaseToken) -> PurchaseInfo (purchaseInfo.purchaseData.purchaseToken)
     - TransactionDetails (purchaseTime) -> PurchaseInfo (purchaseInfo.purchaseData.purchaseTime)
+1. `handleActivityResult` method was removed, you don't need to override your app's `onActivityResult` anymore
+1. Some billing flow related constants were removed from `Constants` class (`BILLING_RESPONSE_*` constants). if your app relies on those - use `BillingClient.BillingResponseCode.*` constants instead  
 
 ### Upgrading to >= 1.0.44
 
