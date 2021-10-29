@@ -24,7 +24,7 @@ repositories {
   mavenCentral()
 }
 dependencies {
-  implementation 'com.anjlab.android.iab.v3:library:1.0.44'
+  implementation 'com.anjlab.android.iab.v3:library:1.1.0'
 }
 ```
 
