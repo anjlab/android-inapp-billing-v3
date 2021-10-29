@@ -48,7 +48,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public interface IBillingHandler
 	{
-		void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details);
+		void onProductPurchased(@NonNull String productId, @Nullable PurchaseInfo details);
 
 		void onPurchaseHistoryRestored();
 
@@ -675,11 +675,11 @@ public class BillingProcessor extends BillingBase
 
 				if (!TextUtils.isEmpty(oldProductId))
 				{
-					TransactionDetails oldProductDetails = getSubscriptionTransactionDetails(oldProductId);
+					PurchaseInfo oldProductDetails = getSubscriptionPurchaseInfo(oldProductId);
 
 					if (oldProductDetails != null)
 					{
-						String oldToken = oldProductDetails.purchaseInfo.purchaseData.purchaseToken;
+						String oldToken = oldProductDetails.purchaseData.purchaseToken;
 						billingFlowParamsBuilder.setSubscriptionUpdateParams(
 								BillingFlowParams.SubscriptionUpdateParams
 										.newBuilder()
@@ -726,7 +726,7 @@ public class BillingProcessor extends BillingBase
 
 	private void handleOwnedPurchaseTransaction(String productId)
 	{
-		TransactionDetails details = getPurchaseTransactionDetails(productId);
+		PurchaseInfo details = getPurchaseInfo(productId);
 		if (!checkMerchant(details))
 		{
 			Log.i(LOG_TAG, "Invalid or tampered merchant id!");
@@ -737,7 +737,7 @@ public class BillingProcessor extends BillingBase
 		{
 			if (details == null)
 			{
-				details = getSubscriptionTransactionDetails(productId);
+				details = getSubscriptionPurchaseInfo(productId);
 			}
 
 			eventHandler.onProductPurchased(productId, details);
@@ -749,45 +749,45 @@ public class BillingProcessor extends BillingBase
 	 * real merchant id, unless publisher GoogleId was hacked
 	 * If merchantId was not supplied function checks nothing
 	 *
-	 * @param details TransactionDetails
+	 * @param details PurchaseInfo
 	 * @return boolean
 	 */
-	private boolean checkMerchant(TransactionDetails details)
+	private boolean checkMerchant(PurchaseInfo details)
 	{
 		if (developerMerchantId == null) //omit merchant id checking
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //newest format applied
+		if (details.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //newest format applied
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
+		if (details.purchaseData.purchaseTime.after(DATE_MERCHANT_LIMIT_2)) //newest format applied
 		{
 			return true;
 		}
-		if (details.purchaseInfo.purchaseData.orderId == null ||
-			details.purchaseInfo.purchaseData.orderId.trim().length() == 0)
+		if (details.purchaseData.orderId == null ||
+			details.purchaseData.orderId.trim().length() == 0)
 		{
 			return false;
 		}
-		int index = details.purchaseInfo.purchaseData.orderId.indexOf('.');
+		int index = details.purchaseData.orderId.indexOf('.');
 		if (index <= 0)
 		{
 			return false; //protect on missing merchant id
 		}
 		//extract merchant id
-		String merchantId = details.purchaseInfo.purchaseData.orderId.substring(0, index);
+		String merchantId = details.purchaseData.orderId.substring(0, index);
 		return merchantId.compareTo(developerMerchantId) == 0;
 	}
 
 	@Nullable
-	private TransactionDetails getPurchaseTransactionDetails(String productId, BillingCache cache)
+	private PurchaseInfo getPurchaseInfo(String productId, BillingCache cache)
 	{
 		PurchaseInfo details = cache.getDetails(productId);
 		if (details != null && !TextUtils.isEmpty(details.responseData))
 		{
-			return new TransactionDetails(details);
+			return details;
 		}
 		return null;
 	}
@@ -801,12 +801,12 @@ public class BillingProcessor extends BillingBase
 
 		try
 		{
-			TransactionDetails transaction = getPurchaseTransactionDetails(productId, cachedProducts);
-			if (transaction != null && !TextUtils.isEmpty(transaction.purchaseInfo.purchaseData.purchaseToken))
+			PurchaseInfo purchaseInfo = getPurchaseInfo(productId, cachedProducts);
+			if (purchaseInfo != null && !TextUtils.isEmpty(purchaseInfo.purchaseData.purchaseToken))
 			{
 				ConsumeParams consumeParams =
 						ConsumeParams.newBuilder()
-									 .setPurchaseToken(transaction.purchaseInfo.purchaseData.purchaseToken)
+									 .setPurchaseToken(purchaseInfo.purchaseData.purchaseToken)
 									 .build();
 
 				billingService.consumeAsync(consumeParams, new ConsumeResponseListener()
@@ -967,15 +967,15 @@ public class BillingProcessor extends BillingBase
 	}
 
 	@Nullable
-	public TransactionDetails getPurchaseTransactionDetails(String productId)
+	public PurchaseInfo getPurchaseInfo(String productId)
 	{
-		return getPurchaseTransactionDetails(productId, cachedProducts);
+		return getPurchaseInfo(productId, cachedProducts);
 	}
 
 	@Nullable
-	public TransactionDetails getSubscriptionTransactionDetails(String productId)
+	public PurchaseInfo getSubscriptionPurchaseInfo(String productId)
 	{
-		return getPurchaseTransactionDetails(productId, cachedSubscriptions);
+		return getPurchaseInfo(productId, cachedSubscriptions);
 	}
 
 	private String detectPurchaseTypeFromPurchaseResponseData(JSONObject purchase)
@@ -1014,7 +1014,7 @@ public class BillingProcessor extends BillingBase
 					PurchaseInfo purchaseInfo = new PurchaseInfo(purchaseData,
 																 dataSignature,
 																 getPurchasePayload());
-					eventHandler.onProductPurchased(productId, new TransactionDetails(purchaseInfo));
+					eventHandler.onProductPurchased(productId, purchaseInfo);
 				}
 			}
 			else
@@ -1048,12 +1048,12 @@ public class BillingProcessor extends BillingBase
 		}
 	}
 
-	public boolean isValidTransactionDetails(TransactionDetails transactionDetails)
+	public boolean isValidPurchaseInfo(PurchaseInfo purchaseInfo)
 	{
-		return verifyPurchaseSignature(transactionDetails.purchaseInfo.purchaseData.productId,
-									   transactionDetails.purchaseInfo.responseData,
-									   transactionDetails.purchaseInfo.signature) &&
-			   checkMerchant(transactionDetails);
+		return verifyPurchaseSignature(purchaseInfo.purchaseData.productId,
+									   purchaseInfo.responseData,
+									   purchaseInfo.signature) &&
+			   checkMerchant(purchaseInfo);
 	}
 
 	private boolean isPurchaseHistoryRestored()

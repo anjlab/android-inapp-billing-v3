@@ -204,8 +204,8 @@ As a part or 1.0.9 changes, `TransactionDetails` object is passed to `onProductP
 However, you can always retrieve it later calling these methods:
 
 ```java
-bp.getPurchaseTransactionDetails("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
-bp.getSubscriptionTransactionDetails("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getPurchaseInfo("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
+bp.getSubscriptionPurchaseInfo("YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
 ```
 
 As a result you will get a `TransactionDetails` object with the following info included:
@@ -224,7 +224,7 @@ public final PurchaseInfo purchaseInfo;
 
 ## Handle Canceled Subscriptions
 
-Call `bp.getSubscriptionTransactionDetails(...)` and check the `purchaseInfo.purchaseData.autoRenewing` flag.
+Call `bp.getSubscriptionPurchaseInfo(...)` and check the `purchaseData.autoRenewing` flag.
 It will be set to `False` once subscription gets cancelled.
 Also notice, that you will need to call periodically `bp.loadOwnedPurchasesFromGoogle()` method in order to update subscription information
 
