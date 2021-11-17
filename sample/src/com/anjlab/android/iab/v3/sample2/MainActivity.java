@@ -127,6 +127,7 @@ public class MainActivity extends Activity {
                 public void onPurchasesSuccess()
                 {
                     showToast("Successfully consumed");
+                    updateTextViews();
                 }
 
                 @Override
@@ -135,7 +136,6 @@ public class MainActivity extends Activity {
                     showToast("Not consumed");
                 }
             });
-            updateTextViews();
         } else if (v.getId() == R.id.productDetailsButton) {
             bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
                 @Override

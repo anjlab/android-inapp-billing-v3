@@ -1,18 +1,13 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'checkstyle'
-
-group 'com.anjlab.android.iab.v3'
-version '2.0.0'
 
 android {
     compileSdkVersion 30
     buildToolsVersion '30.0.3'
 
     defaultConfig {
-        versionCode 1
-        versionName project.version
         minSdkVersion 14
         targetSdkVersion 30
         consumerProguardFiles 'progress-proguard.txt'
@@ -35,86 +30,98 @@ android {
 dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test:rules:1.4.0'
-    implementation 'androidx.annotation:annotation:1.2.0'
+    implementation 'androidx.annotation:annotation:1.3.0'
     implementation 'com.android.billingclient:billing:4.0.0'
 }
 
-configurations.archives.extendsFrom configurations.default
-
-signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
-
 task androidJavadocs(type: Javadoc) {
-    source = 'src/main/java,src/main/aidl'
+    source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    android.libraryVariants.all { variant ->
+        if (variant.name == 'release') {
+            owner.classpath += variant.javaCompileProvider.get().classpath
+        }
+    }
+    exclude '**/R.html', '**/R.*.html', '**/index.html'
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from androidJavadocs.destinationDir
 }
 
 task androidSourcesJar(type: Jar) {
-    classifier = 'sources'
-    from 'src/main/java'
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
 }
 
-artifacts {
-    archives androidSourcesJar
-    archives androidJavadocsJar
-}
+afterEvaluate {
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.release
 
-uploadArchives {
-    configuration = configurations.archives
-    repositories.mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                artifact androidJavadocsJar
+                artifact androidSourcesJar
 
+                groupId = 'com.anjlab.android.iab.v3'
+                artifactId = 'library'
+                version = '2.0.0.1'
+
+                pom {
+                    name = 'Android In-App Billing v3 Library'
+                    description = 'A lightweight implementation of Android In-app Billing Version 3'
+                    url = 'https://github.com/anjlab/android-inapp-billing-v3'
+                    packaging = 'aar'
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'serggl'
+                            name = 'Sergey Glukhov'
+                            email = 'sergey.glukhov@gmail.com'
+                        }
+                    }
+                    scm {
+                        url = 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+                        connection = 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+                        developerConnection = 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
+                    }
+                }
+            }
+        }
         if (project.hasProperty('sonatypeRepo')) {
-            repository(url: sonatypeRepo) {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-        }
-
-        pom.project {
-            name 'Android In-App Billing v3 Library'
-            packaging 'aar'
-            description 'A lightweight implementation of Android In-app Billing Version 3'
-            url 'https://github.com/anjlab/android-inapp-billing-v3'
-
-            scm {
-                url 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-                connection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-                developerConnection 'scm:git@github.com:anjlab/android-inapp-billing-v3.git'
-            }
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-
-            developers {
-                developer {
-                    id 'serggl'
-                    name 'Sergey Glukhov'
-                    email 'sergey.glukhov@gmail.com'
+            repositories {
+                maven {
+                    url sonatypeRepo
+                    credentials {
+                        username sonatypeUsername
+                        password sonatypePassword
+                    }
                 }
             }
         }
+    }
+
+    signing {
+        required { gradle.taskGraph.hasTask("publish") }
+        sign publishing.publications.maven
     }
 }
 
 task checkstyle(type: Checkstyle) {
     configFile file("${project.rootDir}/checkstyle.xml")
-    source 'src'
+
+    source 'src/main/java'
     include '**/*.java'
     exclude '**/gen/**'
 
-    classpath = files()
+    classpath = project.files(android.getBootClasspath().join(File.pathSeparator))
 }
 
 check.dependsOn('checkstyle')
