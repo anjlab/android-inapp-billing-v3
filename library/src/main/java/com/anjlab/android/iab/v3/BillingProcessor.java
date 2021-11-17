@@ -147,6 +147,10 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
 	 * this factory, then you must call {@link #initialize()} afterwards.
+	 * @param context Context object
+	 * @param licenseKey Licence key from Play Console
+	 * @param handler callback instance
+	 * @return BillingProcessor instance
 	 */
 	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, IBillingHandler handler)
 	{
@@ -156,6 +160,11 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Returns a new {@link BillingProcessor}, without immediately binding to Play Services. If you use
 	 * this factory, then you must call {@link #initialize()} afterwards.
+	 * @param context Context object
+	 * @param licenseKey Licence key from Play Console
+	 * @param merchantId Google merchant ID
+	 * @param handler callback instance
+	 * @return BillingProcessor instance
 	 */
 	public static BillingProcessor newBillingProcessor(Context context, String licenseKey, String merchantId,
 													   IBillingHandler handler)
@@ -315,6 +324,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 *  Check for billingClient is initialized and connected, if true then its ready for use.
+	 * @return true or false
 	 * */
 	public boolean isConnected()
 	{
@@ -509,6 +519,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * @deprecated always returns true.
+	 * @return true
 	 */
 	@Deprecated
 	public boolean isOneTimePurchaseSupported()

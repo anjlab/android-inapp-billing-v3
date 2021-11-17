@@ -29,8 +29,7 @@ import android.util.Log;
  * With this PurchaseInfo a developer is able verify
  * a purchase from the google play store on his own
  * server. An example implementation of how to verify
- * a purchase you can find <a href="https://github.com/mgoldsborough/google-play-in-app-billing-
- * verification/blob/master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64">here</a>
+ * a purchase you can find <a href="https://github.com/mgoldsborough/google-play-in-app-billing-verification/blob/master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64">here</a>
  */
 public class PurchaseInfo implements Parcelable
 {
@@ -59,15 +58,6 @@ public class PurchaseInfo implements Parcelable
         this.signature = signature;
         this.developerPayload = developerPayload;
         this.purchaseData = parseResponseDataImpl();
-    }
-
-    /**
-     * @deprecated don't call it directly, use {@see purchaseData} instead.
-     */
-    @Deprecated
-    public PurchaseData parseResponseData()
-    {
-        return parseResponseDataImpl();
     }
 
     PurchaseData parseResponseDataImpl()
