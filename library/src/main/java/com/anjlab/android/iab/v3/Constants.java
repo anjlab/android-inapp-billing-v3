@@ -48,7 +48,6 @@ public class Constants
 
 	@Deprecated
 	public static final int BILLING_ERROR_LOST_CONTEXT = 103;
-	public static final int BILLING_ERROR_INVALID_DEVELOPER_PAYLOAD = 105;
 	public static final int BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED = 106;
 	public static final int BILLING_ERROR_OTHER_ERROR = 110;
 	public static final int BILLING_ERROR_CONSUME_FAILED = 111;

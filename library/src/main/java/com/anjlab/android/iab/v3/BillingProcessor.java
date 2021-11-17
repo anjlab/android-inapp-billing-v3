@@ -720,7 +720,7 @@ public class BillingProcessor extends BillingBase
 				details = getSubscriptionPurchaseInfo(productId);
 			}
 
-			eventHandler.onProductPurchased(productId, details);
+			reportProductPurchased(productId, details);
 		}
 	}
 
@@ -994,7 +994,7 @@ public class BillingProcessor extends BillingBase
 					PurchaseInfo purchaseInfo = new PurchaseInfo(purchaseData,
 																 dataSignature,
 																 getPurchasePayload());
-					eventHandler.onProductPurchased(productId, purchaseInfo);
+					reportProductPurchased(productId, purchaseInfo);
 				}
 			}
 			else
@@ -1005,7 +1005,7 @@ public class BillingProcessor extends BillingBase
 		}
 		catch (Exception e)
 		{
-			Log.e(LOG_TAG, "Error in handleActivityResult", e);
+			Log.e(LOG_TAG, "Error in verifyAndCachePurchase", e);
 			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
 		savePurchasePayload(null);
@@ -1058,9 +1058,9 @@ public class BillingProcessor extends BillingBase
 
 	private void reportBillingError(int errorCode, Throwable error)
 	{
-		if (eventHandler != null)
+		if (eventHandler != null && handler != null)
 		{
-			eventHandler.onBillingError(errorCode, error);
+			handler.post(() -> eventHandler.onBillingError(errorCode, error));
 		}
 	}
 
@@ -1068,14 +1068,7 @@ public class BillingProcessor extends BillingBase
 	{
 		if (listener != null && handler != null)
 		{
-			handler.post(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					listener.onPurchasesSuccess();
-				}
-			});
+			handler.post(() -> listener.onPurchasesSuccess());
 		}
 	}
 
@@ -1083,14 +1076,7 @@ public class BillingProcessor extends BillingBase
 	{
 		if (listener != null && handler != null)
 		{
-			handler.post(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					listener.onPurchasesError();
-				}
-			});
+			handler.post(() -> listener.onPurchasesError());
 		}
 	}
 
@@ -1098,14 +1084,7 @@ public class BillingProcessor extends BillingBase
 	{
 		if (listener != null && handler != null)
 		{
-			handler.post(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					listener.onSkuDetailsError(error);
-				}
-			});
+			handler.post(() -> listener.onSkuDetailsError(error));
 		}
 	}
 
@@ -1114,17 +1093,17 @@ public class BillingProcessor extends BillingBase
 	{
 		if (listener != null && handler != null)
 		{
-			handler.post(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					listener.onSkuDetailsResponse(products);
-				}
-			});
+			handler.post(() -> listener.onSkuDetailsResponse(products));
 		}
 	}
 
+	private void reportProductPurchased(@NonNull String productId, @Nullable PurchaseInfo details)
+	{
+		if (eventHandler != null && handler != null)
+		{
+			handler.post(() -> eventHandler.onProductPurchased(productId, details));
+		}
+	}
 
 	private void handlePurchase(final Purchase purchase)
 	{
