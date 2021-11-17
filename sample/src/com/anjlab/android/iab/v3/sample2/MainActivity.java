@@ -1,17 +1,17 @@
-/**
- * Copyright 2014 AnjLab
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+  Copyright 2014 AnjLab
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
  */
 package com.anjlab.android.iab.v3.sample2;
 
@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
     // PRODUCT & SUBSCRIPTION IDS
     private static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
     private static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
-    private static final String LICENSE_KEY = null; // PUT YOUR MERCHANT KEY HERE;
+    private static final String LICENSE_KEY = BuildConfig.licenceKey; // PUT YOUR MERCHANT KEY HERE;
     // put your Google merchant id here (as stated in public profile of your Payments Merchant Center)
     // if filled library will provide protection against Freedom alike Play Market simulators
     private static final String MERCHANT_ID=null;
@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-		TextView title = (TextView)findViewById(R.id.titleTextView);
+		TextView title = findViewById(R.id.titleTextView);
 		title.setText(String.format(getString(R.string.title), getIntent().getIntExtra(ACTIVITY_NUMBER, 1)));
 
         if(!BillingProcessor.isIabServiceAvailable(this)) {
@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
             }
             @Override
             public void onBillingError(int errorCode, @Nullable Throwable error) {
-                showToast("onBillingError: " + Integer.toString(errorCode));
+                showToast("onBillingError: " + errorCode);
             }
             @Override
             public void onBillingInitialized() {
@@ -103,9 +103,9 @@ public class MainActivity extends Activity {
     }
 
     private void updateTextViews() {
-        TextView text = (TextView)findViewById(R.id.productIdTextView);
+        TextView text = findViewById(R.id.productIdTextView);
         text.setText(String.format("%s is%s purchased", PRODUCT_ID, bp.isPurchased(PRODUCT_ID) ? "" : " not"));
-        text = (TextView)findViewById(R.id.subscriptionIdTextView);
+        text = findViewById(R.id.subscriptionIdTextView);
         text.setText(String.format("%s is%s subscribed", SUBSCRIPTION_ID, bp.isSubscribed(SUBSCRIPTION_ID) ? "" : " not"));
     }
 
@@ -118,86 +118,76 @@ public class MainActivity extends Activity {
             showToast("Billing not initialized.");
             return;
         }
-        switch (v.getId()) {
-            case R.id.purchaseButton:
-                bp.purchase(this,PRODUCT_ID);
-                break;
-            case R.id.consumeButton:
-                bp.consumePurchaseAsync(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
+        if (v.getId() == R.id.purchaseButton) {
+            bp.purchase(this,PRODUCT_ID);
+        } else if (v.getId() == R.id.consumeButton) {
+            bp.consumePurchaseAsync(PRODUCT_ID, new BillingProcessor.IPurchasesResponseListener()
+            {
+                @Override
+                public void onPurchasesSuccess()
                 {
-                    @Override
-                    public void onPurchasesSuccess()
-                    {
-                        showToast("Successfully consumed");
-                    }
+                    showToast("Successfully consumed");
+                }
 
-                    @Override
-                    public void onPurchasesError()
-                    {
-                        showToast("Not consumed");
+                @Override
+                public void onPurchasesError()
+                {
+                    showToast("Not consumed");
+                }
+            });
+            updateTextViews();
+        } else if (v.getId() == R.id.productDetailsButton) {
+            bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
+                @Override
+                public void onSkuDetailsResponse(@Nullable List<SkuDetails> products) {
+                    if (products != null && !products.isEmpty()) {
+                        showToast(products.get(0).toString());
+                    } else {
+                        showToast("Failed to load SKU details");
                     }
-                });
-                updateTextViews();
-                break;
-            case R.id.productDetailsButton:
-				bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
-                    @Override
-                    public void onSkuDetailsResponse(@Nullable List<SkuDetails> products) {
-                        if (products != null && !products.isEmpty()) {
-                            showToast(products.get(0).toString());
-                        } else {
-                            showToast("Failed to load SKU details");
-                        }
-                    }
+                }
 
-                    @Override
-                    public void onSkuDetailsError(String error) {
-                        showToast(error);
-                    }
-                });
+                @Override
+                public void onSkuDetailsError(String error) {
+                    showToast(error);
+                }
+            });
+        } else if (v.getId() == R.id.subscribeButton) {
+            bp.subscribe(this,SUBSCRIPTION_ID);
+        } else if (v.getId() == R.id.updateSubscriptionsButton) {
+            bp.loadOwnedPurchasesFromGoogleAsync(new BillingProcessor.IPurchasesResponseListener() {
+                @Override
+                public void onPurchasesSuccess()
+                {
+                    showToast("Subscriptions updated.");
+                    updateTextViews();
+                }
 
-                break;
-            case R.id.subscribeButton:
-                bp.subscribe(this,SUBSCRIPTION_ID);
-                break;
-            case R.id.updateSubscriptionsButton:
-                bp.loadOwnedPurchasesFromGoogleAsync(new BillingProcessor.IPurchasesResponseListener() {
-                    @Override
-                    public void onPurchasesSuccess()
-                    {
-                        showToast("Subscriptions updated.");
-                        updateTextViews();
-                    }
+                @Override
+                public void onPurchasesError()
+                {
+                    showToast("Subscriptions update eroor.");
+                    updateTextViews();
+                }
+            });
+        } else if (v.getId() == R.id.subsDetailsButton) {
+            bp.getSubscriptionListingDetailsAsync(SUBSCRIPTION_ID, new BillingProcessor.ISkuDetailsResponseListener()
+            {
+                @Override
+                public void onSkuDetailsResponse(@Nullable final List<SkuDetails> products) {
+                    showToast(products != null ? products.toString() : "Failed to load subscription details");
+                }
 
-                    @Override
-                    public void onPurchasesError()
-                    {
-                        showToast("Subscriptions update eroor.");
-                        updateTextViews();
-                    }
-                });
-
-                break;
-            case R.id.subsDetailsButton:
-				 bp.getSubscriptionListingDetailsAsync(SUBSCRIPTION_ID, new BillingProcessor.ISkuDetailsResponseListener()
-                 {
-                    @Override
-                    public void onSkuDetailsResponse(@Nullable final List<SkuDetails> products) {
-                        showToast(products != null ? products.toString() : "Failed to load subscription details");
-                    }
-
-                    @Override
-                    public void onSkuDetailsError(String string) {
-                        showToast(string);
-                    }
-                });
-
-				break;
-			case R.id.launchMoreButton:
-				startActivity(new Intent(this, MainActivity.class).putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1));
-				break;
-            default:
-                break;
+                @Override
+                public void onSkuDetailsError(String string) {
+                    showToast(string);
+                }
+            });
+        } else if (v.getId() == R.id.launchMoreButton)
+        {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra(ACTIVITY_NUMBER, getIntent().getIntExtra(ACTIVITY_NUMBER, 1) + 1);
+            startActivity(intent);
         }
     }
 
