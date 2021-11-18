@@ -101,11 +101,10 @@ public class PurchaseInfo implements Parcelable
         dest.writeString(this.signature);
     }
 
-    protected PurchaseInfo(Parcel in)
-    {
+    protected PurchaseInfo(Parcel in) {
         this.responseData = in.readString();
-        this.signature = in.readString();
         this.developerPayload = in.readString();
+        this.signature = in.readString();
         this.purchaseData = parseResponseDataImpl();
     }
 

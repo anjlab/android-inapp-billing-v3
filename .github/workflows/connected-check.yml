@@ -1,0 +1,36 @@
+name: Connected Check
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  run-connected-checks:
+    # put [skip ci] into the commit message if you don't want to run this workflow
+
+    runs-on: macos-latest
+
+    timeout-minutes: 15
+
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v2
+
+      - name: Set up build properties
+        run: |
+          echo 'licenceKey=""' > local.properties
+          echo 'android.useAndroidX=true' >> gradle.properties
+          echo 'android.enableJetifier=true' >> gradle.properties
+
+      - name: Run connectedCheck
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          script: ./gradlew connectedCheck

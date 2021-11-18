@@ -1,4 +1,4 @@
-name: Checkstyle
+name: Check
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
       - '*'
 
 jobs:
-  check:
+  run-checks:
     # put [skip ci] into the commit message if you don't want to run this workflow
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     timeout-minutes: 15
 
@@ -21,9 +21,9 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 11
+#      - uses: actions/setup-java@v1
+#        with:
+#          java-version: 11
 
       - name: Set up build properties
         run: |
@@ -31,8 +31,16 @@ jobs:
           echo 'android.useAndroidX=true' >> gradle.properties
           echo 'android.enableJetifier=true' >> gradle.properties
 
-      - name: Run gradle checks
-        uses: gradle/gradle-build-action@v2
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
         with:
-          gradle-version: wrapper
-          arguments: check
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          script: ./gradlew connectedCheck
+
+#      - name: Run gradle checks
+#        uses: gradle/gradle-build-action@v2
+#        with:
+#          gradle-version: wrapper
+#          arguments: check
