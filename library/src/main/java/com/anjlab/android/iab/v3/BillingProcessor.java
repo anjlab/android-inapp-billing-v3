@@ -875,7 +875,7 @@ public class BillingProcessor extends BillingBase
 			reportSkuDetailsErrorCaller("Failed to call getSkuDetails. Service may not be connected", listener);
 			return;
 		}
-		if (productIdList != null && productIdList.size() > 0)
+		if (productIdList == null || productIdList.isEmpty())
 		{
 			reportSkuDetailsErrorCaller("Empty products list", listener);
 			return;

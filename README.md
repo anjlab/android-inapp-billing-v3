@@ -29,7 +29,7 @@ repositories {
   mavenCentral()
 }
 dependencies {
-  implementation 'com.anjlab.android.iab.v3:library:2.0.2'
+  implementation 'com.anjlab.android.iab.v3:library:2.0.3'
 }
 ```
 

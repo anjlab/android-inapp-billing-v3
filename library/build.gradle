@@ -67,7 +67,7 @@ afterEvaluate {
 
                 groupId = 'com.anjlab.android.iab.v3'
                 artifactId = 'library'
-                version = '2.0.2'
+                version = '2.0.3'
 
                 pom {
                     name = 'Android In-App Billing v3 Library'
