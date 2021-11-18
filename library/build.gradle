@@ -4,12 +4,12 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     buildToolsVersion '30.0.3'
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 31
         consumerProguardFiles 'progress-proguard.txt'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -121,7 +121,7 @@ task checkstyle(type: Checkstyle) {
     include '**/*.java'
     exclude '**/gen/**'
 
-    classpath = project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath = project.files(android.getBootClasspath())
 }
 
 check.dependsOn('checkstyle')

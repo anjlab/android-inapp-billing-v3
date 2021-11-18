@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 AnjLab and Unic8
+ * Copyright 2014 AnjLab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.anjlab.android.iab.v3;
 
 import org.json.JSONException;
@@ -29,7 +28,11 @@ import android.util.Log;
  * With this PurchaseInfo a developer is able verify
  * a purchase from the google play store on his own
  * server. An example implementation of how to verify
- * a purchase you can find <a href="https://github.com/mgoldsborough/google-play-in-app-billing-verification/blob/master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64">here</a>
+ * a purchase you can find here:
+ * <pre>
+ * See <a href="https://github.com/mgoldsborough/google-play-in-app-billing-verification/blob/
+ * master/library/GooglePlay/InAppBilling/GooglePlayResponseValidator.php#L64"> here </a>
+ * </pre>
  */
 public class PurchaseInfo implements Parcelable
 {

@@ -1,4 +1,4 @@
-name: Check
+name: Checkstyle
 
 on:
   push:
@@ -23,9 +23,16 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
 
-      - uses: gradle/gradle-build-action@v2
+      - name: Set up build properties
+        run: |
+          echo 'licenceKey=""' > local.properties
+          echo 'android.useAndroidX=true' >> gradle.properties
+          echo 'android.enableJetifier=true' >> gradle.properties
+
+      - name: Run gradle checks
+        uses: gradle/gradle-build-action@v2
         with:
           gradle-version: wrapper
           arguments: check

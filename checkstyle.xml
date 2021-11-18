@@ -3,14 +3,16 @@
     "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
     "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
+    <property name="charset" value="UTF-8" />
+
+    <property name="tabWidth" value="4" />
 
     <module name="LineLength">
-        <property name="max" value="130"/>
+        <property name="max" value="120"/>
+        <property name="fileExtensions" value="java"/>
     </module>
 
     <module name="TreeWalker">
-        <property name="tabWidth" value="4"/>
-
         <module name="ParameterNumber">
             <property name="max" value="10"/>
         </module>

@@ -15,7 +15,18 @@
  */
 package com.anjlab.android.iab.v3;
 
-import com.android.billingclient.api.*;
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.ConsumeResponseListener;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesResponseListener;
+import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.SkuDetailsParams;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import android.app.Activity;
@@ -60,7 +72,8 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Callback methods for notifying about success or failure attempt to fetch purchases from the server.
 	 */
-	public interface IPurchasesResponseListener {
+	public interface IPurchasesResponseListener
+	{
 		void onPurchasesSuccess();
 
 		void onPurchasesError();
@@ -69,7 +82,8 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Callback methods where result of SkuDetails fetch returned or error message on failure.
 	 */
-	public interface ISkuDetailsResponseListener {
+	public interface ISkuDetailsResponseListener
+	{
 		void onSkuDetailsResponse(@Nullable List<SkuDetails> products);
 
 		void onSkuDetailsError(String error);
@@ -236,9 +250,12 @@ public class BillingProcessor extends BillingBase
 				else if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED)
 				{
 					String purchasePayload = getPurchasePayload();
-					if (TextUtils.isEmpty(purchasePayload)) {
+					if (TextUtils.isEmpty(purchasePayload))
+					{
 						loadOwnedPurchasesFromGoogleAsync(null);
-					} else {
+					}
+					else
+					{
 						handleItemAlreadyOwned(purchasePayload.split(":")[1]);
 						savePurchasePayload(null);
 					}
@@ -583,7 +600,8 @@ public class BillingProcessor extends BillingBase
 			return false;
 		}
 
-		if (TextUtils.isEmpty(productId)) {
+		if (TextUtils.isEmpty(productId))
+		{
 			reportBillingError(Constants.BILLING_ERROR_PRODUCT_ID_NOT_SPECIFIED, null);
 			return false;
 		}
@@ -680,7 +698,8 @@ public class BillingProcessor extends BillingBase
 		});
 	}
 
-	private void handleItemAlreadyOwned(final String productId) {
+	private void handleItemAlreadyOwned(final String productId)
+	{
 		if (!isPurchased(productId) && !isSubscribed(productId))
 		{
 			loadOwnedPurchasesFromGoogleAsync(new IPurchasesResponseListener()
@@ -851,78 +870,74 @@ public class BillingProcessor extends BillingBase
 	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType,
 									final ISkuDetailsResponseListener listener)
 	{
-		if (billingService != null && billingService.isReady() && productIdList != null &&
-			productIdList.size() > 0)
+		if (billingService == null || !billingService.isReady())
 		{
-			try
-			{
-				SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
-																	.setSkusList(productIdList)
-																	.setType(purchaseType)
-																	.build();
-				final ArrayList<SkuDetails> productDetails = new ArrayList<>();
+			reportSkuDetailsErrorCaller("Failed to call getSkuDetails. Service may not be connected", listener);
+			return;
+		}
+		if (productIdList != null && productIdList.size() > 0)
+		{
+			reportSkuDetailsErrorCaller("Empty products list", listener);
+			return;
+		}
 
-				billingService.querySkuDetailsAsync(
-						skuDetailsParams,
-						new com.android.billingclient.api.SkuDetailsResponseListener()
+		try
+		{
+			SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
+																.setSkusList(productIdList)
+																.setType(purchaseType)
+																.build();
+			final ArrayList<SkuDetails> productDetails = new ArrayList<>();
+
+			billingService.querySkuDetailsAsync(
+					skuDetailsParams,
+					new com.android.billingclient.api.SkuDetailsResponseListener()
+					{
+						@Override
+						public void onSkuDetailsResponse(
+								@NonNull BillingResult billingResult,
+								@Nullable List<com.android.billingclient.api.SkuDetails> detailsList)
 						{
-							@Override
-							public void onSkuDetailsResponse(@NonNull BillingResult billingResult,
-															 @Nullable List<com.android.billingclient.api.SkuDetails> detailsList)
+							int response = billingResult.getResponseCode();
+							if (response == BillingClient.BillingResponseCode.OK)
 							{
-								int response = billingResult.getResponseCode();
-								if (response == BillingClient.BillingResponseCode.OK)
+								if (detailsList != null && detailsList.size() > 0)
 								{
-									if (detailsList != null && detailsList.size() > 0)
+									for (com.android.billingclient.api.SkuDetails skuDetails : detailsList)
 									{
-										for (com.android.billingclient.api.SkuDetails skuDetails : detailsList)
+										try
 										{
-											try
-											{
-												JSONObject object =
-														new JSONObject(skuDetails.getOriginalJson());
-												productDetails.add(new SkuDetails(object));
-											}
-											catch (JSONException jsonException)
-											{
-												jsonException.printStackTrace();
-											}
+											JSONObject object = new JSONObject(skuDetails.getOriginalJson());
+											productDetails.add(new SkuDetails(object));
+										}
+										catch (JSONException jsonException)
+										{
+											jsonException.printStackTrace();
 										}
 									}
-
-									reportSkuDetailsResponseCaller(productDetails, listener);
 								}
-								else
-								{
-									reportBillingError(response, null);
-									Log.e(LOG_TAG,
-										  String.format(
-												  "Failed to retrieve info for %d products, %d",
-												  productIdList.size(),
-												  response));
 
-									reportSkuDetailsErrorCaller(
-											String.format(
-													"Failed to retrieve info for %d products, %d",
-													productIdList.size(),
-													response), listener);
-								}
+								reportSkuDetailsResponseCaller(productDetails, listener);
 							}
-						});
-			}
-			catch (Exception e)
-			{
-				Log.e(LOG_TAG, "Failed to call getSkuDetails", e);
-				reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
+							else
+							{
+								reportBillingError(response, null);
+								String errorMessage = String.format(Locale.US,
+																	"Failed to retrieve info for %d products, %d",
+																	productIdList.size(), response);
+								Log.e(LOG_TAG, errorMessage);
 
-				reportSkuDetailsErrorCaller(e.getLocalizedMessage(), listener);
-			}
+								reportSkuDetailsErrorCaller(errorMessage, listener);
+							}
+						}
+					});
 		}
-		else
+		catch (Exception e)
 		{
-			reportSkuDetailsErrorCaller(
-					"Failed to call getSkuDetails. Service may not be connected",
-					listener);
+			Log.e(LOG_TAG, "Failed to call getSkuDetails", e);
+			reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
+
+			reportSkuDetailsErrorCaller(e.getLocalizedMessage(), listener);
 		}
 	}
 
@@ -931,7 +946,8 @@ public class BillingProcessor extends BillingBase
 		 getSkuDetailsAsync(productId, Constants.PRODUCT_TYPE_MANAGED, listener);
 	}
 
-	public void getPurchaseListingDetailsAsync(ArrayList<String> productIdList, final ISkuDetailsResponseListener listener)
+	public void getPurchaseListingDetailsAsync(ArrayList<String> productIdList,
+											   final ISkuDetailsResponseListener listener)
 	{
 		getSkuDetailsAsync(productIdList, Constants.PRODUCT_TYPE_MANAGED, listener);
 	}
@@ -1130,8 +1146,7 @@ public class BillingProcessor extends BillingBase
 						new AcknowledgePurchaseResponseListener()
 						{
 							@Override
-							public void onAcknowledgePurchaseResponse(
-									@NonNull BillingResult billingResult)
+							public void onAcknowledgePurchaseResponse(@NonNull BillingResult billingResult)
 							{
 								if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK)
 								{
@@ -1139,9 +1154,7 @@ public class BillingProcessor extends BillingBase
 								}
 								else
 								{
-									reportBillingError(
-											Constants.BILLING_ERROR_FAILED_TO_ACKNOWLEDGE_PURCHASE,
-											null);
+									reportBillingError(Constants.BILLING_ERROR_FAILED_TO_ACKNOWLEDGE_PURCHASE, null);
 								}
 							}
 						});

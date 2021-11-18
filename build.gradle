@@ -7,17 +7,20 @@ buildscript {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
         google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.0.3'
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.7.0'
+        classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1"
         classpath "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:1.2.0"
     }
 }
 
 allprojects {
-    apply plugin: 'license'
+    apply plugin: "com.github.hierynomus.license"
 
     repositories {
         mavenCentral()
@@ -28,18 +31,12 @@ allprojects {
         }
     }
 
-    sourceSets {
-        licenseSrc {
-            java {
-                srcDir 'src'
-                exclude 'com/anjlab/android/iab/v3/Security.java'
-                exclude 'com/android/vending/billing/IInAppBillingService.aidl'
-            }
-        }
-    }
-
     license {
         header rootProject.file('LICENSE')
         strictCheck true
+        include "**/*.java"
+        exclude "**/*Test.java"
+        exclude "com/anjlab/android/iab/v3/util/ResourcesUtil.java"
+        exclude "com/anjlab/android/iab/v3/Security.java"
     }
 }
