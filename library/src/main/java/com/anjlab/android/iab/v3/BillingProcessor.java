@@ -259,6 +259,19 @@ public class BillingProcessor extends BillingBase
 						handleItemAlreadyOwned(purchasePayload.split(":")[1]);
 						savePurchasePayload(null);
 					}
+
+					reportBillingError(responseCode, new Throwable(billingResult.getDebugMessage()));
+
+				}
+				else if (responseCode == BillingClient.BillingResponseCode.USER_CANCELED
+						|| responseCode == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE
+						|| responseCode == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE
+						|| responseCode == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE
+						|| responseCode == BillingClient.BillingResponseCode.DEVELOPER_ERROR
+						|| responseCode == BillingClient.BillingResponseCode.ERROR
+						|| responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED)
+				{
+					reportBillingError(responseCode, new Throwable(billingResult.getDebugMessage()));
 				}
 			}
 		};
