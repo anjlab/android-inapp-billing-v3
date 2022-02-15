@@ -128,9 +128,9 @@ Before any usage it's good practice to check in-app billing services availabilit
 In some older devices or chinese ones it may happen that Play Market is unavailable or is deprecated
  and doesn't support in-app billing.
 
-Simply call static method `BillingProcessor.isIabServiceAvailable()`:
+Simply call static method `BillingProcessor.isIabServiceAvailable(context)`:
 ```java
-boolean isAvailable = BillingProcessor.isIabServiceAvailable();
+boolean isAvailable = BillingProcessor.isIabServiceAvailable(this);
 if(!isAvailable) {
   // continue
 }
