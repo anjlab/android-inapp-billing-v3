@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
     // PRODUCT & SUBSCRIPTION IDS
     private static final String PRODUCT_ID = "com.anjlab.test.iab.s2.p5";
     private static final String SUBSCRIPTION_ID = "com.anjlab.test.iab.subs1";
-    private static final String LICENSE_KEY = BuildConfig.licenceKey; // PUT YOUR MERCHANT KEY HERE;
+    private static final String LICENSE_KEY = "THE_KEY"; //BuildConfig.LICENSE_KEY; // PUT YOUR MERCHANT KEY HERE;
     // put your Google merchant id here (as stated in public profile of your Payments Merchant Center)
     // if filled library will provide protection against Freedom alike Play Market simulators
     private static final String MERCHANT_ID=null;
