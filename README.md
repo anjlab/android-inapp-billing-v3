@@ -3,6 +3,10 @@ This is a simple, straight-forward implementation of the Android v4 In-app billi
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
+**Keep in mind**, the library will provide the client side features necessary to implement in-app purchases but will still require quite a lot of work on your side. You'll also have to implement the server to validate your receipts (which is probably the most time consuming part to do correctly).
+
+If you're looking for a *Plug & Play* SDK that does everything (including the server validation of your receipts), you can use the [IAPHUB SDK](https://github.com/iaphub/iaphub-android-sdk).
+
 ## Maintainers Wanted
 
 This project is looking for maintainers. 
