@@ -4,12 +4,13 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion '30.0.3'
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 31
+        compileSdk = 33
+        buildToolsVersion = '30.0.3'
+
+        minSdkVersion 19
+        targetSdkVersion 33
         consumerProguardFiles 'progress-proguard.txt'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
