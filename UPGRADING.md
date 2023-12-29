@@ -1,5 +1,12 @@
 ## Upgrading Android In-App Billing v3 Library
 
+### Upgrading from 2.0.x to 2.1.0
+
+This release updates `com.android.billingclient:billing` library from version 4 to version 6.
+While your apps will probably continue to work, you still need to follow steps from official
+upgrade guide https://developer.android.com/google/play/billing/migrate-gpblv6 to make sure you're
+ready for future library updates from Google
+
 ### Upgrading from 1.x to 2.0.0
 
 Starting from Nov 1, 2021 Google will stop supporting v2 billing client library used as a dependency here.

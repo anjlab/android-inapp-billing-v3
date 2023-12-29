@@ -33,7 +33,7 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.4.0'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     implementation 'androidx.annotation:annotation:1.3.0'
-    implementation 'com.android.billingclient:billing:4.0.0'
+    implementation 'com.android.billingclient:billing:6.1.0'
 }
 
 task androidJavadocs(type: Javadoc) {
@@ -68,7 +68,7 @@ afterEvaluate {
 
                 groupId = 'com.anjlab.android.iab.v3'
                 artifactId = 'library'
-                version = '2.0.3'
+                version = '2.1.0'
 
                 pom {
                     name = 'Android In-App Billing v3 Library'
