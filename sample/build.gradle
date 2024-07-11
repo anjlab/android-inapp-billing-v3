@@ -11,6 +11,8 @@ dependencies {
 }
 
 android {
+    namespace 'com.anjlab.android.iab.v3.sample2'
+
     defaultConfig {
         versionCode 5
         versionName '5.0'

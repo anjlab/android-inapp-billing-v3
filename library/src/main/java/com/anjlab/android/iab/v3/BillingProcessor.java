@@ -694,7 +694,6 @@ public class BillingProcessor extends BillingBase
 						billingFlowParamsBuilder.setSubscriptionUpdateParams(
 								BillingFlowParams.SubscriptionUpdateParams
 										.newBuilder()
-
 										.setOldPurchaseToken(oldToken)
 										.build());
 					}
