@@ -14,11 +14,11 @@ android {
     namespace 'com.anjlab.android.iab.v3.sample2'
 
     defaultConfig {
-        versionCode 5
-        versionName '5.0'
+        versionCode 6
+        versionName '6.0'
         minSdkVersion 21
-        targetSdkVersion 33
-        compileSdk = 33
+        targetSdkVersion 34
+        compileSdk = 34
         buildToolsVersion = '30.0.3'
     }
 
