@@ -13,7 +13,7 @@ jobs:
   run-connected-checks:
     # put [skip ci] into the commit message if you don't want to run this workflow
 
-    runs-on: macos-latest
+    runs-on: macos-13
 
     timeout-minutes: 15
 
@@ -39,7 +39,7 @@ jobs:
       - name: Run connectedCheck
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 31
+          api-level: 33
           target: google_apis
           arch: x86_64
           script: ./gradlew connectedCheck
