@@ -14,7 +14,7 @@ android {
     defaultConfig {
         versionCode 5
         versionName '5.0'
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
         compileSdk = 33
         buildToolsVersion = '30.0.3'
