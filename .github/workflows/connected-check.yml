@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: oracle
+          distribution: adopt
           java-version: 11
 
       - name: Set up build properties
