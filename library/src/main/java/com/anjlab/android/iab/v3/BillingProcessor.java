@@ -23,16 +23,22 @@ import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
 import com.android.billingclient.api.ConsumeResponseListener;
+import com.android.billingclient.api.PendingPurchasesParams;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsResult;
+import com.android.billingclient.api.QueryPurchasesParams;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -81,12 +87,28 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Callback methods where result of SkuDetails fetch returned or error message on failure.
+	 *
+	 * @deprecated use {@link IProductDetailsResponseListener} for the full Billing Library 8
+	 *     {@link ProductDetails} shape (multi-offer subscriptions, pricing phases, base plans).
 	 */
+	@Deprecated
 	public interface ISkuDetailsResponseListener
 	{
 		void onSkuDetailsResponse(@Nullable List<SkuDetails> products);
 
 		void onSkuDetailsError(String error);
+	}
+
+	/**
+	 * Callback methods delivering raw Billing Library 8 {@link ProductDetails} objects — the
+	 * full product information including subscription offer trees, pricing phases, and base
+	 * plans. Prefer this over the legacy {@link ISkuDetailsResponseListener}.
+	 */
+	public interface IProductDetailsResponseListener
+	{
+		void onProductDetailsResponse(@NonNull List<ProductDetails> products);
+
+		void onProductDetailsError(@NonNull String error);
 	}
 
 	private static final Date DATE_MERCHANT_LIMIT_1; //5th December 2012
@@ -276,10 +298,15 @@ public class BillingProcessor extends BillingBase
 			}
 		};
 
+		PendingPurchasesParams pendingPurchasesParams = PendingPurchasesParams.newBuilder()
+				.enableOneTimeProducts()
+				.build();
+
 		billingService = BillingClient.newBuilder(context)
-									  .enablePendingPurchases()
-									  .setListener(listener)
-									  .build();
+				.setListener(listener)
+				.enablePendingPurchases(pendingPurchasesParams)
+				.enableAutoServiceReconnection()
+				.build();
 	}
 
 	/**
@@ -410,7 +437,11 @@ public class BillingProcessor extends BillingBase
 			return;
 		}
 
-		billingService.queryPurchasesAsync(type, new PurchasesResponseListener()
+		QueryPurchasesParams queryPurchasesParams = QueryPurchasesParams.newBuilder()
+				.setProductType(type)
+				.build();
+
+		billingService.queryPurchasesAsync(queryPurchasesParams, new PurchasesResponseListener()
 		{
 			@Override
 			public void onQueryPurchasesResponse(@NonNull BillingResult billingResult,
@@ -548,6 +579,66 @@ public class BillingProcessor extends BillingBase
 	}
 
 	/**
+	 * Launch the billing flow using a pre-fetched {@link ProductDetails} object. Callers that
+	 * already have the product details in hand (e.g. from
+	 * {@link #getPurchaseProductDetailsAsync(String, IProductDetailsResponseListener)} or
+	 * {@link #getSubscriptionProductDetailsAsync(String, IProductDetailsResponseListener)})
+	 * can use this overload to avoid an extra round-trip to Play. For subscriptions the
+	 * library picks the base plan offer (null {@code offerId}), falling back to the first
+	 * offer in the list.
+	 *
+	 * @param activity the activity launching the flow
+	 * @param productDetails the product to purchase
+	 * @return {@code false} if the billing system is not initialized or an exception occurs,
+	 *     {@code true} otherwise
+	 */
+	public boolean purchase(Activity activity, @NonNull ProductDetails productDetails)
+	{
+		return purchase(activity, productDetails, null);
+	}
+
+	/**
+	 * Launch the billing flow using a pre-fetched {@link ProductDetails} object, optionally
+	 * upgrading or downgrading an existing subscription. See
+	 * {@link #purchase(Activity, ProductDetails)} for offer-selection details.
+	 *
+	 * @param activity the activity launching the flow
+	 * @param productDetails the product to purchase
+	 * @param oldProductId the existing subscription product id being replaced, or {@code null}
+	 *     for a fresh purchase
+	 * @return {@code false} if the billing system is not initialized or an exception occurs,
+	 *     {@code true} otherwise
+	 */
+	public boolean purchase(Activity activity, @NonNull ProductDetails productDetails,
+							@Nullable String oldProductId)
+	{
+		if (!isConnected())
+		{
+			retryBillingClientConnection();
+			return false;
+		}
+		try
+		{
+			String productId = productDetails.getProductId();
+			String productType = productDetails.getProductType();
+			String purchasePayload = productType + ":" + productId;
+			if (!BillingClient.ProductType.SUBS.equals(productType))
+			{
+				purchasePayload += ":" + UUID.randomUUID().toString();
+			}
+			savePurchasePayload(purchasePayload);
+			startPurchaseFlow(activity, productDetails, oldProductId);
+			return true;
+		}
+		catch (Exception e)
+		{
+			Log.e(LOG_TAG, "Error in purchase(ProductDetails)", e);
+			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
+		}
+		return false;
+	}
+
+	/**
 	 * @deprecated always returns true.
 	 * @return true
 	 */
@@ -628,31 +719,33 @@ public class BillingProcessor extends BillingBase
 			}
 			savePurchasePayload(purchasePayload);
 
-			List<String> skuList = new ArrayList<>();
-			skuList.add(productId);
-			SkuDetailsParams params = SkuDetailsParams.newBuilder()
-													  .setSkusList(skuList)
-													  .setType(purchaseType)
-													  .build();
+			QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+					.setProductList(Collections.singletonList(
+							QueryProductDetailsParams.Product.newBuilder()
+									.setProductId(productId)
+									.setProductType(purchaseType)
+									.build()))
+					.build();
 
-			billingService.querySkuDetailsAsync(
+			billingService.queryProductDetailsAsync(
 					params,
-					new com.android.billingclient.api.SkuDetailsResponseListener()
+					new ProductDetailsResponseListener()
 					{
 						@Override
-						public void onSkuDetailsResponse(
+						public void onProductDetailsResponse(
 								@NonNull BillingResult billingResult,
-								@Nullable List<com.android.billingclient.api.SkuDetails> skuList)
+								@NonNull QueryProductDetailsResult result)
 						{
-
-							if (skuList != null && !skuList.isEmpty())
+							List<ProductDetails> details = result.getProductDetailsList();
+							if (details != null && !details.isEmpty())
 							{
-								startPurchaseFlow(activity, skuList.get(0), oldProductId);
+								startPurchaseFlow(activity, details.get(0), oldProductId);
 							}
 							else
 							{
-								// This will occur if product id does not match with the product type
-								Log.d("onSkuResponse: ", "product id mismatch with Product type");
+								// Product id did not resolve against the selected product type,
+								// or Google returned it in result.getUnfetchedProductList().
+								Log.d("onProductDetailsResponse: ", "product id mismatch with Product type");
 								reportBillingError(
 										Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE,
 										null);
@@ -671,18 +764,47 @@ public class BillingProcessor extends BillingBase
 	}
 
 	private void startPurchaseFlow(final Activity activity,
-								   final com.android.billingclient.api.SkuDetails skuDetails,
+								   final ProductDetails productDetails,
 								   final String oldProductId)
 	{
-		final String productId = skuDetails.getSku();
+		final String productId = productDetails.getProductId();
 
 		handler.post(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				BillingFlowParams.Builder billingFlowParamsBuilder = BillingFlowParams.newBuilder();
-				billingFlowParamsBuilder.setSkuDetails(skuDetails);
+				BillingFlowParams.ProductDetailsParams.Builder pdpBuilder =
+						BillingFlowParams.ProductDetailsParams.newBuilder()
+								.setProductDetails(productDetails);
+
+				// Subscriptions require an offer token; one-time products must not set it.
+				if (BillingClient.ProductType.SUBS.equals(productDetails.getProductType()))
+				{
+					List<ProductDetails.SubscriptionOfferDetails> offers =
+							productDetails.getSubscriptionOfferDetails();
+					if (offers == null || offers.isEmpty())
+					{
+						reportBillingError(
+								Constants.BILLING_ERROR_FAILED_TO_INITIALIZE_PURCHASE, null);
+						return;
+					}
+					// Prefer the base plan (null offerId); fall back to the first offer.
+					ProductDetails.SubscriptionOfferDetails chosen = offers.get(0);
+					for (ProductDetails.SubscriptionOfferDetails offer : offers)
+					{
+						if (offer.getOfferId() == null)
+						{
+							chosen = offer;
+							break;
+						}
+					}
+					pdpBuilder.setOfferToken(chosen.getOfferToken());
+				}
+
+				BillingFlowParams.Builder billingFlowParamsBuilder = BillingFlowParams.newBuilder()
+						.setProductDetailsParamsList(
+								Collections.singletonList(pdpBuilder.build()));
 
 				if (!TextUtils.isEmpty(oldProductId))
 				{
@@ -691,6 +813,8 @@ public class BillingProcessor extends BillingBase
 					if (oldProductDetails != null)
 					{
 						String oldToken = oldProductDetails.purchaseData.purchaseToken;
+						// No replacement mode set -> default WITH_TIME_PRORATION, preserving
+						// pre-8.x behavior.
 						billingFlowParamsBuilder.setSubscriptionUpdateParams(
 								BillingFlowParams.SubscriptionUpdateParams
 										.newBuilder()
@@ -880,57 +1004,51 @@ public class BillingProcessor extends BillingBase
 		});
 	}
 
-	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType,
-									final ISkuDetailsResponseListener listener)
+	private void getProductDetailsAsync(final List<String> productIdList, final String purchaseType,
+										final IProductDetailsResponseListener listener)
 	{
 		if (billingService == null || !billingService.isReady())
 		{
-			reportSkuDetailsErrorCaller("Failed to call getSkuDetails. Service may not be connected", listener);
+			reportProductDetailsErrorCaller(
+					"Failed to call queryProductDetails. Service may not be connected", listener);
 			return;
 		}
 		if (productIdList == null || productIdList.isEmpty())
 		{
-			reportSkuDetailsErrorCaller("Empty products list", listener);
+			reportProductDetailsErrorCaller("Empty products list", listener);
 			return;
 		}
 
 		try
 		{
-			SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
-																.setSkusList(productIdList)
-																.setType(purchaseType)
-																.build();
-			final ArrayList<SkuDetails> productDetails = new ArrayList<>();
+			List<QueryProductDetailsParams.Product> productList = new ArrayList<>(productIdList.size());
+			for (String id : productIdList)
+			{
+				productList.add(QueryProductDetailsParams.Product.newBuilder()
+						.setProductId(id)
+						.setProductType(purchaseType)
+						.build());
+			}
+			QueryProductDetailsParams queryParams = QueryProductDetailsParams.newBuilder()
+					.setProductList(productList)
+					.build();
 
-			billingService.querySkuDetailsAsync(
-					skuDetailsParams,
-					new com.android.billingclient.api.SkuDetailsResponseListener()
+			billingService.queryProductDetailsAsync(
+					queryParams,
+					new ProductDetailsResponseListener()
 					{
 						@Override
-						public void onSkuDetailsResponse(
+						public void onProductDetailsResponse(
 								@NonNull BillingResult billingResult,
-								@Nullable List<com.android.billingclient.api.SkuDetails> detailsList)
+								@NonNull QueryProductDetailsResult result)
 						{
 							int response = billingResult.getResponseCode();
 							if (response == BillingClient.BillingResponseCode.OK)
 							{
-								if (detailsList != null && detailsList.size() > 0)
-								{
-									for (com.android.billingclient.api.SkuDetails skuDetails : detailsList)
-									{
-										try
-										{
-											JSONObject object = new JSONObject(skuDetails.getOriginalJson());
-											productDetails.add(new SkuDetails(object));
-										}
-										catch (JSONException jsonException)
-										{
-											jsonException.printStackTrace();
-										}
-									}
-								}
-
-								reportSkuDetailsResponseCaller(productDetails, listener);
+								List<ProductDetails> detailsList = result.getProductDetailsList();
+								reportProductDetailsResponseCaller(
+										detailsList != null ? detailsList : Collections.emptyList(),
+										listener);
 							}
 							else
 							{
@@ -940,39 +1058,138 @@ public class BillingProcessor extends BillingBase
 																	productIdList.size(), response);
 								Log.e(LOG_TAG, errorMessage);
 
-								reportSkuDetailsErrorCaller(errorMessage, listener);
+								reportProductDetailsErrorCaller(errorMessage, listener);
 							}
 						}
 					});
 		}
 		catch (Exception e)
 		{
-			Log.e(LOG_TAG, "Failed to call getSkuDetails", e);
+			Log.e(LOG_TAG, "Failed to call queryProductDetails", e);
 			reportBillingError(Constants.BILLING_ERROR_SKUDETAILS_FAILED, e);
 
-			reportSkuDetailsErrorCaller(e.getLocalizedMessage(), listener);
+			String msg = e.getLocalizedMessage();
+			reportProductDetailsErrorCaller(msg != null ? msg : "Unknown error", listener);
 		}
 	}
 
+	@SuppressWarnings("deprecation")
+	private void getSkuDetailsAsync(final ArrayList<String> productIdList, String purchaseType,
+									final ISkuDetailsResponseListener listener)
+	{
+		// Legacy path: query ProductDetails via the shared helper and translate to the
+		// deprecated SkuDetails shape on the way out.
+		getProductDetailsAsync(productIdList, purchaseType, new IProductDetailsResponseListener()
+		{
+			@Override
+			public void onProductDetailsResponse(@NonNull List<ProductDetails> products)
+			{
+				ArrayList<SkuDetails> translated = new ArrayList<>();
+				for (ProductDetails pd : products)
+				{
+					try
+					{
+						translated.add(SkuDetails.fromProductDetails(pd));
+					}
+					catch (JSONException jsonException)
+					{
+						jsonException.printStackTrace();
+					}
+				}
+				reportSkuDetailsResponseCaller(translated, listener);
+			}
+
+			@Override
+			public void onProductDetailsError(@NonNull String error)
+			{
+				reportSkuDetailsErrorCaller(error, listener);
+			}
+		});
+	}
+
+	/**
+	 * @deprecated use {@link #getPurchaseProductDetailsAsync(String, IProductDetailsResponseListener)}
+	 *     which returns the full Billing Library 8 {@link ProductDetails}.
+	 */
+	@Deprecated
 	public void getPurchaseListingDetailsAsync(String productId, final ISkuDetailsResponseListener listener)
 	{
 		 getSkuDetailsAsync(productId, Constants.PRODUCT_TYPE_MANAGED, listener);
 	}
 
+	/**
+	 * @deprecated use {@link #getPurchaseProductDetailsAsync(List, IProductDetailsResponseListener)}
+	 *     which returns the full Billing Library 8 {@link ProductDetails}.
+	 */
+	@Deprecated
 	public void getPurchaseListingDetailsAsync(ArrayList<String> productIdList,
 											   final ISkuDetailsResponseListener listener)
 	{
 		getSkuDetailsAsync(productIdList, Constants.PRODUCT_TYPE_MANAGED, listener);
 	}
 
+	/**
+	 * @deprecated use {@link #getSubscriptionProductDetailsAsync(String, IProductDetailsResponseListener)}
+	 *     which returns the full Billing Library 8 {@link ProductDetails}, including
+	 *     multi-offer subscription trees and pricing phases.
+	 */
+	@Deprecated
 	public void getSubscriptionListingDetailsAsync(String productId, ISkuDetailsResponseListener listener)
 	{
 		getSkuDetailsAsync(productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, listener);
 	}
 
+	/**
+	 * @deprecated use {@link #getSubscriptionProductDetailsAsync(List, IProductDetailsResponseListener)}
+	 *     which returns the full Billing Library 8 {@link ProductDetails}, including
+	 *     multi-offer subscription trees and pricing phases.
+	 */
+	@Deprecated
 	public void getSubscriptionsListingDetailsAsync(ArrayList<String> productIds, ISkuDetailsResponseListener listener)
 	{
 		getSkuDetailsAsync(productIds, Constants.PRODUCT_TYPE_SUBSCRIPTION, listener);
+	}
+
+	/**
+	 * Fetch one managed (one-time) product's {@link ProductDetails}. The listener receives
+	 * Billing Library 8's native type with access to the full one-time offer details.
+	 */
+	public void getPurchaseProductDetailsAsync(String productId,
+											   IProductDetailsResponseListener listener)
+	{
+		getProductDetailsAsync(Collections.singletonList(productId),
+				Constants.PRODUCT_TYPE_MANAGED, listener);
+	}
+
+	/**
+	 * Fetch multiple managed (one-time) products' {@link ProductDetails} in a single call.
+	 */
+	public void getPurchaseProductDetailsAsync(List<String> productIds,
+											   IProductDetailsResponseListener listener)
+	{
+		getProductDetailsAsync(productIds, Constants.PRODUCT_TYPE_MANAGED, listener);
+	}
+
+	/**
+	 * Fetch one subscription product's {@link ProductDetails}. The listener receives Billing
+	 * Library 8's native type with the full subscription offer tree — base plan, promotional
+	 * offers, and all pricing phases. Use
+	 * {@link ProductDetails#getSubscriptionOfferDetails()} to enumerate the offers.
+	 */
+	public void getSubscriptionProductDetailsAsync(String productId,
+												   IProductDetailsResponseListener listener)
+	{
+		getProductDetailsAsync(Collections.singletonList(productId),
+				Constants.PRODUCT_TYPE_SUBSCRIPTION, listener);
+	}
+
+	/**
+	 * Fetch multiple subscription products' {@link ProductDetails} in a single call.
+	 */
+	public void getSubscriptionProductDetailsAsync(List<String> productIds,
+												   IProductDetailsResponseListener listener)
+	{
+		getProductDetailsAsync(productIds, Constants.PRODUCT_TYPE_SUBSCRIPTION, listener);
 	}
 
 	@Nullable
@@ -1123,6 +1340,24 @@ public class BillingProcessor extends BillingBase
 		if (listener != null && handler != null)
 		{
 			handler.post(() -> listener.onSkuDetailsResponse(products));
+		}
+	}
+
+	private void reportProductDetailsErrorCaller(@NonNull final String error,
+												 final IProductDetailsResponseListener listener)
+	{
+		if (listener != null && handler != null)
+		{
+			handler.post(() -> listener.onProductDetailsError(error));
+		}
+	}
+
+	private void reportProductDetailsResponseCaller(@NonNull final List<ProductDetails> products,
+													final IProductDetailsResponseListener listener)
+	{
+		if (listener != null && handler != null)
+		{
+			handler.post(() -> listener.onProductDetailsResponse(products));
 		}
 	}
 

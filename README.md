@@ -1,35 +1,48 @@
 # Android In-App Billing v3 Library [![Build Status](https://github.com/anjlab/android-inapp-billing-v3/actions/workflows/connected-check.yml/badge.svg)](https://github.com/anjlab/android-inapp-billing-v3/actions/workflows/connected-check.yml)  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.anjlab.android.iab.v3/library)
-This is a simple, straight-forward implementation of the Android v4 In-app billing API.
+This is a simple, straight-forward wrapper around **Google Play Billing Library 8.x**.
 
 It supports: In-App Product Purchases (both non-consumable and consumable) and Subscriptions.
 
 ## Maintainers Wanted
 
-This project is looking for maintainers. 
+This project is looking for maintainers.
 
-For now only pull requests of external contributors are being reviewed, accepted and welcomed. No more bug fixes or new features will be implemented by the Anjlab team. 
+For now only pull requests of external contributors are being reviewed, accepted and welcomed — see [Contributing](#contributing) below for the PR workflow. No more bug fixes or new features will be implemented by the Anjlab team.
 
 If you are interesting in giving this project some :heart:, please chime in!
 
-## v4 API Upgrade Notice
+## Play Billing 8.x Upgrade Notice
 
-Originally this was Google's v2 Billing API implementation, for those who  interested all source code kept safe [here](https://github.com/anjlab/android-inapp-billing-v3/tree/v2_billing_1_1_0).
+This library now targets `com.android.billingclient:billing:8.3.0`. The legacy
+`SkuDetails` type and the `getPurchaseListingDetailsAsync` / `getSubscriptionListingDetailsAsync`
+methods are preserved for source-compatibility but are marked `@Deprecated` —
+under the hood they translate from Play Billing 8's `ProductDetails`, which flattens
+multi-offer subscriptions down to a single base plan. Consumers that need
+multiple promotional offers, pricing phases, or base-plan-aware flows should
+migrate to the new `ProductDetails`-based API — see the [3.0.0 CHANGELOG
+entry](CHANGELOG.md#300-2026-04-15) and the [2.2 → 3.0 upgrade
+guide](UPGRADING.md#upgrading-from-22-to-30) for the full walkthrough.
 
-If you got your app using this library previously, here is the [Migration Guide](https://github.com/anjlab/android-inapp-billing-v3/blob/master/UPGRADING.md).
+**Breaking change (2.x → 3.0)**: `minSdkVersion` is now **23** (Android 6.0).
+Play Billing 8.1 dropped support for API 21–22, so consumers still shipping to
+those levels must pin to `2.2.0` or upgrade their own `minSdkVersion`.
+
+Older history: this was originally Google's v2 Billing API implementation —
+source archived [here](https://github.com/anjlab/android-inapp-billing-v3/tree/v2_billing_1_1_0).
+Version-by-version migration notes: [UPGRADING.md](UPGRADING.md). Full release
+history: [CHANGELOG.md](CHANGELOG.md).
 
 ## Getting Started
 
-* You project should build against Android 4.0 SDK at least.
+* Your project must build against `compileSdk 34+` and `minSdk 23+` (Android 6.0 Marshmallow).
 
-* Add this *Android In-App Billing v3 Library* to your project:
-  - If you guys are using Eclipse, download latest jar version from the [releases](https://github.com/anjlab/android-inapp-billing-v3/releases) section of this repository and add it as a dependency
-  - If you guys are using Android Studio and Gradle, add this to you build.gradle file:
+* Add this library via Gradle:
 ```groovy
 repositories {
   mavenCentral()
 }
 dependencies {
-  implementation 'com.anjlab.android.iab.v3:library:2.0.3'
+  implementation 'com.anjlab.android.iab.v3:library:3.0.0'
 }
 ```
 
