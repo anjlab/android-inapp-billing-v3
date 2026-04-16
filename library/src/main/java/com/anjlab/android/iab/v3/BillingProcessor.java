@@ -1093,7 +1093,13 @@ public class BillingProcessor extends BillingBase
 					}
 					catch (JSONException jsonException)
 					{
-						jsonException.printStackTrace();
+						// A partial list would silently render missing or wrong pricing.
+						// Fail the whole callback instead so callers can react.
+						String error = "Failed to translate ProductDetails to legacy SkuDetails for product: "
+								+ pd.getProductId();
+						Log.e(LOG_TAG, error, jsonException);
+						reportSkuDetailsErrorCaller(error, listener);
+						return;
 					}
 				}
 				reportSkuDetailsResponseCaller(translated, listener);
