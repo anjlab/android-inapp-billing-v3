@@ -38,6 +38,39 @@
     - `getSubscriptionListingDetailsAsync(String, …)`
     - `getSubscriptionsListingDetailsAsync(ArrayList<String>, …)`
 
+#### Bug Fixes
+
+* Fix `NullPointerException` in `checkMerchant` when Google returns
+  `ITEM_ALREADY_OWNED` but neither local cache has a `PurchaseInfo`
+  record ([#512](https://github.com/anjlab/android-inapp-billing-v3/issues/512),
+  [#551](https://github.com/anjlab/android-inapp-billing-v3/issues/551)).
+  The subscription-cache fallback now runs ahead of the merchant check
+  and both caches missing yields a `BILLING_ERROR_OTHER_ERROR` report
+  instead of a crash.
+* Stop racing Billing 8's new `enableAutoServiceReconnection()` on
+  disconnect ([#532](https://github.com/anjlab/android-inapp-billing-v3/issues/532)).
+  The manual retry posted from `onBillingServiceDisconnected` collided
+  with Google's internal reconnect and produced `DEVELOPER_ERROR`
+  ("Client is already in the process of connecting"). The manual retry
+  has been removed from the disconnect path and the remaining retry
+  sites are now deduped via an `AtomicBoolean`.
+* Reconcile the owned-purchases cache on every init so refunds
+  eventually clear ([#435](https://github.com/anjlab/android-inapp-billing-v3/issues/435)).
+  Previously `loadOwnedPurchasesFromGoogleAsync` only ran on the
+  first-ever restore, so a refunded product stayed cached as owned
+  indefinitely. `onPurchaseHistoryRestored` is still one-shot.
+* Add `IBillingHandler.onPurchasePending(productId, details)` and
+  dispatch it from `handlePurchase` when Google reports a purchase in
+  `PENDING` state
+  ([#506](https://github.com/anjlab/android-inapp-billing-v3/issues/506),
+  [#501](https://github.com/anjlab/android-inapp-billing-v3/issues/501),
+  [#450](https://github.com/anjlab/android-inapp-billing-v3/issues/450)).
+  Previously the `PENDING` branch was missing, so deferred payment
+  methods (cash at convenience store, carrier billing, slow card auth)
+  silently produced no callback on the first `onPurchasesUpdated` event.
+  The method is a Java 8 default — existing implementations compile
+  unchanged.
+
 #### Internal
 
 * Migrated all internal call sites from `SkuDetails` / `SkuDetailsParams` /

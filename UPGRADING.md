@@ -97,9 +97,11 @@ hold the details.
 
 #### Behavioral notes
 
-* `BillingClient.Builder.enableAutoServiceReconnection()` is now enabled in
-  addition to the library's existing manual reconnect loop. No action on
-  your part.
+* `BillingClient.Builder.enableAutoServiceReconnection()` is now enabled
+  and the library's previous manual retry on disconnect has been removed
+  to avoid racing Google's internal reconnect. The manual retry on
+  setup-failure / public-method paths stays, but is now deduped so
+  overlapping retries can't stack. No action on your part.
 * `BillingFlowParams.SubscriptionUpdateParams` for subscription updates
   still uses the implicit default replacement mode (`WITH_TIME_PRORATION`),
   matching pre-3.0 behavior — explicitly set a different mode if you need
@@ -107,6 +109,37 @@ hold the details.
 * `BillingClient.BillingResponseCode` values are unchanged between Billing
   7 and 8.3, so `IBillingHandler.onBillingError(int, Throwable)` consumers
   don't need to change anything.
+* Owned purchases are now re-queried from Google on **every** init, not
+  only on the first-ever restore. This makes refunds eventually show up
+  in `isPurchased()` without consumers needing to call
+  `loadOwnedPurchasesFromGoogleAsync` themselves. `onPurchaseHistoryRestored`
+  is still one-shot. If you need refund-accurate state *inside*
+  `onBillingInitialized`, call `loadOwnedPurchasesFromGoogleAsync(listener)`
+  explicitly and read `isPurchased` from the success callback — the
+  reconciliation is async and `onBillingInitialized` fires before it
+  completes.
+
+#### New: observe pending (deferred-payment) purchases
+
+`IBillingHandler` now has an optional `onPurchasePending(productId, details)`
+callback that fires when Google reports a purchase in `PENDING` state
+(deferred payment methods like cash-at-convenience-store, carrier
+billing, slow card auth). This branch was previously missing, so those
+purchases produced no callback on the first `onPurchasesUpdated` event.
+The method is a Java 8 default, so existing `IBillingHandler`
+implementations compile unchanged.
+
+```java
+@Override
+public void onPurchasePending(@NonNull String productId, @Nullable PurchaseInfo details) {
+    // Do NOT grant entitlement — the payment has not cleared yet.
+    // Surface "payment pending" UI. The transition to PURCHASED fires
+    // onProductPurchased on the next onPurchasesUpdated event or on
+    // the next init (loadOwnedPurchasesFromGoogleAsync).
+}
+```
+
+See [Handling pending transactions](https://developer.android.com/google/play/billing/integrate#pending).
 
 ### Upgrading from 2.0.x to 2.1.0
 
