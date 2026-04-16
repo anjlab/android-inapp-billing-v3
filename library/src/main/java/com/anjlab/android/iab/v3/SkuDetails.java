@@ -338,7 +338,11 @@ public class SkuDetails implements Parcelable
         this.haveIntroductoryPeriod = in.readByte() != 0;
         this.introductoryPriceCycles = in.readInt();
         this.responseData = in.readString();
-        this.offerToken = in.readString();
+        // offerToken was appended to the Parcel wire format in library 3.0.0.
+        // Guard the read so parcels produced by 2.x consumers (no trailing field)
+        // unparcel cleanly - e.g. IPC from an older process or a cached parcel
+        // bytestream that survives an in-place library upgrade.
+        this.offerToken = in.dataAvail() > 0 ? in.readString() : null;
     }
 
     public static final Parcelable.Creator<SkuDetails> CREATOR =

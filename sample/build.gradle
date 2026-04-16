@@ -6,7 +6,7 @@ apply plugin: 'com.android.application'
 def localProps = new Properties()
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) {
-    localProps.load(new FileInputStream(localPropsFile))
+    localPropsFile.withInputStream { localProps.load(it) }
 }
 def playLicenceKey = localProps.getProperty('licenceKey', '')
 
