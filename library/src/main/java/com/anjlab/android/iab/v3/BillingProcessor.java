@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.app.Activity;
 import android.content.Context;
@@ -134,6 +135,7 @@ public class BillingProcessor extends BillingBase
 	private static final long RECONNECT_TIMER_MAX_TIME_MILLISECONDS = 1000L * 60L * 15L;
 
 	private long reconnectMilliseconds = RECONNECT_TIMER_START_MILLISECONDS;
+	private final AtomicBoolean reconnectPending = new AtomicBoolean(false);
 
 	private BillingClient billingService;
 	private String signatureBase64;
@@ -347,13 +349,12 @@ public class BillingProcessor extends BillingBase
 				@Override
 				public void onBillingServiceDisconnected()
 				{
-					Log.d("ServiceDisconnected; ", "BillingServiceDisconnected, trying new Connection");
-
-					//retrying connection to GooglePlay
-					if (!isConnected())
-					{
-						retryBillingClientConnection();
-					}
+					// enableAutoServiceReconnection() (set on the builder) now handles
+					// reconnects automatically with exponential backoff. Posting an
+					// additional manual retry here raced Google's internal reconnect
+					// and produced DEVELOPER_ERROR (code 5 — "Client is already in the
+					// process of connecting to billing service"), see #532.
+					Log.d("ServiceDisconnected; ", "BillingServiceDisconnected, auto-reconnect will handle");
 				}
 			});
 		}
@@ -362,15 +363,23 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Retries the billing client connection with exponential backoff
-	 * Max out at the time specified by RECONNECT_TIMER_MAX_TIME_MILLISECONDS (15 minutes)
+	 * Max out at the time specified by RECONNECT_TIMER_MAX_TIME_MILLISECONDS (15 minutes).
+	 * Guarded by {@link #reconnectPending} so that simultaneous callers
+	 * (setup-failure callback + public-method paths) can't stack pending
+	 * {@code startConnection} calls and trip DEVELOPER_ERROR (#532).
 	 */
 	private void retryBillingClientConnection()
 	{
+		if (!reconnectPending.compareAndSet(false, true))
+		{
+			return;
+		}
 		handler.postDelayed(new Runnable()
 		{
 			@Override
 			public void run()
 			{
+				reconnectPending.set(false);
 				initialize();
 			}
 		}, reconnectMilliseconds);
