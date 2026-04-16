@@ -74,6 +74,25 @@ public class BillingProcessor extends BillingBase
 		void onBillingError(int errorCode, @Nullable Throwable error);
 
 		void onBillingInitialized();
+
+		/**
+		 * Called when Google reports a purchase in PENDING state — deferred
+		 * payment methods such as cash-at-convenience-store, carrier billing,
+		 * or slow credit-card auth. The purchase is <b>not</b> yet entitled;
+		 * do not grant anything here. Surface a "payment pending" UI and wait
+		 * for the transition to PURCHASED, which will be delivered via
+		 * {@link #onProductPurchased} on the next {@code onPurchasesUpdated}
+		 * event or on the next init (covered by
+		 * {@code loadOwnedPurchasesFromGoogleAsync}).
+		 *
+		 * <p>Default no-op for source compatibility with pre-3.0
+		 * implementations. Override to react to pending purchases. See
+		 * <a href="https://developer.android.com/google/play/billing/integrate#pending">
+		 * Handling pending transactions</a>.
+		 */
+		default void onPurchasePending(@NonNull String productId, @Nullable PurchaseInfo details)
+		{
+		}
 	}
 
 	/**
@@ -1406,8 +1425,10 @@ public class BillingProcessor extends BillingBase
 		// Ensure entitlement was not already granted for this purchaseToken.
 		// Grant entitlement to the user.
 
+		final int purchaseState = purchase.getPurchaseState();
+
 		//Acknowledging purchase
-		if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED)
+		if (purchaseState == Purchase.PurchaseState.PURCHASED)
 		{
 			if (purchase.isAcknowledged())
 			{
@@ -1438,6 +1459,60 @@ public class BillingProcessor extends BillingBase
 							}
 						});
 			}
+		}
+		else if (purchaseState == Purchase.PurchaseState.PENDING)
+		{
+			// Deferred payment methods (cash at convenience store, carrier
+			// billing, slow card auth). The purchase is not yet entitled —
+			// surface it to the consumer so they can show "payment pending"
+			// UI instead of silently dropping the event. Previously this
+			// branch was missing entirely and consumers never heard about
+			// the first purchase until the state transitioned to PURCHASED
+			// on a later app launch (#506, #501, #450).
+			reportPendingPurchase(purchase);
+		}
+	}
+
+	private void reportPendingPurchase(Purchase purchase)
+	{
+		if (eventHandler == null)
+		{
+			return;
+		}
+		String purchaseData = purchase.getOriginalJson();
+		String dataSignature = purchase.getSignature();
+		try
+		{
+			JSONObject purchaseJsonObject = new JSONObject(purchaseData);
+			String productId = purchaseJsonObject.getString(Constants.RESPONSE_PRODUCT_ID);
+			if (!verifyPurchaseSignature(productId, purchaseData, dataSignature))
+			{
+				Log.e(LOG_TAG, "Public key signature doesn't match!");
+				reportBillingError(Constants.BILLING_ERROR_INVALID_SIGNATURE, null);
+				return;
+			}
+			final PurchaseInfo purchaseInfo = new PurchaseInfo(purchaseData,
+															   dataSignature,
+															   getPurchasePayload());
+			// The eventHandler callback must run on the main thread for
+			// parity with onProductPurchased; Billing 8's listener callbacks
+			// are already main-thread, but post explicitly for consistency.
+			handler.post(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (eventHandler != null)
+					{
+						eventHandler.onPurchasePending(productId, purchaseInfo);
+					}
+				}
+			});
+		}
+		catch (Exception e)
+		{
+			Log.e(LOG_TAG, "Error in reportPendingPurchase", e);
+			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, e);
 		}
 	}
 }
