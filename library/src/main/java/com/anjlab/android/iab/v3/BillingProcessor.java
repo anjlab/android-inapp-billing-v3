@@ -593,7 +593,29 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean purchase(Activity activity, String productId)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED, null, null);
+	}
+
+	/**
+	 * Purchase a product, attaching obfuscated identifiers to the billing flow.
+	 *
+	 * <p>{@code obfuscatedAccountId} and {@code obfuscatedProfileId} are forwarded to
+	 * {@link BillingFlowParams.Builder#setObfuscatedAccountId(String)} and
+	 * {@link BillingFlowParams.Builder#setObfuscatedProfileId(String)}. They are
+	 * visible to Google as a one-way hash, let you correlate a purchase to a
+	 * specific account / profile in your backend without exposing PII, and are
+	 * useful for deduplicating cross-device purchases or detecting account
+	 * sharing. Either may be {@code null}.
+	 *
+	 * @see <a href="https://developer.android.com/google/play/billing/developer-payload">
+	 *     Developer payload — obfuscated identifiers</a>
+	 */
+	public boolean purchase(Activity activity, String productId,
+							@Nullable String obfuscatedAccountId,
+							@Nullable String obfuscatedProfileId)
+	{
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_MANAGED,
+						obfuscatedAccountId, obfuscatedProfileId);
 	}
 
 	/***
@@ -606,7 +628,20 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean subscribe(Activity activity, String productId)
 	{
-		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null, null);
+	}
+
+	/**
+	 * Subscribe for a product, attaching obfuscated identifiers to the billing flow.
+	 * See {@link #purchase(Activity, String, String, String)} for a description of the
+	 * identifier semantics.
+	 */
+	public boolean subscribe(Activity activity, String productId,
+							 @Nullable String obfuscatedAccountId,
+							 @Nullable String obfuscatedProfileId)
+	{
+		return purchase(activity, null, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION,
+						obfuscatedAccountId, obfuscatedProfileId);
 	}
 
 	/**
@@ -625,7 +660,7 @@ public class BillingProcessor extends BillingBase
 	 */
 	public boolean purchase(Activity activity, @NonNull ProductDetails productDetails)
 	{
-		return purchase(activity, productDetails, null);
+		return purchase(activity, productDetails, null, null, null);
 	}
 
 	/**
@@ -643,6 +678,19 @@ public class BillingProcessor extends BillingBase
 	public boolean purchase(Activity activity, @NonNull ProductDetails productDetails,
 							@Nullable String oldProductId)
 	{
+		return purchase(activity, productDetails, oldProductId, null, null);
+	}
+
+	/**
+	 * Launch the billing flow using a pre-fetched {@link ProductDetails} and attach
+	 * obfuscated identifiers. See {@link #purchase(Activity, String, String, String)}
+	 * for a description of the identifier semantics.
+	 */
+	public boolean purchase(Activity activity, @NonNull ProductDetails productDetails,
+							@Nullable String oldProductId,
+							@Nullable String obfuscatedAccountId,
+							@Nullable String obfuscatedProfileId)
+	{
 		if (!isConnected())
 		{
 			retryBillingClientConnection();
@@ -658,7 +706,8 @@ public class BillingProcessor extends BillingBase
 				purchasePayload += ":" + UUID.randomUUID().toString();
 			}
 			savePurchasePayload(purchasePayload);
-			startPurchaseFlow(activity, productDetails, oldProductId);
+			startPurchaseFlow(activity, productDetails, oldProductId,
+							  obfuscatedAccountId, obfuscatedProfileId);
 			return true;
 		}
 		catch (Exception e)
@@ -714,16 +763,34 @@ public class BillingProcessor extends BillingBase
 		{
 			return false;
 		}
-		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION);
+		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION, null, null);
+	}
+
+	/**
+	 * Change subscription attaching obfuscated identifiers. See
+	 * {@link #purchase(Activity, String, String, String)} for identifier semantics.
+	 */
+	public boolean updateSubscription(Activity activity, String oldProductId, String productId,
+									  @Nullable String obfuscatedAccountId,
+									  @Nullable String obfuscatedProfileId)
+	{
+		if (oldProductId != null && !isSubscriptionUpdateSupported())
+		{
+			return false;
+		}
+		return purchase(activity, oldProductId, productId, Constants.PRODUCT_TYPE_SUBSCRIPTION,
+						obfuscatedAccountId, obfuscatedProfileId);
 	}
 
 	private boolean purchase(Activity activity, String productId, String purchaseType)
 	{
-		return purchase(activity, null, productId, purchaseType);
+		return purchase(activity, null, productId, purchaseType, null, null);
 	}
 
 	private boolean purchase(final Activity activity, final String oldProductId, final String productId,
-							 String purchaseType)
+							 String purchaseType,
+							 @Nullable final String obfuscatedAccountId,
+							 @Nullable final String obfuscatedProfileId)
 	{
 		if (!isConnected() || TextUtils.isEmpty(productId) || TextUtils.isEmpty(purchaseType))
 		{
@@ -770,7 +837,8 @@ public class BillingProcessor extends BillingBase
 							List<ProductDetails> details = result.getProductDetailsList();
 							if (details != null && !details.isEmpty())
 							{
-								startPurchaseFlow(activity, details.get(0), oldProductId);
+								startPurchaseFlow(activity, details.get(0), oldProductId,
+												  obfuscatedAccountId, obfuscatedProfileId);
 							}
 							else
 							{
@@ -796,7 +864,9 @@ public class BillingProcessor extends BillingBase
 
 	private void startPurchaseFlow(final Activity activity,
 								   final ProductDetails productDetails,
-								   final String oldProductId)
+								   final String oldProductId,
+								   @Nullable final String obfuscatedAccountId,
+								   @Nullable final String obfuscatedProfileId)
 	{
 		final String productId = productDetails.getProductId();
 
@@ -852,6 +922,15 @@ public class BillingProcessor extends BillingBase
 										.setOldPurchaseToken(oldToken)
 										.build());
 					}
+				}
+
+				if (!TextUtils.isEmpty(obfuscatedAccountId))
+				{
+					billingFlowParamsBuilder.setObfuscatedAccountId(obfuscatedAccountId);
+				}
+				if (!TextUtils.isEmpty(obfuscatedProfileId))
+				{
+					billingFlowParamsBuilder.setObfuscatedProfileId(obfuscatedProfileId);
 				}
 
 				BillingFlowParams params = billingFlowParamsBuilder.build();
