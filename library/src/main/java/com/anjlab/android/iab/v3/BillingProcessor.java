@@ -863,6 +863,19 @@ public class BillingProcessor extends BillingBase
 	private void handleOwnedPurchaseTransaction(String productId)
 	{
 		PurchaseInfo details = getPurchaseInfo(productId);
+		if (details == null)
+		{
+			details = getSubscriptionPurchaseInfo(productId);
+		}
+
+		if (details == null)
+		{
+			// Google reported ITEM_ALREADY_OWNED but neither cache holds the record
+			// — surface a billing error instead of NPE'ing in checkMerchant.
+			reportBillingError(Constants.BILLING_ERROR_OTHER_ERROR, null);
+			return;
+		}
+
 		if (!checkMerchant(details))
 		{
 			Log.i(LOG_TAG, "Invalid or tampered merchant id!");
@@ -871,11 +884,6 @@ public class BillingProcessor extends BillingBase
 
 		if (eventHandler != null)
 		{
-			if (details == null)
-			{
-				details = getSubscriptionPurchaseInfo(productId);
-			}
-
 			reportProductPurchased(productId, details);
 		}
 	}
@@ -893,6 +901,11 @@ public class BillingProcessor extends BillingBase
 		if (developerMerchantId == null) //omit merchant id checking
 		{
 			return true;
+		}
+		if (details == null || details.purchaseData == null
+			|| details.purchaseData.purchaseTime == null)
+		{
+			return false; //can't verify merchant id without purchase data
 		}
 		if (details.purchaseData.purchaseTime.before(DATE_MERCHANT_LIMIT_1)) //newest format applied
 		{
