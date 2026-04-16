@@ -142,9 +142,37 @@ Either mechanically fixed by the Billing 7 → 8.3 migration or fixed in a prior
 
 *Pending body-read pass. Likely closed with migration pointer to UPGRADING.md.*
 
-## Bucket D — Feature requests worth keeping (~10)
+## Bucket D — Feature requests (8 issues)
 
-*Pending body-read pass.*
+Body-read. The preliminary "worth keeping" framing was too generous — most of this bucket is already resolved by 3.0.0 or is a usage question disguised as a feature request. Two are clean 3.1.0 candidates; one is a larger 3.1.x design-first item.
+
+### D.1 Clean 3.1.0 candidates — keep open with milestone
+
+| # | Reporter | Labels | Verdict | Notes |
+|---|----------|--------|---------|-------|
+| #509 | timyc | — | **3.1.0 CANDIDATE** | `setObfuscatedAccountId` / `setObfuscatedProfileId` on `BillingFlowParams.Builder` — Billing 8 supports both. Library's `purchase()` doesn't expose them. Add new overload `purchase(Activity, String productId, String obfuscatedAccountId, String obfuscatedProfileId)` (or per-field null-tolerant overloads). ~20–30 lines plus tests. |
+| #339 | scisci | `enhancement`, `PR Needed` | **3.1.0 CANDIDATE** | Include `productId` in `onBillingError`. Implement via a Java 8 default method added to `IBillingHandler`: `default void onBillingError(int, Throwable, String productId)` that by default delegates to the existing 2-arg method. New dispatch sites pass productId when known, pass null otherwise. No break, clean additive shape — same pattern used for `onPurchasePending` in the 3.0.0 batch. |
+
+### D.2 Larger — design before code
+
+| # | Reporter | Labels | Verdict | Notes |
+|---|----------|--------|---------|-------|
+| #348 | autonomousapps | `enhancement`, `PR Needed` | **3.1.x TRACKING** | "Is the user's subscription still valid?" Existing `isSubscribed(productId)` only reports cached ownership. True validity (expired / paused / on account-hold) requires either server-side RTDN integration or polling `queryPurchasesAsync` + reading `Purchase.getPurchaseState()` and subscription-specific flags. Not a quick add — needs an API design decision before implementation. Keep open as tracking issue. |
+
+### D.3 Resolved by 3.0.0 — close on publish
+
+| # | Reporter | Verdict | Notes |
+|---|----------|---------|-------|
+| #345 | Vittt2008 | **FIXED-IN-3.0.0** | `support.Fragment` billing support. Library 2.0 removed `onActivityResult`-based dispatch, which was the underlying blocker. `bp.purchase(activity, ...)` works from any caller with an `Activity`, including inside a Fragment. |
+| #383 | memorycj | **FIXED-IN-3.0.0** | Same as #345 (Fragment + `onActivityResult`). Close as duplicate of #345. |
+| #447 | aneta9 | **FIXED-IN-3.0.0** | Promo codes for subscriptions. Billing 8 supports promo codes on subs through the standard purchase flow; Google's purchase sheet handles code entry and validation. Library passes through unchanged. |
+| #443 | rausNT | **FIXED-IN-3.0.0** | "Call `queryPurchases()` whenever the app starts or resumes". Library already did this once at init via `HistoryInitializationTask`; the `cd6b0f3` fix for #435 now reconciles on every init. Resume-time reconciliation remains a consumer responsibility but is documented in UPGRADING. |
+
+### D.4 Usage questions mislabeled as features
+
+| # | Reporter | Verdict | Notes |
+|---|----------|---------|-------|
+| #454 | Duna | **MOOT** | "How do I initialize billing across multiple activities?" Usage question. Recommended pattern: singleton `BillingProcessor` instance created in `Application.onCreate`. Close with a short answer. |
 
 ## Bucket F — Meta / off-topic (~5)
 
