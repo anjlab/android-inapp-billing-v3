@@ -43,6 +43,14 @@ dependencies {
     // and the new purchase(Activity, ProductDetails, ...) overload expose billing-client
     // types in the library's public surface.
     api 'com.android.billingclient:billing:8.3.0'
+
+    // JVM unit tests: Robolectric gives real Android framework impls (TextUtils,
+    // JSONObject, Parcel) so SkuDetails.fromProductDetails() can be exercised
+    // without an emulator. Mockito 5 mocks the final billing-client ProductDetails
+    // hierarchy out of the box.
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
 }
 
 task androidJavadocs(type: Javadoc) {
