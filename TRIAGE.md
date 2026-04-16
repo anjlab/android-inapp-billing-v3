@@ -97,9 +97,42 @@ Fix adds a `default void onPurchasePending(...)` method to `IBillingHandler` (Ja
 
 ---
 
-## Bucket A — Moot after 3.0.0 (~15)
+## Bucket A — Moot after 3.0.0 (10 issues)
 
-*Pending body-read pass. Scope confirmed from title cluster.*
+Body-read. The preliminary title cluster lumped these together as "resolved by upgrade", but body-reading splits them into three actually-distinct subgroups:
+
+### A.1 Not related to this library — close as **MOOT / off-topic**
+
+Reporters confused Google Play *Developer API* (server-side REST, managed in Play Console) with Google Play *Billing Library* (client-side IAP, this library). The library never used the Developer API.
+
+| # | Reporter | Verdict | Notes |
+|---|----------|---------|-------|
+| #402 | Anetcom | **MOOT** | Play Console warning about Developer API v1/v2 deprecation (Dec 1, 2019). Library is unrelated to that API. |
+| #404 | arm786 | **MOOT** | Same Developer API deprecation warning. Duplicate of #402. |
+| #440 | appsapiconsole | **MOOT** | Same ("server-side billing confirmations"). The Developer API is a server concern; this is a client library. |
+| #367 | gilshallem | **MOOT** | App removed from Play for Advertising ID policy violation. Library does not use AdID. Unrelated. |
+
+**Action:** Close each with a short comment explaining Developer API ≠ Billing Library (for #402/#404/#440) or "this library does not touch AdID" (for #367).
+
+### A.2 Resolved by 3.0.0 publish — close as **FIXED-IN-3.0.0**
+
+Either mechanically fixed by the Billing 7 → 8.3 migration or fixed in a prior release that the reporter missed.
+
+| # | Reporter | Verdict | Notes |
+|---|----------|---------|-------|
+| #490 | RajatVaghani | **FIXED-IN-3.0.0** | "Can we work to get this to really support v3?" — asked at a time when the library was on Billing v2 AIDL. 3.0.0 is on Billing 8.3. 31-comment thread is mostly resolved. |
+| #458 | RajatVaghani | **FIXED-IN-3.0.0** | Account Hold / Account Restore / subscription pause-resume. Billing 8 exposes these via `Purchase.PurchaseState`, `PendingPurchasesParams.enableOneTimeProducts()`, and server-side RTDN. The library passes them through unchanged. |
+| #427 | (anonymous) | **FIXED** | AndroidX support. Library has been on AndroidX since well before 3.0.0 (current deps: `androidx.annotation:1.3.0`, `androidx.test.ext:junit:1.1.3`). Already resolved. |
+| #500 | ShafiqSadat | **FIXED-IN-3.0.0** | "Cannot resolve symbol `IInAppBillingService` after upgrade to 2.0.0". `IInAppBillingService` is the old Billing v2 AIDL, removed from Billing 3+. Consumers should use `BillingProcessor`'s public API instead — UPGRADING.md "Upgrading from 1.x to 2.0.0" covers this. Close with pointer. |
+| #530 | edmundoto | **FIXED-IN-3.0.0** | `NoSuchMethodError: LambdaMetafactory.metafactory` on devices where D8 desugaring didn't kick in. 3.0.0 avoids the problem structurally (the library consistently uses anonymous inner classes, not lambdas — see `BillingProcessor.onBillingServiceDisconnected`, `HistoryInitializationTask`, the PurchasesUpdatedListener), so no invokeDynamic is emitted in the first place. AGP 8.11 + compileSdk 34 also guarantees proper desugaring for any residual lambda use. |
+
+### A.3 Unactionable — close as **STALE**
+
+| # | Reporter | Verdict | Notes |
+|---|----------|---------|-------|
+| #546 | jeffmoreta | **STALE** | Body is the empty issue template — no actual question. Title ("Google not support library 4.0") is ambiguous (Billing Library v4? this library 4.0?) and there's no reproduction. |
+
+**Action:** Close with "no actionable content; please reopen with details per the issue template".
 
 ## Bucket B — Questions / support (~55)
 
