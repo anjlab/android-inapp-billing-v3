@@ -153,12 +153,15 @@ public class BillingProcessor extends BillingBase
 		@Override
 		protected Boolean doInBackground(Void... nothing)
 		{
-			if (!isPurchaseHistoryRestored())
-			{
-				loadOwnedPurchasesFromGoogleAsync(null);
-				return true;
-			}
-			return false;
+			// Always refresh on init. The cache is only appended to from the
+			// purchase callback path (handlePurchase -> verifyAndCachePurchase),
+			// so without reconciling against Google's canonical owned list here,
+			// a refunded product stays cached as "owned" forever — see #435.
+			// loadOwnedPurchasesFromGoogleAsync clears and repopulates the cache
+			// on success.
+			final boolean firstRestore = !isPurchaseHistoryRestored();
+			loadOwnedPurchasesFromGoogleAsync(null);
+			return firstRestore;
 		}
 
 		@Override
