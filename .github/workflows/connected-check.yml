@@ -19,13 +19,13 @@ jobs:
 
     steps:
       - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.12.1
+        uses: styfle/cancel-workflow-action@0.13.1
         with:
           access_token: ${{ github.token }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: adopt
           java-version: 17
@@ -38,6 +38,7 @@ jobs:
 
       - name: Run connectedCheck
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 30
         with:
           api-level: 33
           target: google_apis
