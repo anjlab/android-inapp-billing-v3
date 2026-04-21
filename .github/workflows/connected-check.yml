@@ -3,7 +3,7 @@ name: Connected Check
 on:
   push:
     branches:
-      - '*'
+      - "*"
 
   pull_request:
     branches:
@@ -13,7 +13,7 @@ jobs:
   run-connected-checks:
     # put [skip ci] into the commit message if you don't want to run this workflow
 
-    runs-on: macos-13
+    runs-on: macos-15
 
     timeout-minutes: 15
 
