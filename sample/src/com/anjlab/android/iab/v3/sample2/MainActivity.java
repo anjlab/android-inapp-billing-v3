@@ -17,7 +17,7 @@ package com.anjlab.android.iab.v3.sample2;
 
 import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.PurchaseInfo;
-import com.anjlab.android.iab.v3.SkuDetails;
+import com.android.billingclient.api.ProductDetails;
 
 import java.util.List;
 
@@ -137,18 +137,18 @@ public class MainActivity extends Activity {
                 }
             });
         } else if (v.getId() == R.id.productDetailsButton) {
-            bp.getPurchaseListingDetailsAsync(PRODUCT_ID, new BillingProcessor.ISkuDetailsResponseListener() {
+            bp.getPurchaseProductDetailsAsync(PRODUCT_ID, new BillingProcessor.IProductDetailsResponseListener() {
                 @Override
-                public void onSkuDetailsResponse(@Nullable List<SkuDetails> products) {
-                    if (products != null && !products.isEmpty()) {
+                public void onProductDetailsResponse(@NonNull List<ProductDetails> products) {
+                    if (!products.isEmpty()) {
                         showToast(products.get(0).toString());
                     } else {
-                        showToast("Failed to load SKU details");
+                        showToast("Failed to load product details");
                     }
                 }
 
                 @Override
-                public void onSkuDetailsError(String error) {
+                public void onProductDetailsError(@NonNull String error) {
                     showToast(error);
                 }
             });
@@ -171,16 +171,16 @@ public class MainActivity extends Activity {
                 }
             });
         } else if (v.getId() == R.id.subsDetailsButton) {
-            bp.getSubscriptionListingDetailsAsync(SUBSCRIPTION_ID, new BillingProcessor.ISkuDetailsResponseListener()
+            bp.getSubscriptionProductDetailsAsync(SUBSCRIPTION_ID, new BillingProcessor.IProductDetailsResponseListener()
             {
                 @Override
-                public void onSkuDetailsResponse(@Nullable final List<SkuDetails> products) {
-                    showToast(products != null ? products.toString() : "Failed to load subscription details");
+                public void onProductDetailsResponse(@NonNull final List<ProductDetails> products) {
+                    showToast(!products.isEmpty() ? products.toString() : "Failed to load subscription details");
                 }
 
                 @Override
-                public void onSkuDetailsError(String string) {
-                    showToast(string);
+                public void onProductDetailsError(@NonNull String error) {
+                    showToast(error);
                 }
             });
         } else if (v.getId() == R.id.launchMoreButton)

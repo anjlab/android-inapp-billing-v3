@@ -146,3 +146,22 @@ task checkstyle(type: Checkstyle) {
 check.dependsOn('checkstyle')
 connectedCheck.dependsOn('checkstyle')
 
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    if (name.equals('com.android.builder.BuilderConstants.DEBUG')) {
+        return; // Skip debug builds.
+    }
+    def task = project.tasks.create "jar${name.capitalize()}", Jar
+    task.dependsOn variant.javaCompileProvider
+    task.from variant.javaCompileProvider.get().destinationDirectory
+    task.archiveBaseName.set('anjlab-iabv3')
+    task.doLast {
+        println "Copying jar to sample project..."
+        copy {
+            from task.archiveFile
+            into '../sample/libs'
+            rename { String fileName -> 'anjlab-iabv3-current.jar' }
+        }
+    }
+    artifacts.add('archives', task);
+}
