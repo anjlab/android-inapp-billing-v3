@@ -2,7 +2,6 @@
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
         maven {
             url 'https://maven.google.com/'
             name 'Google'
@@ -13,9 +12,9 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.11.1'
         classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1"
-        classpath "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:1.2.0"
+        classpath "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1"
     }
 }
 
@@ -24,11 +23,11 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
         maven {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        google()
     }
 
     license {

@@ -3,6 +3,16 @@ plugins {
 }
 apply plugin: 'com.android.application'
 
+// Read Play license key from local.properties (never checked in). An empty
+// placeholder lets the build succeed; MainActivity will fail at runtime without
+// a real key. Developers: put `licenceKey=<your key>` in local.properties.
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
+def playLicenceKey = localProps.getProperty('licenceKey', '')
+
 dependencies {
     implementation project(':library')
 //    implementation fileTree(dir: 'libs', include: '*.jar')
@@ -16,10 +26,17 @@ android {
     defaultConfig {
         versionCode 6
         versionName '6.0'
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 34
         compileSdk = 34
-        buildToolsVersion = '30.0.3'
+        buildToolsVersion = '34.0.0'
+
+        buildConfigField "String", "licenceKey", "\"${playLicenceKey}\""
+    }
+
+    // AGP 8.x disables BuildConfig generation by default.
+    buildFeatures {
+        buildConfig true
     }
 
     sourceSets.main {

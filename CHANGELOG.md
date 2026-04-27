@@ -1,3 +1,109 @@
+## 3.0.0 (2026-04-15)
+
+#### Breaking Changes
+
+* **`minSdkVersion` raised 21 → 23.** Google Play Billing Library 8.1+
+  dropped support for API 21–22. Consumers shipping to those levels must
+  pin this library at `2.2.0` or raise their own `minSdkVersion`.
+* Targets `com.android.billingclient:billing:8.3.0` (up from `7.0.0`).
+
+#### Features
+
+* New `ProductDetails`-based public API exposing the full Billing Library 8
+  product surface (subscription offer trees, base plans, pricing phases,
+  multiple promotional offers):
+    - `IProductDetailsResponseListener` returning `List<ProductDetails>`
+    - `getPurchaseProductDetailsAsync(String, …)` and `(List<String>, …)`
+    - `getSubscriptionProductDetailsAsync(String, …)` and `(List<String>, …)`
+    - `purchase(Activity, ProductDetails)` and
+      `purchase(Activity, ProductDetails, String oldProductId)` overloads
+      that skip the extra product-lookup round-trip when the caller already
+      holds the details.
+* `BillingClient.Builder.enableAutoServiceReconnection()` is now enabled on
+  the internal billing client alongside the library's existing manual
+  reconnect loop.
+* See [UPGRADING.md](UPGRADING.md#upgrading-from-22-to-30) for a migration
+  walkthrough.
+
+#### Deprecations
+
+* The legacy `com.anjlab.android.iab.v3.SkuDetails` type and everything
+  that returns or consumes it is now `@Deprecated`. These keep working via
+  a translator that flattens Billing 8 `ProductDetails` into the legacy
+  JSON shape, but the translation is **lossy for multi-offer subscriptions**
+  — only the base plan is surfaced. Affected:
+    - `com.anjlab.android.iab.v3.SkuDetails`
+    - `BillingProcessor.ISkuDetailsResponseListener`
+    - `getPurchaseListingDetailsAsync(…)` (both overloads)
+    - `getSubscriptionListingDetailsAsync(String, …)`
+    - `getSubscriptionsListingDetailsAsync(ArrayList<String>, …)`
+
+#### Bug Fixes
+
+* Fix `NullPointerException` in `checkMerchant` when Google returns
+  `ITEM_ALREADY_OWNED` but neither local cache has a `PurchaseInfo`
+  record ([#512](https://github.com/anjlab/android-inapp-billing-v3/issues/512),
+  [#551](https://github.com/anjlab/android-inapp-billing-v3/issues/551)).
+  The subscription-cache fallback now runs ahead of the merchant check
+  and both caches missing yields a `BILLING_ERROR_OTHER_ERROR` report
+  instead of a crash.
+* Stop racing Billing 8's new `enableAutoServiceReconnection()` on
+  disconnect ([#532](https://github.com/anjlab/android-inapp-billing-v3/issues/532)).
+  The manual retry posted from `onBillingServiceDisconnected` collided
+  with Google's internal reconnect and produced `DEVELOPER_ERROR`
+  ("Client is already in the process of connecting"). The manual retry
+  has been removed from the disconnect path and the remaining retry
+  sites are now deduped via an `AtomicBoolean`.
+* Reconcile the owned-purchases cache on every init so refunds
+  eventually clear ([#435](https://github.com/anjlab/android-inapp-billing-v3/issues/435)).
+  Previously `loadOwnedPurchasesFromGoogleAsync` only ran on the
+  first-ever restore, so a refunded product stayed cached as owned
+  indefinitely. `onPurchaseHistoryRestored` is still one-shot.
+* Add `IBillingHandler.onPurchasePending(productId, details)` and
+  dispatch it from `handlePurchase` when Google reports a purchase in
+  `PENDING` state
+  ([#506](https://github.com/anjlab/android-inapp-billing-v3/issues/506),
+  [#501](https://github.com/anjlab/android-inapp-billing-v3/issues/501),
+  [#450](https://github.com/anjlab/android-inapp-billing-v3/issues/450)).
+  Previously the `PENDING` branch was missing, so deferred payment
+  methods (cash at convenience store, carrier billing, slow card auth)
+  silently produced no callback on the first `onPurchasesUpdated` event.
+  The method is a Java 8 default — existing implementations compile
+  unchanged.
+
+#### Internal
+
+* Migrated all internal call sites from `SkuDetails` / `SkuDetailsParams` /
+  `querySkuDetailsAsync` to `ProductDetails` / `QueryProductDetailsParams` /
+  `queryProductDetailsAsync` (+ the new `QueryProductDetailsResult`
+  callback signature).
+* Purchase flow now builds `BillingFlowParams.ProductDetailsParams` with
+  `setOfferToken()` for subscriptions, preferring the base plan (null
+  `offerId`) with fallback to the first offer.
+* `enablePendingPurchases()` replaced with
+  `enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())`
+  (required in 8.x).
+* `queryPurchasesAsync(String, …)` replaced with
+  `queryPurchasesAsync(QueryPurchasesParams, …)`.
+
+#### Build
+
+* Gradle `7.5` → `9.0.0`
+* Android Gradle Plugin `7.4.2` → `8.11.1`
+* `buildToolsVersion` `30.0.3` → `34.0.0`
+* Billing dependency is now `api`, not `implementation`, because the new
+  public API exposes billing-client types in its signatures.
+* Removed the Gradle-9-incompatible `hierynomus` license plugin.
+* Removed the deprecated `package=` attribute from the library
+  `AndroidManifest.xml`; added `namespace 'com.anjlab.android.iab.v3'` in
+  `library/build.gradle`.
+* Added `android { publishing { singleVariant('release') {} } }` for AGP
+  8.x maven-publish.
+* `android.useAndroidX=true` / `android.enableJetifier=true` moved from
+  `gradle-wrapper.properties` (wrong file) to `gradle.properties`.
+
+---
+
 ## 1.0.44 (8/7/2017)
 
 #### Features
