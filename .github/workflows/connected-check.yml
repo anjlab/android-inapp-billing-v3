@@ -95,21 +95,11 @@ jobs:
           # missing when Gradle tried to install the test APK, failing with
           # `cmd: Can't find service: package` after running 0 tests. Gate on
           # the package manager itself before handing over to Gradle. On an
-          # accelerated emulator this exits on the first iteration.
+          # accelerated emulator this returns immediately.
+          #
+          # NOTE: the action runs this script one line per `sh -c`, so every
+          # line must stand alone. Multi-line loops are a syntax error and
+          # variables do not survive between lines.
           script: |
-            adb wait-for-device
-            ready=0
-            for i in $(seq 1 60); do
-              if adb shell pm path android >/dev/null 2>&1; then
-                ready=1
-                echo "Package manager ready after $((i * 5))s."
-                break
-              fi
-              sleep 5
-            done
-            if [ "$ready" != 1 ]; then
-              echo "Package manager did not come up within 300s." >&2
-              adb shell service list >&2 || true
-              exit 1
-            fi
+            timeout 300 sh -c 'until adb shell pm path android >/dev/null 2>&1; do sleep 5; done' || { echo "Package manager did not come up within 300s." >&2; adb shell service list >&2; exit 1; }
             ./gradlew connectedCheck
