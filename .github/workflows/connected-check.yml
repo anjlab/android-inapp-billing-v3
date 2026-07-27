@@ -50,10 +50,15 @@ jobs:
     # on a tree that already compiles, hence `needs: build`.
     needs: build
 
-    runs-on: macos-15-intel
+    # x86_64 host, so the x86_64 system image runs without translation, and
+    # KVM is available for real hardware acceleration (see the Enable KVM step).
+    #
+    # This job previously ran on macos-15-intel. That runner has only 4 logical
+    # cores and the emulator caps itself at 1 virtual CPU below 6, which pushed
+    # boot to 436s on a run that passed and past the 600s timeout on one that
+    # did not. Neither is a workable margin.
+    runs-on: ubuntu-latest
 
-    # Emulator boot alone eats most of the budget on this runner; 15 minutes
-    # was not enough to reach the tests and the job was killed mid-run.
     timeout-minutes: 30
 
     steps:
@@ -63,6 +68,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      # Without this the emulator falls back to software emulation and boots
+      # an order of magnitude slower. /dev/kvm exists on the runner but is not
+      # world-accessible by default.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Set up build properties
         run: |
@@ -76,11 +91,11 @@ jobs:
           arch: x86_64
           # `sys.boot_completed` is the only readiness signal the action waits
           # for, and it flips before system_server has published all of its
-          # binder services. Boot here takes ~7 minutes, so the package manager
-          # was still missing by the time Gradle finished building and tried to
-          # install the test APK, failing the job with
-          # `cmd: Can't find service: package` after running 0 tests.
-          # Gate on the package manager itself before handing over to Gradle.
+          # binder services. On a slow boot the package manager was still
+          # missing when Gradle tried to install the test APK, failing with
+          # `cmd: Can't find service: package` after running 0 tests. Gate on
+          # the package manager itself before handing over to Gradle. On an
+          # accelerated emulator this exits on the first iteration.
           script: |
             adb wait-for-device
             ready=0
