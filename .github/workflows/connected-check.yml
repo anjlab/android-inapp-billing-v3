@@ -74,4 +74,27 @@ jobs:
           api-level: 33
           target: google_apis
           arch: x86_64
-          script: ./gradlew connectedCheck
+          # `sys.boot_completed` is the only readiness signal the action waits
+          # for, and it flips before system_server has published all of its
+          # binder services. Boot here takes ~7 minutes, so the package manager
+          # was still missing by the time Gradle finished building and tried to
+          # install the test APK, failing the job with
+          # `cmd: Can't find service: package` after running 0 tests.
+          # Gate on the package manager itself before handing over to Gradle.
+          script: |
+            adb wait-for-device
+            ready=0
+            for i in $(seq 1 60); do
+              if adb shell pm path android >/dev/null 2>&1; then
+                ready=1
+                echo "Package manager ready after $((i * 5))s."
+                break
+              fi
+              sleep 5
+            done
+            if [ "$ready" != 1 ]; then
+              echo "Package manager did not come up within 300s." >&2
+              adb shell service list >&2 || true
+              exit 1
+            fi
+            ./gradlew connectedCheck
