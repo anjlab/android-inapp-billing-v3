@@ -33,7 +33,7 @@ import java.util.Locale;
 /**
  * Legacy product details type preserved for source compatibility with Billing Library 4/5/6/7
  * consumers of this library. New code should use the {@link ProductDetails} type from the Billing
- * Library 8 directly, via {@link BillingProcessor.IProductDetailsResponseListener}.
+ * Library 9 directly, via {@link BillingProcessor.IProductDetailsResponseListener}.
  *
  * <p>This class flattens multi-offer subscription data down to a single offer / single regular
  * pricing phase (see {@link #fromProductDetails(ProductDetails)}). That is lossy.
@@ -89,7 +89,7 @@ public class SkuDetails implements Parcelable
     public final String responseData;
 
     /**
-     * Opaque offer token for Billing Library 8 subscription purchases. Populated by
+     * Opaque offer token for Billing Library 9 subscription purchases. Populated by
      * {@link #fromProductDetails(ProductDetails)} for subscription products; null for one-time
      * products or instances constructed from legacy JSON. Package-private — read by
      * {@link BillingProcessor} when launching a purchase flow, not intended for consumers.
@@ -124,24 +124,26 @@ public class SkuDetails implements Parcelable
     }
 
     /**
-     * Translates a Billing Library 8 {@link ProductDetails} into the legacy {@link SkuDetails}
+     * Translates a Billing Library 9 {@link ProductDetails} into the legacy {@link SkuDetails}
      * shape so existing consumers of this library's {@code ISkuDetailsResponseListener} surface
-     * continue to work unchanged after the 8.x upgrade.
+     * continue to work unchanged after the 9.x upgrade.
      *
      * <p>Translation rules:
      * <ul>
      *   <li>For one-time products (INAPP), fields are read from
      *       {@link ProductDetails#getOneTimePurchaseOfferDetails()}.</li>
-     *   <li>For subscriptions (SUBS), the first offer whose {@code offerId} is null (the base plan)
-     *       is selected; if no base-plan offer exists the first offer in the list is used. Within
-     *       the chosen offer, the first {@code INFINITE_RECURRING} pricing phase becomes the
-     *       regular price; a {@code FINITE_RECURRING} phase with price 0 becomes the free trial;
-     *       a {@code FINITE_RECURRING} phase with a non-zero price becomes the introductory
-     *       price. This collapses multi-offer subscriptions. Consumers needing the full offer
-     *       tree should use {@link ProductDetails} directly.</li>
+     *   <li>For subscriptions (SUBS), {@code pickBestOffer} selects the offer — a free
+     *       trial first, then a discounted introductory offer, then the base plan. Within the
+     *       chosen offer the {@code INFINITE_RECURRING} pricing phase becomes the regular price;
+     *       remaining phases are classified <em>by price</em>, so a zero-price phase becomes the
+     *       free trial and any other becomes the introductory price, regardless of recurrence
+     *       mode. If no {@code INFINITE_RECURRING} phase exists (e.g. installment plans) the last
+     *       phase is used as the regular price. This collapses multi-offer subscriptions to one
+     *       offer. Consumers needing the full offer tree should use {@link ProductDetails}
+     *       directly.</li>
      * </ul>
      *
-     * @param pd the Billing Library 8 product details to translate
+     * @param pd the Billing Library 9 product details to translate
      * @return a legacy {@link SkuDetails} wrapping the flattened data
      * @throws JSONException if the constructed legacy JSON is malformed (should not happen)
      */
@@ -238,7 +240,6 @@ public class SkuDetails implements Parcelable
         return result;
     }
 
-    @NonNull
     /**
      * Picks the offer to represent this subscription in the legacy
      * {@link SkuDetails} shape, and to launch the purchase flow with.
@@ -263,6 +264,7 @@ public class SkuDetails implements Parcelable
      * the trial fields stay empty. That difference is inherent to Billing 5+
      * and cannot be translated away.
      */
+    @NonNull
     static ProductDetails.SubscriptionOfferDetails pickBestOffer(
             @NonNull List<ProductDetails.SubscriptionOfferDetails> offers)
     {

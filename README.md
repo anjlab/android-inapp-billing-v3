@@ -17,11 +17,13 @@ This library now targets `com.android.billingclient:billing:9.1.0`. The legacy
 `SkuDetails` type and the `getPurchaseListingDetailsAsync` / `getSubscriptionListingDetailsAsync`
 methods are preserved for source-compatibility but are marked `@Deprecated` —
 under the hood they translate from Play Billing 9's `ProductDetails`, which flattens
-multi-offer subscriptions down to a single base plan. Consumers that need
-multiple promotional offers, pricing phases, or base-plan-aware flows should
-migrate to the new `ProductDetails`-based API — see the [3.0.0 CHANGELOG
-entry](CHANGELOG.md#300-2026-04-15) and the [2.2 → 3.0 upgrade
-guide](UPGRADING.md#upgrading-from-22-to-30) for the full walkthrough.
+multi-offer subscriptions down to a single offer. The library picks the best offer
+Play reports you are eligible for — a free trial first, then a discounted
+introductory offer, then the base plan — and uses that same offer for the purchase
+itself, so the price you display is the price charged. Consumers that need multiple
+promotional offers or pricing phases should migrate to the new `ProductDetails`-based
+API — see the [3.0.0 CHANGELOG entry](CHANGELOG.md#300-2026-07-27) and the
+[2.2 → 3.0 upgrade guide](UPGRADING.md#upgrading-from-22-to-30) for the full walkthrough.
 
 **Breaking change (2.x → 3.0)**: `minSdkVersion` is now **23** (Android 6.0).
 Play Billing 8.1 dropped support for API 21–22, so consumers still shipping to
@@ -89,7 +91,10 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     * Called when some error occurred. See Constants class for more details
     * 
     * Note - this includes handling the case where the user canceled the buy dialog:
-    * errorCode = Constants.BILLING_RESPONSE_RESULT_USER_CANCELED
+    * errorCode = BillingClient.BillingResponseCode.USER_CANCELED
+    *
+    * Codes from Play itself are BillingClient.BillingResponseCode.* constants;
+    * codes raised by this library are Constants.BILLING_ERROR_* (100 and above).
     */
   }
 	
@@ -100,6 +105,20 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
     * was loaded from Google Play
     */
   }
+
+  @Override
+  public void onPurchasePending(String productId, PurchaseInfo purchaseInfo) {
+    /*
+    * Optional - this is a default method, so you only override it if you care.
+    *
+    * Called when Google reports a purchase in PENDING state (deferred payment:
+    * cash-at-convenience-store, carrier billing, slow card auth). The purchase is
+    * NOT entitled yet - do not grant anything here. Show a "payment pending" UI and
+    * wait for the transition to PURCHASED, which arrives via onProductPurchased.
+    *
+    * See "Handling Pending Purchases" below.
+    */
+  }
 }
 ```
 
@@ -108,6 +127,24 @@ public class SomeActivity extends Activity implements BillingProcessor.IBillingH
 ```java
 bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE");
 bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID FROM GOOGLE PLAY CONSOLE HERE");
+```
+
+Both also accept Play's optional obfuscated identifiers, which let you correlate a
+purchase with your own account records without sending Google any personal data:
+
+```java
+bp.purchase(YOUR_ACTIVITY, "YOUR PRODUCT ID", obfuscatedAccountId, obfuscatedProfileId);
+bp.subscribe(YOUR_ACTIVITY, "YOUR SUBSCRIPTION ID", obfuscatedAccountId, obfuscatedProfileId);
+bp.updateSubscription(YOUR_ACTIVITY, oldProductId, "NEW SUBSCRIPTION ID",
+                      obfuscatedAccountId, obfuscatedProfileId);
+```
+
+If you already hold a `ProductDetails` object you can skip the extra round-trip to
+Play and launch the flow directly:
+
+```java
+bp.purchase(YOUR_ACTIVITY, productDetails);
+bp.purchase(YOUR_ACTIVITY, productDetails, oldProductId); // subscription upgrade/downgrade
 ```
 
 
@@ -181,7 +218,28 @@ bp.loadOwnedPurchasesFromGoogleAsync(new IPurchasesResponseListener());
 
 ## Getting Listing Details of Your Products
 
-To query listing price and a description of your product / subscription listed in Google Play use these methods:
+### The `ProductDetails` API (recommended)
+
+These return Play Billing 9's native `ProductDetails`, with the full subscription
+offer tree — base plan, promotional offers, and every pricing phase:
+
+```java
+bp.getPurchaseProductDetailsAsync("YOUR PRODUCT ID", new IProductDetailsResponseListener() {
+  @Override public void onProductDetailsResponse(List<ProductDetails> products) { /* ... */ }
+  @Override public void onProductDetailsError(String error) { /* ... */ }
+});
+bp.getSubscriptionProductDetailsAsync("YOUR SUBSCRIPTION ID", listener);
+```
+
+Both also take a `List<String>` to query several products in one call. See the
+[upgrade guide](UPGRADING.md#displaying-prices--offers-move-off-the-deprecated-skudetails-api)
+for how to read offers and pricing phases out of a `ProductDetails`.
+
+### The legacy `SkuDetails` API (deprecated)
+
+These are kept for source compatibility and are marked `@Deprecated`. They translate
+`ProductDetails` down to a single offer, which is lossy — you lose access to multiple
+promotional offers and to individual pricing phases:
 
 ```java
 bp.getPurchaseListingDetailsAsync("YOUR PRODUCT ID FROM GOOGLE PLAY CONSOLE HERE", new ISkuDetailsResponseListener());
@@ -204,10 +262,11 @@ To get info for multiple products / subscriptions on one query, just pass a list
 
 ```java
 bp.getPurchaseListingDetailsAsync(arrayListOfProductIds, new ISkuDetailsResponseListener());
-bp.getSubscriptionListingDetailsAsync(arrayListOfProductIds, new ISkuDetailsResponseListener());
+bp.getSubscriptionsListingDetailsAsync(arrayListOfProductIds, new ISkuDetailsResponseListener());
 ```
 
 where arrayListOfProductIds is a `ArrayList<String>` containing either IDs for products or subscriptions.
+Note the plural `getSubscriptionsListingDetailsAsync` on the list overload.
 
 
 ## Getting Purchase Info Details
@@ -228,6 +287,19 @@ public final String signature;
 // PurchaseData contains orderId, productId, purchaseTime, purchaseToken, purchaseState and autoRenewing fields 
 public final PurchaseData purchaseData;
 ```
+
+`purchaseData.purchaseState` is a `PurchaseState` enum with five values:
+
+| Value | Meaning |
+|---|---|
+| `PurchasedSuccessfully` | Paid and entitled. This is the only value that should grant access. |
+| `Canceled` | Not completed. Also the value reported when Play omits the state field entirely. |
+| `Refunded` | Refunded by Google or the developer. |
+| `SubscriptionExpired` | Subscription term ended without renewal. |
+| `Pending` | Deferred payment awaiting completion — **not** entitled yet. See [Handling Pending Purchases](#handling-pending-purchases-and-the-subscription-it-never-confirms-race). |
+
+`Pending` was added in 3.0.0 and is appended last in the enum, so existing ordinals
+stay stable. If you `switch` over `PurchaseState`, add a branch for it.
 
 ## Handle Canceled Subscriptions
 
@@ -319,11 +391,12 @@ The contents in the consumer proguard file contains:
 
 ```
 -keep class com.android.vending.billing.**
+-keep class com.android.billingclient.api.**
 ```
 
 ## License
 
-Copyright 2021 AnjLab
+Copyright 2014 AnjLab
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

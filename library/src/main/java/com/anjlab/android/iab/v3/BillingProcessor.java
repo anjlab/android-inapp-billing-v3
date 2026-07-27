@@ -108,7 +108,7 @@ public class BillingProcessor extends BillingBase
 	/**
 	 * Callback methods where result of SkuDetails fetch returned or error message on failure.
 	 *
-	 * @deprecated use {@link IProductDetailsResponseListener} for the full Billing Library 8
+	 * @deprecated use {@link IProductDetailsResponseListener} for the full Billing Library 9
 	 *     {@link ProductDetails} shape (multi-offer subscriptions, pricing phases, base plans).
 	 */
 	@Deprecated
@@ -120,7 +120,7 @@ public class BillingProcessor extends BillingBase
 	}
 
 	/**
-	 * Callback methods delivering raw Billing Library 8 {@link ProductDetails} objects — the
+	 * Callback methods delivering raw Billing Library 9 {@link ProductDetails} objects — the
 	 * full product information including subscription offer trees, pricing phases, and base
 	 * plans. Prefer this over the legacy {@link ISkuDetailsResponseListener}.
 	 */
@@ -676,8 +676,9 @@ public class BillingProcessor extends BillingBase
 	 * {@link #getPurchaseProductDetailsAsync(String, IProductDetailsResponseListener)} or
 	 * {@link #getSubscriptionProductDetailsAsync(String, IProductDetailsResponseListener)})
 	 * can use this overload to avoid an extra round-trip to Play. For subscriptions the
-	 * library picks the base plan offer (null {@code offerId}), falling back to the first
-	 * offer in the list.
+	 * library selects the best offer the user is eligible for — a free trial first, then a
+	 * discounted introductory offer, then the base plan — using the same selection that
+	 * populates {@link SkuDetails}, so the offer charged matches the offer displayed.
 	 *
 	 * @param activity the activity launching the flow
 	 * @param productDetails the product to purchase
@@ -1259,7 +1260,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * @deprecated use {@link #getPurchaseProductDetailsAsync(String, IProductDetailsResponseListener)}
-	 *     which returns the full Billing Library 8 {@link ProductDetails}.
+	 *     which returns the full Billing Library 9 {@link ProductDetails}.
 	 */
 	@Deprecated
 	public void getPurchaseListingDetailsAsync(String productId, final ISkuDetailsResponseListener listener)
@@ -1269,7 +1270,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * @deprecated use {@link #getPurchaseProductDetailsAsync(List, IProductDetailsResponseListener)}
-	 *     which returns the full Billing Library 8 {@link ProductDetails}.
+	 *     which returns the full Billing Library 9 {@link ProductDetails}.
 	 */
 	@Deprecated
 	public void getPurchaseListingDetailsAsync(ArrayList<String> productIdList,
@@ -1280,7 +1281,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * @deprecated use {@link #getSubscriptionProductDetailsAsync(String, IProductDetailsResponseListener)}
-	 *     which returns the full Billing Library 8 {@link ProductDetails}, including
+	 *     which returns the full Billing Library 9 {@link ProductDetails}, including
 	 *     multi-offer subscription trees and pricing phases.
 	 */
 	@Deprecated
@@ -1291,7 +1292,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * @deprecated use {@link #getSubscriptionProductDetailsAsync(List, IProductDetailsResponseListener)}
-	 *     which returns the full Billing Library 8 {@link ProductDetails}, including
+	 *     which returns the full Billing Library 9 {@link ProductDetails}, including
 	 *     multi-offer subscription trees and pricing phases.
 	 */
 	@Deprecated
@@ -1302,7 +1303,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Fetch one managed (one-time) product's {@link ProductDetails}. The listener receives
-	 * Billing Library 8's native type with access to the full one-time offer details.
+	 * Billing Library 9's native type with access to the full one-time offer details.
 	 */
 	public void getPurchaseProductDetailsAsync(String productId,
 											   IProductDetailsResponseListener listener)
@@ -1322,7 +1323,7 @@ public class BillingProcessor extends BillingBase
 
 	/**
 	 * Fetch one subscription product's {@link ProductDetails}. The listener receives Billing
-	 * Library 8's native type with the full subscription offer tree — base plan, promotional
+	 * Library 9's native type with the full subscription offer tree — base plan, promotional
 	 * offers, and all pricing phases. Use
 	 * {@link ProductDetails#getSubscriptionOfferDetails()} to enumerate the offers.
 	 */
@@ -1595,7 +1596,7 @@ public class BillingProcessor extends BillingBase
 															   dataSignature,
 															   getPurchasePayload());
 			// The eventHandler callback must run on the main thread for
-			// parity with onProductPurchased; Billing 8's listener callbacks
+			// parity with onProductPurchased; Billing 9's listener callbacks
 			// are already main-thread, but post explicitly for consistency.
 			handler.post(new Runnable()
 			{

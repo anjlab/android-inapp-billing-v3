@@ -90,8 +90,22 @@ bp.updateSubscription(activity, oldProductId, newProductId);
 
 These signatures are unchanged from 2.x. They now fetch Billing 9
 `ProductDetails` internally instead of `SkuDetails`, and for subscriptions
-the library automatically picks the base-plan offer (falling back to the
-first available offer) when launching the flow. No code change required.
+the library automatically picks the best offer the user is eligible for —
+a free trial first, then a discounted introductory offer, then the base plan
+— when launching the flow. That is the same selection used to populate the
+legacy `SkuDetails`, so the offer you displayed is the offer charged. No code
+change required.
+
+Each of these also has an overload taking Play's optional obfuscated
+identifiers, new in 3.0.0, which let you tie a purchase back to your own
+account records without handing Google any personal data:
+
+```java
+bp.purchase(activity, productId, obfuscatedAccountId, obfuscatedProfileId);
+bp.subscribe(activity, productId, obfuscatedAccountId, obfuscatedProfileId);
+bp.updateSubscription(activity, oldProductId, newProductId,
+                      obfuscatedAccountId, obfuscatedProfileId);
+```
 
 #### Displaying prices / offers: move off the deprecated `SkuDetails` API
 
@@ -100,9 +114,9 @@ If your app calls `getPurchaseListingDetailsAsync` or
 methods and the `SkuDetails` type they return are now `@Deprecated`. They
 keep working — backed internally by a translator from Billing 9
 `ProductDetails` — but the translation **collapses multi-offer
-subscriptions to a single offer** (preferring the base plan), so you lose
-access to promotional offers, alternative pricing phases, and their offer
-tokens. Migrate when you can.
+subscriptions to a single offer** (the best one the user is eligible for),
+so you lose access to the remaining promotional offers, alternative pricing
+phases, and their offer tokens. Migrate when you can.
 
 **Before** (still works, deprecated):
 

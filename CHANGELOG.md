@@ -1,4 +1,4 @@
-## 3.0.0 (2026-04-15)
+## 3.0.0 (2026-07-27)
 
 #### Breaking Changes
 
@@ -34,6 +34,20 @@
       `purchase(Activity, ProductDetails, String oldProductId)` overloads
       that skip the extra product-lookup round-trip when the caller already
       holds the details.
+* Expose Play's obfuscated identifiers on the purchase flow
+  ([#509](https://github.com/anjlab/android-inapp-billing-v3/issues/509)).
+  New overloads taking `obfuscatedAccountId` / `obfuscatedProfileId` let you
+  correlate a purchase with your own account records without sending Google
+  personal data:
+    - `purchase(Activity, String, String, String)`
+    - `subscribe(Activity, String, String, String)`
+    - `updateSubscription(Activity, String, String, String, String)`
+    - `purchase(Activity, ProductDetails, String, String, String)`
+* New `PurchaseState.Pending` constant for deferred payments awaiting
+  completion. It is appended last in the enum so the existing ordinals — which
+  are the Parcel wire format for `PurchaseData` — stay stable. `switch`
+  statements over `PurchaseState` are no longer exhaustive and need a new
+  branch.
 * `BillingClient.Builder.enableAutoServiceReconnection()` is now enabled on
   the internal billing client alongside the library's existing manual
   reconnect loop.
@@ -46,7 +60,9 @@
   that returns or consumes it is now `@Deprecated`. These keep working via
   a translator that flattens Billing 9 `ProductDetails` into the legacy
   JSON shape, but the translation is **lossy for multi-offer subscriptions**
-  — only the base plan is surfaced. Affected:
+  — only one offer is surfaced (the best the user is eligible for: a trial,
+  then an introductory offer, then the base plan), and only one regular
+  pricing phase. Affected:
     - `com.anjlab.android.iab.v3.SkuDetails`
     - `BillingProcessor.ISkuDetailsResponseListener`
     - `getPurchaseListingDetailsAsync(…)` (both overloads)
@@ -73,6 +89,14 @@
 * Classify pricing phases by price rather than recurrence mode. A plain
   one-off free trial is `NON_RECURRING`, which the previous `FINITE_RECURRING`
   check dropped entirely, as it did single-payment introductory phases.
+* Map a raw `purchaseState` of `4` to `PurchaseState.Pending` instead of
+  indexing `PurchaseState.values()` directly, which threw
+  `ArrayIndexOutOfBoundsException` on any value outside the enum. Unknown
+  values now degrade to `PurchasedSuccessfully`, and an absent field keeps its
+  historical `Canceled` default.
+* Fail loudly when the legacy `SkuDetails` translation cannot parse a product.
+  A `JSONException` now fires `onSkuDetailsError` instead of silently
+  delivering a partial list that omitted the offending product.
 * Fix `NullPointerException` in `checkMerchant` when Google returns
   `ITEM_ALREADY_OWNED` but neither local cache has a `PurchaseInfo`
   record ([#512](https://github.com/anjlab/android-inapp-billing-v3/issues/512),
@@ -111,13 +135,17 @@
   `queryProductDetailsAsync` (+ the new `QueryProductDetailsResult`
   callback signature).
 * Purchase flow now builds `BillingFlowParams.ProductDetailsParams` with
-  `setOfferToken()` for subscriptions, preferring the base plan (null
-  `offerId`) with fallback to the first offer.
+  `setOfferToken()` for subscriptions, using the same `pickBestOffer`
+  selection as the `SkuDetails` translation (trial, then introductory
+  offer, then base plan) so the offer displayed is the offer charged.
 * `enablePendingPurchases()` replaced with
   `enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())`
   (required in 8.x).
 * `queryPurchasesAsync(String, …)` replaced with
   `queryPurchasesAsync(QueryPurchasesParams, …)`.
+* `SkuDetails` carries the selected offer's `offerToken`, appended to its
+  Parcel wire format. Reads are guarded by `dataAvail()` so a 2.x-written
+  parcel still deserializes, but a 3.0-written parcel read by 2.x will not.
 
 #### Build
 
@@ -134,14 +162,15 @@
   copies collide and fail `checkDebugDuplicateClasses`.
 * Billing dependency is now `api`, not `implementation`, because the new
   public API exposes billing-client types in its signatures.
-* Removed the Gradle-9-incompatible `hierynomus` license plugin.
 * Removed the deprecated `package=` attribute from the library
   `AndroidManifest.xml`; added `namespace 'com.anjlab.android.iab.v3'` in
   `library/build.gradle`.
 * Added `android { publishing { singleVariant('release') {} } }` for AGP
   8.x maven-publish.
-* `android.useAndroidX=true` / `android.enableJetifier=true` moved from
+* `android.useAndroidX=true` / `android.enableJetifier` moved from
   `gradle-wrapper.properties` (wrong file) to `gradle.properties`.
+  Jetifier is set to `false`: it is unnecessary for this dependency set and
+  OOM'd the CI runner while transforming Robolectric's native runtime.
 
 ---
 
