@@ -69,10 +69,13 @@ dependencies {
 
 task androidJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    // Both classpath contributions must happen inside this callback: it fires
+    // after evaluation, so a `classpath +=` written above it is overwritten
+    // under AGP 8 and javadoc ends up without android.jar.
     android.libraryVariants.all { variant ->
         if (variant.name == 'release') {
             owner.classpath += variant.javaCompileProvider.get().classpath
+            owner.classpath += project.files(android.getBootClasspath())
         }
     }
     exclude '**/R.html', '**/R.*.html', '**/index.html'
@@ -144,6 +147,46 @@ afterEvaluate {
     signing {
         required { gradle.taskGraph.hasTask("publish") }
         sign publishing.publications.maven
+    }
+}
+
+// --- Central Portal handover ------------------------------------------------
+// Run right after `./gradlew :library:publish`, which leaves the artifacts in a
+// staging repository. This task hands that repository to the Portal; it does
+// not release anything -- review and publish by hand at
+// https://central.sonatype.com/publishing/deployments.
+//
+// sonatypeRepo and the Portal user token live in ~/.gradle/gradle.properties.
+task publishToPortal {
+    group = 'publishing'
+    description = 'Hands the uploaded staging repository over to the Central Portal'
+
+    def user = project.findProperty('sonatypeUsername')
+    def pass = project.findProperty('sonatypePassword')
+
+    doLast {
+        if (!user || !pass) {
+            throw new GradleException('sonatypeUsername / sonatypePassword are not set. ' +
+                    'Put the Central Portal user token in ~/.gradle/gradle.properties.')
+        }
+        // Last segment is the registered namespace, not the groupId.
+        def connection = new URL('https://ossrh-staging-api.central.sonatype.com' +
+                '/manual/upload/defaultRepository/com.anjlab').openConnection()
+        connection.requestMethod = 'POST'
+        connection.setRequestProperty('Authorization',
+                'Bearer ' + "${user}:${pass}".getBytes('UTF-8').encodeBase64().toString())
+        connection.connectTimeout = 30_000
+        connection.readTimeout = 60_000
+
+        def status = connection.responseCode
+        def stream = status >= 400 ? connection.errorStream : connection.inputStream
+        println "HTTP ${status} ${stream ? stream.getText('UTF-8').trim() : ''}"
+        if (status < 200 || status >= 300) {
+            throw new GradleException("Portal upload failed with HTTP ${status}. " +
+                    'The request must come from the same IP that uploaded the artifacts.')
+        }
+        println 'Handed over. Review and release at:'
+        println '  https://central.sonatype.com/publishing/deployments'
     }
 }
 
