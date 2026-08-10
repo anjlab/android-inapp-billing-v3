@@ -37,6 +37,13 @@ public class PurchaseInfo implements Parcelable
 {
     private static final String LOG_TAG = "iabv3.purchaseInfo";
 
+    /**
+     * Raw {@code purchaseState} value Google Play uses for a pending purchase in the
+     * purchase JSON. Mirrors how {@code com.android.billingclient.api.Purchase#getPurchaseState()}
+     * decodes it ({@code optInt("purchaseState", PURCHASED)}, {@code case 4 -> PENDING}).
+     */
+    private static final int RESPONSE_STATE_PENDING = 4;
+
     public final String responseData;
     public final String signature;
     /**
@@ -73,7 +80,8 @@ public class PurchaseInfo implements Parcelable
             data.productId = json.optString(Constants.RESPONSE_PRODUCT_ID);
             long purchaseTimeMillis = json.optLong(Constants.RESPONSE_PURCHASE_TIME, 0);
             data.purchaseTime = purchaseTimeMillis != 0 ? new Date(purchaseTimeMillis) : null;
-            data.purchaseState = PurchaseState.values()[json.optInt(Constants.RESPONSE_PURCHASE_STATE, 1)];
+            data.purchaseState = toPurchaseState(
+                    json.optInt(Constants.RESPONSE_PURCHASE_STATE, PurchaseState.Canceled.ordinal()));
             data.developerPayload = developerPayload;
             data.purchaseToken = json.getString(Constants.RESPONSE_PURCHASE_TOKEN);
             data.autoRenewing = json.optBoolean(Constants.RESPONSE_AUTO_RENEWING);
@@ -84,6 +92,31 @@ public class PurchaseInfo implements Parcelable
             Log.e(LOG_TAG, "Failed to parse response data", e);
             return null;
         }
+    }
+
+    /**
+     * Maps the raw {@code purchaseState} integer from Google Play's purchase JSON to a
+     * {@link PurchaseState}. Google encodes a pending purchase as {@code 4}, which is
+     * outside the {@code 0..3} range this library originally modelled; indexing
+     * {@link PurchaseState#values()} directly therefore threw
+     * {@link ArrayIndexOutOfBoundsException} for pending purchases — including the one
+     * this library itself builds when reporting a pending purchase. Pending is mapped
+     * explicitly (not via its ordinal) so it survives any future reordering of the enum,
+     * and any unrecognised value degrades to a normal purchase instead of crashing.
+     */
+    private static PurchaseState toPurchaseState(int responseState)
+    {
+        if (responseState == RESPONSE_STATE_PENDING)
+        {
+            return PurchaseState.Pending;
+        }
+        // 0..3 keep their historical meaning:
+        // PurchasedSuccessfully / Canceled / Refunded / SubscriptionExpired.
+        if (responseState >= 0 && responseState <= PurchaseState.SubscriptionExpired.ordinal())
+        {
+            return PurchaseState.values()[responseState];
+        }
+        return PurchaseState.PurchasedSuccessfully;
     }
 
     @Override

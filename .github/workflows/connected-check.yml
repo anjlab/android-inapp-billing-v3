@@ -10,10 +10,14 @@ on:
       - master
 
 jobs:
-  run-connected-checks:
+  # Fast feedback job. Compiles both modules and runs the JVM-only checks on a
+  # cheap Ubuntu runner, so compile errors and failing unit tests surface in a
+  # couple of minutes instead of after a full emulator cycle. The emulator job
+  # below only starts once this passes.
+  build:
     # put [skip ci] into the commit message if you don't want to run this workflow
 
-    runs-on: macos-15-intel
+    runs-on: ubuntu-latest
 
     timeout-minutes: 15
 
@@ -27,14 +31,57 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: adopt
+          distribution: temurin
           java-version: 17
 
       - name: Set up build properties
         run: |
-          echo 'licenceKey=""' > local.properties
-          echo 'android.useAndroidX=true' >> gradle.properties
-          echo 'android.enableJetifier=true' >> gradle.properties
+          # Raw value, NOT pre-quoted: sample/build.gradle wraps this in quotes
+          # itself when generating the BuildConfig field. Writing `licenceKey=""`
+          # here produced `""""` in BuildConfig.java, which javac rejects as a
+          # malformed text block.
+          echo 'licenceKey=' > local.properties
+
+      - name: Assemble and run JVM checks
+        run: ./gradlew assembleDebug :library:test :library:checkstyle
+
+  run-connected-checks:
+    # Instrumented tests on a real emulator. Only worth spending emulator time
+    # on a tree that already compiles, hence `needs: build`.
+    needs: build
+
+    # x86_64 host, so the x86_64 system image runs without translation, and
+    # KVM is available for real hardware acceleration (see the Enable KVM step).
+    #
+    # This job previously ran on macos-15-intel. That runner has only 4 logical
+    # cores and the emulator caps itself at 1 virtual CPU below 6, which pushed
+    # boot to 436s on a run that passed and past the 600s timeout on one that
+    # did not. Neither is a workable margin.
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Without this the emulator falls back to software emulation and boots
+      # an order of magnitude slower. /dev/kvm exists on the runner but is not
+      # world-accessible by default.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up build properties
+        run: |
+          echo 'licenceKey=' > local.properties
 
       - name: Run connectedCheck
         uses: reactivecircus/android-emulator-runner@v2
@@ -42,4 +89,17 @@ jobs:
           api-level: 33
           target: google_apis
           arch: x86_64
-          script: ./gradlew connectedCheck
+          # `sys.boot_completed` is the only readiness signal the action waits
+          # for, and it flips before system_server has published all of its
+          # binder services. On a slow boot the package manager was still
+          # missing when Gradle tried to install the test APK, failing with
+          # `cmd: Can't find service: package` after running 0 tests. Gate on
+          # the package manager itself before handing over to Gradle. On an
+          # accelerated emulator this returns immediately.
+          #
+          # NOTE: the action runs this script one line per `sh -c`, so every
+          # line must stand alone. Multi-line loops are a syntax error and
+          # variables do not survive between lines.
+          script: |
+            timeout 300 sh -c 'until adb shell pm path android >/dev/null 2>&1; do sleep 5; done' || { echo "Package manager did not come up within 300s." >&2; adb shell service list >&2; exit 1; }
+            ./gradlew connectedCheck

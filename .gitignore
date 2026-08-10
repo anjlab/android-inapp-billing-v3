@@ -4,7 +4,6 @@ gen/
 !.idea/codeStyleSettings.xml
 build
 local.properties
-gradle.properties
 .gradle
 *.iml
 .DS_Store

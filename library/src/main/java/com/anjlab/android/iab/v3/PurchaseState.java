@@ -20,5 +20,13 @@ public enum PurchaseState
     PurchasedSuccessfully,
     Canceled,
     Refunded,
-    SubscriptionExpired
+    SubscriptionExpired,
+    /**
+     * Deferred payment awaiting completion (e.g. cash-at-counter, carrier billing,
+     * slow card authorization). Google reports this as raw {@code purchaseState == 4}
+     * in the purchase JSON. Appended last on purpose: the earlier ordinals are used as
+     * the wire format for {@link PurchaseData}'s Parcel serialization, so they must stay
+     * stable.
+     */
+    Pending
 }

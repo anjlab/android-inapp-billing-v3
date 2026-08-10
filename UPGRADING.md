@@ -1,5 +1,221 @@
 ## Upgrading Android In-App Billing v3 Library
 
+### Upgrading from 2.2 to 3.0
+
+**TL;DR**: This release updates `com.android.billingclient:billing` from
+`7.0.0` to `9.1.0`. **The everyday purchase API is unchanged** — code that
+just calls `bp.purchase(activity, productId)` / `bp.subscribe(activity, productId)`
+compiles and runs exactly as before, the new billing client is wired up
+under the hood. You only need to touch your code if you were using
+`SkuDetails` to display prices or offers in your UI.
+
+#### Required changes in your app
+
+1. **Raise `minSdkVersion` to 23.** Play Billing `8.1+` no longer supports
+   API 21–22. If you must stay on those levels, pin this library at `2.2.0`.
+2. **Raise `compileSdk` to at least 35.** Play Billing `9.x` depends on
+   `androidx.core:1.15.0`, whose AAR metadata declares `minCompileSdk=35`.
+   Building against `34` fails at `checkDebugAarMetadata`. Note this is
+   independent of `targetSdk` — you can raise `compileSdk` without opting
+   into Android 15 runtime behavior.
+3. **Use a modern AGP.** Any consumer AGP `8.1+` can consume the new `aar`
+   without further changes.
+
+#### One behavior change to be aware of
+
+Play Billing `9.0` reclassified the case where the Play Store app is blocked
+by the system (for example, OEM-customized kids mode) from `BILLING_RESPONSE_RESULT_ERROR`
+to `BILLING_UNAVAILABLE`. If your `IBillingHandler.onBillingError` branches on
+the specific error code for that scenario, update it — the library passes the
+code through unchanged.
+
+#### Free trials and introductory prices are now filtered by eligibility
+
+This one **can bite you at runtime**, and it cannot be translated away.
+
+Before Play Billing 5, a subscription's free trial and introductory price were
+properties of the SKU. `SkuDetails.subscriptionFreeTrialPeriod` was populated
+for every caller, whether or not that particular user could still claim the
+trial, and launching a purchase applied whichever offer the user was entitled
+to automatically.
+
+From Billing 5 on, trials and introductory prices are **separate offers**, and
+`ProductDetails.getSubscriptionOfferDetails()` only returns the offers the
+signed-in user is **currently eligible for**. A user who has already used the
+trial gets the base plan alone.
+
+What that means for the legacy `SkuDetails` API:
+
+* `subscriptionFreeTrialPeriod` is `""` and `haveTrialPeriod` is `false`
+  whenever the user is not eligible. The same applies to
+  `introductoryPricePeriod` / `introductoryPriceLong` / `introductoryPriceCycles`.
+* This is **normal**, not an error. There is no way for the library to report a
+  trial that Play did not return.
+
+**Guard your code accordingly.** Feeding those fields straight into a parser
+crashes for every ineligible user:
+
+```java
+// Crashes with DateTimeParseException once the user is no longer eligible:
+Period p = Period.parse(details.subscriptionFreeTrialPeriod);
+
+// Do this instead:
+if (details.haveTrialPeriod && !TextUtils.isEmpty(details.subscriptionFreeTrialPeriod))
+{
+    Period p = Period.parse(details.subscriptionFreeTrialPeriod);
+    // ...
+}
+```
+
+The library does pick the **best offer the user is eligible for** — a free
+trial first, then a discounted introductory offer, then the base plan — both
+when filling in `SkuDetails` and when launching the purchase flow, so an
+eligible user still gets the trial exactly as before 3.0. Only genuinely
+ineligible users see empty fields.
+
+If you need the full offer tree instead of this flattened view, use
+`getSubscriptionProductDetailsAsync` and read
+`ProductDetails.getSubscriptionOfferDetails()` directly.
+
+That's it for most apps — the following sections only apply if you read
+product details directly.
+
+#### Purchasing is unchanged
+
+```java
+bp.purchase(activity, productId);      // one-time product
+bp.subscribe(activity, productId);     // subscription
+bp.updateSubscription(activity, oldProductId, newProductId);
+```
+
+These signatures are unchanged from 2.x. They now fetch Billing 9
+`ProductDetails` internally instead of `SkuDetails`, and for subscriptions
+the library automatically picks the best offer the user is eligible for —
+a free trial first, then a discounted introductory offer, then the base plan
+— when launching the flow. That is the same selection used to populate the
+legacy `SkuDetails`, so the offer you displayed is the offer charged. No code
+change required.
+
+Each of these also has an overload taking Play's optional obfuscated
+identifiers, new in 3.0.0, which let you tie a purchase back to your own
+account records without handing Google any personal data:
+
+```java
+bp.purchase(activity, productId, obfuscatedAccountId, obfuscatedProfileId);
+bp.subscribe(activity, productId, obfuscatedAccountId, obfuscatedProfileId);
+bp.updateSubscription(activity, oldProductId, newProductId,
+                      obfuscatedAccountId, obfuscatedProfileId);
+```
+
+#### Displaying prices / offers: move off the deprecated `SkuDetails` API
+
+If your app calls `getPurchaseListingDetailsAsync` or
+`getSubscriptionListingDetailsAsync` to render prices or offers, those
+methods and the `SkuDetails` type they return are now `@Deprecated`. They
+keep working — backed internally by a translator from Billing 9
+`ProductDetails` — but the translation **collapses multi-offer
+subscriptions to a single offer** (the best one the user is eligible for),
+so you lose access to the remaining promotional offers, alternative pricing
+phases, and their offer tokens. Migrate when you can.
+
+**Before** (still works, deprecated):
+
+```java
+bp.getSubscriptionListingDetailsAsync(productId, new BillingProcessor.ISkuDetailsResponseListener() {
+    @Override
+    public void onSkuDetailsResponse(List<SkuDetails> products) {
+        SkuDetails s = products.get(0);
+        String price  = s.priceText;
+        String period = s.subscriptionPeriod;
+        // No access to multiple offers, base plans, or pricing phases.
+    }
+    @Override public void onSkuDetailsError(String error) { }
+});
+```
+
+**After** (Billing 9 native):
+
+```java
+bp.getSubscriptionProductDetailsAsync(productId, new BillingProcessor.IProductDetailsResponseListener() {
+    @Override
+    public void onProductDetailsResponse(@NonNull List<ProductDetails> products) {
+        ProductDetails pd = products.get(0);
+        for (ProductDetails.SubscriptionOfferDetails offer : pd.getSubscriptionOfferDetails()) {
+            // offer.getBasePlanId(), offer.getOfferId() (null = base plan),
+            // offer.getPricingPhases().getPricingPhaseList(), offer.getOfferToken()
+        }
+    }
+    @Override public void onProductDetailsError(@NonNull String error) { }
+});
+```
+
+The matching `getPurchaseProductDetailsAsync` method exists for one-time
+(INAPP) products — it exposes
+`ProductDetails.getOneTimePurchaseOfferDetails()` instead of the
+subscription offer tree.
+
+#### Optional: skip the re-fetch when you already have `ProductDetails`
+
+If you already hold a `ProductDetails` (for example, from rendering a
+paywall) and want to launch the flow without another round-trip to Play,
+there is now a `ProductDetails`-taking overload of `purchase`:
+
+```java
+bp.purchase(activity, productDetails);                         // new purchase
+bp.purchase(activity, productDetails, oldProductId);           // sub upgrade/downgrade
+```
+
+This is strictly an optimization — the flat `bp.purchase(activity, productId)`
+call above does the same thing and is preferred when you don't already
+hold the details.
+
+#### Behavioral notes
+
+* `BillingClient.Builder.enableAutoServiceReconnection()` is now enabled
+  and the library's previous manual retry on disconnect has been removed
+  to avoid racing Google's internal reconnect. The manual retry on
+  setup-failure / public-method paths stays, but is now deduped so
+  overlapping retries can't stack. No action on your part.
+* `BillingFlowParams.SubscriptionUpdateParams` for subscription updates
+  still uses the implicit default replacement mode (`WITH_TIME_PRORATION`),
+  matching pre-3.0 behavior — explicitly set a different mode if you need
+  one.
+* `BillingClient.BillingResponseCode` values themselves are unchanged
+  between Billing 7 and 9.1, so `IBillingHandler.onBillingError(int, Throwable)`
+  consumers don't need to change anything — with the single exception of the
+  blocked-Play-Store reclassification noted above.
+* Owned purchases are now re-queried from Google on **every** init, not
+  only on the first-ever restore. This makes refunds eventually show up
+  in `isPurchased()` without consumers needing to call
+  `loadOwnedPurchasesFromGoogleAsync` themselves. `onPurchaseHistoryRestored`
+  is still one-shot. If you need refund-accurate state *inside*
+  `onBillingInitialized`, call `loadOwnedPurchasesFromGoogleAsync(listener)`
+  explicitly and read `isPurchased` from the success callback — the
+  reconciliation is async and `onBillingInitialized` fires before it
+  completes.
+
+#### New: observe pending (deferred-payment) purchases
+
+`IBillingHandler` now has an optional `onPurchasePending(productId, details)`
+callback that fires when Google reports a purchase in `PENDING` state
+(deferred payment methods like cash-at-convenience-store, carrier
+billing, slow card auth). This branch was previously missing, so those
+purchases produced no callback on the first `onPurchasesUpdated` event.
+The method is a Java 8 default, so existing `IBillingHandler`
+implementations compile unchanged.
+
+```java
+@Override
+public void onPurchasePending(@NonNull String productId, @Nullable PurchaseInfo details) {
+    // Do NOT grant entitlement — the payment has not cleared yet.
+    // Surface "payment pending" UI. The transition to PURCHASED fires
+    // onProductPurchased on the next onPurchasesUpdated event or on
+    // the next init (loadOwnedPurchasesFromGoogleAsync).
+}
+```
+
+See [Handling pending transactions](https://developer.android.com/google/play/billing/integrate#pending).
+
 ### Upgrading from 2.0.x to 2.1.0
 
 This release updates `com.android.billingclient:billing` library from version 4 to version 6.
